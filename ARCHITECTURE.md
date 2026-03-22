@@ -392,9 +392,10 @@ decompose(
 | borderHeight | number | ❌ | 容器高度，默认 100% |
 
 #### 圆角统一规则
-> BeakerManager 在渲染时会自动统一 background 和 border 的圆角：
-> - 如果只设置了其中一个的 radius，另一个自动同步
-> - 如果都没有设置，则都设为 0
+> BeakerManager 在渲染时会自动统一 background、border 和 shadow 的圆角：
+> - 如果只设置了 background 或 border 其一的 radius，另一个自动同步
+> - shadow 会自动同步 background/border 的圆角值
+> - 如果都没有设置 radius，则都设为 0
 
 #### shadow
 | 属性 | 类型 | 必需 | 说明 |
@@ -408,6 +409,7 @@ decompose(
 | shadowWidth | number | ❌ | 容器宽度，默认 100% |
 | shadowHeight | number | ❌ | 容器高度，默认 100% |
 | radius | number | ❌ | 圆角，自动同步 background/border 的圆角 |
+| trigger | 'hover' | ❌ | 悬停时修改静态阴影的 boxShadow（不渲染独立元素） |
 
 ---
 

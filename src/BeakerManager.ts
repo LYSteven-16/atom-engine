@@ -16,6 +16,9 @@ export class BeakerManager {
   private totalDragOffset: { x: number; y: number } = { x: 0, y: 0 };
   private collapseStates: Record<string, boolean> = {};
   private atomRenderer: AtomRenderer;
+  private shadowElement: HTMLElement | null = null;
+  private staticShadowAtom: any = null;
+  private hoverShadowAtom: any = null;
 
   constructor(molecule: Molecule) {
     this.molecule = molecule;
@@ -50,7 +53,8 @@ export class BeakerManager {
     const { renderable, others } = Catalyst.decompose(atoms);
 
     const decorationAtoms = others.filter(a =>
-      a.capability === 'background' || a.capability === 'border' || a.capability === 'shadow'
+      (a.capability === 'background' || a.capability === 'border') ||
+      a.capability === 'shadow'
     ) as DecorationAtom[];
 
     const animationAtoms = others.filter(a =>
@@ -150,7 +154,6 @@ export class BeakerManager {
   private renderDecorationAtoms(atoms: DecorationAtom[]): void {
     const backgroundAtom = atoms.find(a => a.capability === 'background') as any;
     const borderAtom = atoms.find(a => a.capability === 'border') as any;
-    const shadowAtom = atoms.find(a => a.capability === 'shadow') as any;
 
     let radius = 0;
     if (backgroundAtom?.radius !== undefined && borderAtom?.radius === undefined) {
@@ -165,13 +168,24 @@ export class BeakerManager {
 
     if (backgroundAtom?.radius !== undefined || borderAtom?.radius !== undefined) {
       radius = backgroundAtom?.radius ?? borderAtom?.radius ?? 0;
-      if (shadowAtom) {
-        shadowAtom.radius = radius;
-      }
     }
 
     atoms.forEach(atom => {
+      const shadowAtom = atom as any;
+      if (shadowAtom.capability === 'shadow') {
+        if (shadowAtom.trigger) {
+          this.hoverShadowAtom = shadowAtom;
+          return;
+        } else {
+          this.staticShadowAtom = shadowAtom;
+          shadowAtom.radius = radius;
+        }
+      }
+
       const element = this.atomRenderer.render(atom);
+      if (atom.capability === 'shadow' && !(atom as any).trigger) {
+        this.shadowElement = element;
+      }
       this.element.appendChild(element);
     });
   }
@@ -202,8 +216,12 @@ export class BeakerManager {
     let hasTranslate = false;
     let hasHeight = false;
     let hasWidth = false;
+    let hoverShadowX = 0;
+    let hoverShadowY = 0;
+    let hoverShadowBlur = 0;
+    let hasHoverShadow = false;
 
-    atoms.forEach(atom => {
+    (atoms as any[]).forEach((atom: any) => {
       switch (atom.capability) {
         case 'scale':
           if (atom.trigger === 'hover' && isHovered) {
@@ -298,6 +316,13 @@ export class BeakerManager {
           }
           break;
       }
+
+      if (this.hoverShadowAtom && this.hoverShadowAtom.trigger === 'hover' && isHovered) {
+        hasHoverShadow = true;
+        hoverShadowX = this.hoverShadowAtom.x;
+        hoverShadowY = this.hoverShadowAtom.y;
+        hoverShadowBlur = this.hoverShadowAtom.blur;
+      }
     });
 
     const transforms: string[] = [];
@@ -319,6 +344,16 @@ export class BeakerManager {
 
     if (hasWidth) {
       this.element.style.width = width;
+    }
+
+    if (this.shadowElement) {
+      if (hasHoverShadow && this.hoverShadowAtom) {
+        const color = this.hoverShadowAtom.color;
+        this.shadowElement.style.boxShadow = `${hoverShadowX}px ${hoverShadowY}px ${hoverShadowBlur}px rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`;
+      } else if (this.staticShadowAtom) {
+        const color = this.staticShadowAtom.color;
+        this.shadowElement.style.boxShadow = `${this.staticShadowAtom.x}px ${this.staticShadowAtom.y}px ${this.staticShadowAtom.blur}px rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.25)`;
+      }
     }
   }
 
