@@ -73,6 +73,7 @@ export interface ShadowAtom extends BaseAtom {
   color: [number, number, number];
   shadowWidth?: number;
   shadowHeight?: number;
+  radius?: number;
 }
 
 export type Trigger = 'hover' | 'click' | 'drag';

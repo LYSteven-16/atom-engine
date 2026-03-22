@@ -152,7 +152,7 @@ export class AtomRenderer {
       width: hasCustomSize ? `${atom.width ?? '100%'}` : '100%',
       height: hasCustomSize ? `${atom.height ?? '100%'}` : '100%',
       backgroundColor: `rgb(${atom.color[0]}, ${atom.color[1]}, ${atom.color[2]})`,
-      borderRadius: atom.radius !== undefined ? `${atom.radius}px` : undefined,
+      borderRadius: atom.radius !== undefined ? `${atom.radius}px` : '0px',
     };
     
     this.applyStyles(el, styles);
@@ -195,6 +195,7 @@ export class AtomRenderer {
       width: hasCustomSize ? `${atom.shadowWidth ?? '100%'}` : '100%',
       height: hasCustomSize ? `${atom.shadowHeight ?? '100%'}` : '100%',
       boxShadow: `${atom.x}px ${atom.y}px ${atom.blur}px rgba(${atom.color[0]}, ${atom.color[1]}, ${atom.color[2]}, 0.25)`,
+      borderRadius: atom.radius !== undefined ? `${atom.radius}px` : '0px',
     };
     
     this.applyStyles(el, styles);

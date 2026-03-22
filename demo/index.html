@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AtomEngine Demo</title>
+  <title>AtomEngine 完整测试 Demo</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
   </style>
@@ -12,7 +12,7 @@
   <div id="app"></div>
 
   <script type="module">
-    import { BeakerManager, SubstanceManager } from '../dist/index.mjs?v=9';
+    import { BeakerManager, SubstanceManager } from '../dist/index.mjs?v=10';
 
     function applyStyles(element, styles) {
       Object.assign(element.style, styles);
@@ -26,86 +26,377 @@
       margin: '0',
       padding: '0',
       fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif',
-      backgroundColor: rgb(30, 30, 30),
-      color: rgb(255, 255, 255),
-      minHeight: '100vh'
+      backgroundColor: rgb(240, 240, 245),
+      color: rgb(30, 30, 30),
+      minHeight: '100vh',
+      overflowX: 'hidden'
     });
 
     const molecules = [
       {
-        id: 'mol-A',
+        id: 'section-media',
         position: { x: 0, y: 0 },
-        width: 160,
-        height: 80,
+        width: 400,
+        height: 50,
         atoms: [
-          { capability: 'background', color: [255, 100, 100] },
-          { capability: 'border', width: 2, color: [200, 50, 50], radius: 8 },
-          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '悬停缩放', size: 16, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 45 }, text: 'hover scale+opacity', size: 11, color: [255, 220, 220] },
-          { capability: 'scale', value: 1.1, trigger: 'hover', duration: 0.3 },
-          { capability: 'opacity', value: 0.8, trigger: 'hover' },
-          { capability: 'drag' }
+          { capability: 'text', position: { x: 10, y: 30 }, text: '📝 文本与媒体', size: 20, color: [40, 40, 40] }
         ]
       },
       {
-        id: 'mol-B',
-        position: { x: 220, y: 0 },
-        width: 160,
-        height: 80,
+        id: 'media-card',
+        position: { x: 0, y: 60 },
+        width: 400,
+        height: 120,
         atoms: [
-          { capability: 'background', color: [100, 150, 255] },
-          { capability: 'border', width: 2, color: [50, 100, 200], radius: 8 },
-          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '悬停旋转', size: 16, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 45 }, text: 'hover rotate', size: 11, color: [200, 220, 255] },
-          { capability: 'rotate', value: 15, trigger: 'hover' },
-          { capability: 'drag' }
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [200, 200, 210], radius: 12 },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.1] },
+          { capability: 'text', position: { x: 15, y: 25 }, text: '课程封面', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 15, y: 50 }, text: '第一章：JavaScript 基础入门', size: 16, color: [30, 30, 30] },
+          { capability: 'text', position: { x: 15, y: 75 }, text: '视频时长：12:34 | 讲师：李老师', size: 12, color: [120, 120, 120] },
+          { capability: 'scale', value: 1.02, trigger: 'hover' },
+          { capability: 'shadow', x: 4, y: 4, blur: 16, color: [0, 0, 0, 0.15], trigger: 'hover' }
         ]
       },
       {
-        id: 'mol-C',
-        position: { x: 0, y: 170 },
-        width: 160,
-        height: 80,
+        id: 'quiz-section',
+        position: { x: 0, y: 200 },
+        width: 400,
+        height: 50,
         atoms: [
-          { capability: 'background', color: [100, 200, 100] },
-          { capability: 'border', width: 2, color: [50, 150, 50], radius: 8 },
-          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '点击展开', size: 16, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 45 }, text: 'click expand', size: 11, color: [200, 255, 200] },
-          { capability: 'height', value: 160, trigger: 'click', collapsedValue: 80 },
-          { capability: 'drag' }
+          { capability: 'text', position: { x: 10, y: 30 }, text: '📋 互动测验元素', size: 20, color: [40, 40, 40] }
         ]
       },
       {
-        id: 'mol-D',
-        position: { x: 220, y: 170 },
-        width: 160,
+        id: 'quiz-question',
+        position: { x: 0, y: 260 },
+        width: 400,
+        height: 140,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [200, 200, 210], radius: 12 },
+          { capability: 'text', position: { x: 15, y: 25 }, text: '选择题', size: 12, color: [100, 100, 200] },
+          { capability: 'text', position: { x: 15, y: 55 }, text: '1. 以下哪个是 JavaScript 的数组方法？', size: 16, color: [30, 30, 30] },
+          { capability: 'text', position: { x: 25, y: 90 }, text: '○ A. push()', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 25, y: 115 }, text: '○ B. foreach()', size: 14, color: [60, 60, 60] }
+        ]
+      },
+      {
+        id: 'quiz-input',
+        position: { x: 0, y: 420 },
+        width: 400,
         height: 80,
         atoms: [
-          { capability: 'background', color: [255, 180, 100] },
-          { capability: 'border', width: 2, color: [200, 150, 50], radius: 8 },
-          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '拖拽移动', size: 16, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 45 }, text: 'drag me!', size: 11, color: [255, 230, 200] },
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [200, 200, 210], radius: 8 },
+          { capability: 'text', position: { x: 15, y: 30 }, text: '填空题：请在下方输入答案', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 15, y: 55 }, text: 'JavaScript 的创始人是 _______', size: 16, color: [30, 30, 30] }
+        ]
+      },
+      {
+        id: 'drag-section',
+        position: { x: 0, y: 520 },
+        width: 400,
+        height: 50,
+        atoms: [
+          { capability: 'text', position: { x: 10, y: 30 }, text: '🔢 排序练习（拖拽排序）', size: 20, color: [40, 40, 40] }
+        ]
+      },
+      {
+        id: 'drag-item-1',
+        position: { x: 0, y: 580 },
+        width: 380,
+        height: 45,
+        atoms: [
+          { capability: 'background', color: [100, 180, 255] },
+          { capability: 'border', width: 1, color: [80, 150, 230], radius: 8 },
+          { capability: 'text', position: { x: 15, y: 28 }, text: '① 第一步：打开开发工具', size: 14, color: [255, 255, 255] },
           { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
           { capability: 'drag', spring: false }
         ]
       },
       {
-        id: 'mol-E',
-        position: { x: 440, y: 0 },
-        width: 160,
+        id: 'drag-item-2',
+        position: { x: 0, y: 635 },
+        width: 380,
+        height: 45,
+        atoms: [
+          { capability: 'background', color: [100, 220, 150] },
+          { capability: 'border', width: 1, color: [80, 190, 120], radius: 8 },
+          { capability: 'text', position: { x: 15, y: 28 }, text: '② 第二步：编写代码', size: 14, color: [255, 255, 255] },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', spring: false }
+        ]
+      },
+      {
+        id: 'drag-item-3',
+        position: { x: 0, y: 690 },
+        width: 380,
+        height: 45,
+        atoms: [
+          { capability: 'background', color: [255, 180, 100] },
+          { capability: 'border', width: 1, color: [230, 160, 80], radius: 8 },
+          { capability: 'text', position: { x: 15, y: 28 }, text: '③ 第三步：运行测试', size: 14, color: [255, 255, 255] },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', spring: false }
+        ]
+      },
+      {
+        id: 'drawing-section',
+        position: { x: 0, y: 760 },
+        width: 400,
+        height: 50,
+        atoms: [
+          { capability: 'text', position: { x: 10, y: 30 }, text: '🎨 绘图板', size: 20, color: [40, 40, 40] }
+        ]
+      },
+      {
+        id: 'drawing-board',
+        position: { x: 0, y: 820 },
+        width: 400,
+        height: 200,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 2, color: [180, 180, 190], radius: 12 },
+          { capability: 'text', position: { x: 160, y: 95 }, text: '点击并拖动开始绘画', size: 16, color: [180, 180, 180] }
+        ]
+      },
+      {
+        id: 'progress-section',
+        position: { x: 0, y: 1040 },
+        width: 400,
+        height: 50,
+        atoms: [
+          { capability: 'text', position: { x: 10, y: 30 }, text: '📊 学习辅助', size: 20, color: [40, 40, 40] }
+        ]
+      },
+      {
+        id: 'progress-bar',
+        position: { x: 0, y: 1100 },
+        width: 400,
+        height: 60,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [200, 200, 210], radius: 8 },
+          { capability: 'text', position: { x: 15, y: 25 }, text: '学习进度', size: 14, color: [60, 60, 60] },
+          { capability: 'background', color: [230, 240, 255], width: 360, height: 20, radius: 10 },
+          { capability: 'scale', value: 1.05, trigger: 'hover' }
+        ]
+      },
+      {
+        id: 'timeline',
+        position: { x: 0, y: 1180 },
+        width: 400,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [200, 200, 210], radius: 8 },
+          { capability: 'text', position: { x: 15, y: 30 }, text: '学习时间线', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 60, y: 60 }, text: '第一章', size: 12, color: [100, 100, 200] },
+          { capability: 'text', position: { x: 180, y: 60 }, text: '第二章', size: 12, color: [200, 100, 100] },
+          { capability: 'text', position: { x: 300, y: 60 }, text: '第三章', size: 12, color: [100, 180, 100] }
+        ]
+      },
+      {
+        id: 'checklist',
+        position: { x: 0, y: 1280 },
+        width: 400,
+        height: 120,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [200, 200, 210], radius: 8 },
+          { capability: 'text', position: { x: 15, y: 25 }, text: '今日学习清单', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 25, y: 55 }, text: '☑ 观看视频课程', size: 14, color: [80, 80, 80] },
+          { capability: 'text', position: { x: 25, y: 85 }, text: '☐ 完成练习题', size: 14, color: [80, 80, 80] },
+          { capability: 'scale', value: 1.02, trigger: 'hover' }
+        ]
+      },
+      {
+        id: 'feedback-section',
+        position: { x: 0, y: 1420 },
+        width: 400,
+        height: 50,
+        atoms: [
+          { capability: 'text', position: { x: 10, y: 30 }, text: '✅ 反馈组件', size: 20, color: [40, 40, 40] }
+        ]
+      },
+      {
+        id: 'score-card',
+        position: { x: 0, y: 1480 },
+        width: 400,
+        height: 100,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 2, color: [100, 200, 100], radius: 12 },
+          { capability: 'text', position: { x: 15, y: 30 }, text: '答题结果', size: 14, color: [100, 100, 100] },
+          { capability: 'text', position: { x: 15, y: 65 }, text: '正确率：85%', size: 20, color: [50, 180, 50] },
+          { capability: 'text', position: { x: 180, y: 65 }, text: '用时：5分32秒', size: 16, color: [100, 100, 100] },
+          { capability: 'scale', value: 1.03, trigger: 'hover' },
+          { capability: 'background', color: [240, 255, 240], trigger: 'hover' }
+        ]
+      },
+      {
+        id: 'answer-analysis',
+        position: { x: 0, y: 1600 },
+        width: 400,
+        height: 140,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [200, 200, 210], radius: 12 },
+          { capability: 'text', position: { x: 15, y: 25 }, text: '答案解析', size: 14, color: [100, 100, 200] },
+          { capability: 'text', position: { x: 15, y: 55 }, text: '题目：JavaScript 的创始人是？', size: 13, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 15, y: 80 }, text: '✓ 正确答案：Brendan Eich', size: 13, color: [50, 180, 50] },
+          { capability: 'text', position: { x: 15, y: 105 }, text: '✗ 你的答案：John Resig', size: 13, color: [200, 80, 80] }
+        ]
+      },
+      {
+        id: 'animation-demo',
+        position: { x: 450, y: 0 },
+        width: 350,
+        height: 50,
+        atoms: [
+          { capability: 'text', position: { x: 10, y: 30 }, text: '🎬 动画效果测试', size: 20, color: [40, 40, 40] }
+        ]
+      },
+      {
+        id: 'anim-scale-hover',
+        position: { x: 450, y: 60 },
+        width: 100,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [255, 100, 100] },
+          { capability: 'border', width: 2, color: [200, 50, 50], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 10, y: 35 }, text: '悬停缩放', size: 12, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.15, trigger: 'hover', duration: 0.3 },
+          { capability: 'drag' }
+        ]
+      },
+      {
+        id: 'anim-rotate-hover',
+        position: { x: 570, y: 60 },
+        width: 100,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 150, 255] },
+          { capability: 'border', width: 2, color: [50, 100, 200], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 10, y: 35 }, text: '悬停旋转', size: 12, color: [255, 255, 255] },
+          { capability: 'rotate', value: 15, trigger: 'hover' },
+          { capability: 'drag' }
+        ]
+      },
+      {
+        id: 'anim-opacity-hover',
+        position: { x: 690, y: 60 },
+        width: 100,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 200, 100] },
+          { capability: 'border', width: 2, color: [50, 150, 50], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 10, y: 35 }, text: '悬停透明', size: 12, color: [255, 255, 255] },
+          { capability: 'opacity', value: 0.5, trigger: 'hover' },
+          { capability: 'drag' }
+        ]
+      },
+      {
+        id: 'anim-click-scale',
+        position: { x: 450, y: 160 },
+        width: 100,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [255, 180, 100] },
+          { capability: 'border', width: 2, color: [200, 150, 50], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 10, y: 35 }, text: '点击缩放', size: 12, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.3, trigger: 'click' },
+          { capability: 'drag' }
+        ]
+      },
+      {
+        id: 'anim-click-rotate',
+        position: { x: 570, y: 160 },
+        width: 100,
         height: 80,
         atoms: [
           { capability: 'background', color: [180, 100, 255] },
           { capability: 'border', width: 2, color: [150, 50, 200], radius: 8 },
           { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '点击缩放', size: 16, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 45 }, text: 'click scale', size: 11, color: [230, 200, 255] },
-          { capability: 'scale', value: 1.2, trigger: 'click' },
+          { capability: 'text', position: { x: 10, y: 35 }, text: '点击旋转', size: 12, color: [255, 255, 255] },
+          { capability: 'rotate', value: 360, trigger: 'click' },
           { capability: 'drag' }
+        ]
+      },
+      {
+        id: 'anim-click-expand',
+        position: { x: 690, y: 160 },
+        width: 100,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 255, 200] },
+          { capability: 'border', width: 2, color: [50, 200, 150], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 10, y: 35 }, text: '点击展开', size: 12, color: [255, 255, 255] },
+          { capability: 'height', value: 160, trigger: 'click', collapsedValue: 80 },
+          { capability: 'drag' }
+        ]
+      },
+      {
+        id: 'anim-drag-move',
+        position: { x: 450, y: 280 },
+        width: 340,
+        height: 60,
+        atoms: [
+          { capability: 'background', color: [255, 220, 180] },
+          { capability: 'border', width: 2, color: [200, 170, 130], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 20, y: 25 }, text: '拖拽移动（不回弹）', size: 14, color: [80, 60, 40] },
+          { capability: 'text', position: { x: 20, y: 48 }, text: 'spring: false - 拖拽后保持在当前位置', size: 11, color: [150, 120, 90] },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', spring: false }
+        ]
+      },
+      {
+        id: 'decoration-demo',
+        position: { x: 450, y: 380 },
+        width: 350,
+        height: 50,
+        atoms: [
+          { capability: 'text', position: { x: 10, y: 30 }, text: '🎀 装饰原子测试', size: 20, color: [40, 40, 40] }
+        ]
+      },
+      {
+        id: 'dec-rounded',
+        position: { x: 450, y: 440 },
+        width: 100,
+        height: 60,
+        atoms: [
+          { capability: 'background', color: [255, 150, 150], radius: 30 },
+          { capability: 'border', width: 2, color: [200, 100, 100], radius: 30 },
+          { capability: 'text', position: { x: 15, y: 35 }, text: '圆角30px', size: 12, color: [255, 255, 255] }
+        ]
+      },
+      {
+        id: 'dec-shadow',
+        position: { x: 570, y: 440 },
+        width: 100,
+        height: 60,
+        atoms: [
+          { capability: 'background', color: [180, 180, 255] },
+          { capability: 'shadow', x: 6, y: 6, blur: 16, color: [0, 0, 0, 0.25] },
+          { capability: 'text', position: { x: 15, y: 35 }, text: '阴影效果', size: 12, color: [255, 255, 255] }
+        ]
+      },
+      {
+        id: 'dec-radius-sync',
+        position: { x: 690, y: 440 },
+        width: 100,
+        height: 60,
+        atoms: [
+          { capability: 'background', color: [150, 255, 150], radius: 20 },
+          { capability: 'border', width: 2, color: [100, 200, 100] },
+          { capability: 'text', position: { x: 10, y: 35 }, text: '圆角同步', size: 12, color: [255, 255, 255] }
         ]
       }
     ];
@@ -113,9 +404,9 @@
     const app = document.getElementById('app');
     applyStyles(app, {
       position: 'relative',
-      width: '550px',
-      height: '400px',
-      margin: '0',
+      width: '800px',
+      height: '1750px',
+      margin: '0 auto',
       left: '0',
       top: '0'
     });
@@ -128,7 +419,8 @@
       app.appendChild(beaker.getElement());
     });
 
-    console.log('📐 AtomEngine Demo 已加载');
+    console.log('🎯 AtomEngine 完整测试 Demo 已加载');
+    console.log('共计分子:', molecules.length);
   </script>
 </body>
 </html>

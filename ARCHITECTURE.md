@@ -407,6 +407,7 @@ decompose(
 | color | [r,g,b] | ✅ | 阴影颜色 |
 | shadowWidth | number | ❌ | 容器宽度，默认 100% |
 | shadowHeight | number | ❌ | 容器高度，默认 100% |
+| radius | number | ❌ | 圆角，自动同步 background/border 的圆角 |
 
 ---
 

@@ -1,6 +1,6 @@
 import type {
   Molecule, ContentAtom, DecorationAtom, AnimationAtom, InputAtom,
-  CollapseAtom, DragAtom
+  DragAtom
 } from './types';
 import { Catalyst } from './Catalyst';
 import { AtomRenderer } from './AtomRenderer';
@@ -9,6 +9,7 @@ export class BeakerManager {
   private element: HTMLElement;
   private molecule: Molecule;
   private triggers: Set<string> = new Set();
+  private clickStates: Record<string, boolean> = {};
   private isDragging: boolean = false;
   private draggingId: string | null = null;
   private dragOffset: { x: number; y: number } = { x: 0, y: 0 };
@@ -149,16 +150,23 @@ export class BeakerManager {
   private renderDecorationAtoms(atoms: DecorationAtom[]): void {
     const backgroundAtom = atoms.find(a => a.capability === 'background') as any;
     const borderAtom = atoms.find(a => a.capability === 'border') as any;
+    const shadowAtom = atoms.find(a => a.capability === 'shadow') as any;
 
-    if (backgroundAtom && borderAtom) {
-      if (backgroundAtom.radius !== undefined && borderAtom.radius === undefined) {
-        borderAtom.radius = backgroundAtom.radius;
-      } else if (backgroundAtom.radius === undefined && borderAtom.radius !== undefined) {
-        backgroundAtom.radius = borderAtom.radius;
-      } else if (backgroundAtom.radius === undefined && borderAtom.radius === undefined) {
-        const defaultRadius = 0;
-        backgroundAtom.radius = defaultRadius;
-        borderAtom.radius = defaultRadius;
+    let radius = 0;
+    if (backgroundAtom?.radius !== undefined && borderAtom?.radius === undefined) {
+      borderAtom.radius = backgroundAtom.radius;
+    } else if (backgroundAtom?.radius === undefined && borderAtom?.radius !== undefined) {
+      backgroundAtom.radius = borderAtom.radius;
+    } else if (backgroundAtom?.radius !== undefined && borderAtom?.radius !== undefined) {
+    } else {
+      backgroundAtom && (backgroundAtom.radius = 0);
+      borderAtom && (borderAtom.radius = 0);
+    }
+
+    if (backgroundAtom?.radius !== undefined || borderAtom?.radius !== undefined) {
+      radius = backgroundAtom?.radius ?? borderAtom?.radius ?? 0;
+      if (shadowAtom) {
+        shadowAtom.radius = radius;
       }
     }
 
@@ -178,7 +186,7 @@ export class BeakerManager {
   private applyAnimationStyles(atoms: AnimationAtom[]): void {
     const { id } = this.molecule;
     const isHovered = this.triggers.has(`${id}-hover`);
-    const isClicked = this.triggers.has(`${id}-click`);
+    const isClicked = this.clickStates[id] === true;
     const isCurrentlyDragging = this.isDragging && this.draggingId === id;
 
     let scale = 1;
@@ -207,6 +215,9 @@ export class BeakerManager {
           } else if (atom.trigger === 'click' && isClicked) {
             scale = atom.value;
             hasScale = true;
+          } else if (atom.trigger === 'click' && !isClicked) {
+            scale = 1;
+            hasScale = true;
           } else if (atom.trigger === 'drag' && isCurrentlyDragging) {
             scale = atom.value;
             hasScale = true;
@@ -222,6 +233,9 @@ export class BeakerManager {
           } else if (atom.trigger === 'click' && isClicked) {
             opacity = atom.value;
             hasOpacity = true;
+          } else if (atom.trigger === 'click' && !isClicked) {
+            opacity = 1;
+            hasOpacity = true;
           } else if (atom.trigger === 'drag' && isCurrentlyDragging) {
             opacity = atom.value;
             hasOpacity = true;
@@ -236,6 +250,9 @@ export class BeakerManager {
             hasRotate = true;
           } else if (atom.trigger === 'click' && isClicked) {
             rotate = atom.value;
+            hasRotate = true;
+          } else if (atom.trigger === 'click' && !isClicked) {
+            rotate = 0;
             hasRotate = true;
           }
           break;
@@ -253,6 +270,9 @@ export class BeakerManager {
           } else if (atom.trigger === 'click' && isClicked) {
             height = `${atom.value}px`;
             hasHeight = true;
+          } else if (atom.trigger === 'click' && !isClicked && atom.collapsedValue !== undefined) {
+            height = `${atom.collapsedValue}px`;
+            hasHeight = true;
           }
           break;
         case 'width':
@@ -261,6 +281,9 @@ export class BeakerManager {
             hasWidth = true;
           } else if (atom.trigger === 'click' && isClicked) {
             width = `${atom.value}px`;
+            hasWidth = true;
+          } else if (atom.trigger === 'click' && !isClicked && (atom as any).collapsedValue !== undefined) {
+            width = `${(atom as any).collapsedValue}px`;
             hasWidth = true;
           }
           break;
@@ -303,14 +326,19 @@ export class BeakerManager {
     const { id } = this.molecule;
     const dragAtom = inputAtoms.find(a => a.capability === 'drag') as DragAtom | undefined;
     const hasDrag = dragAtom !== undefined;
-    const hasClick = inputAtoms.some(a => a.capability === 'click');
+    const hasClickTrigger = animationAtoms.some(a =>
+      (a.capability === 'scale' || a.capability === 'rotate' ||
+        a.capability === 'height' || a.capability === 'width') &&
+      (a as any).trigger === 'click'
+    );
+    const hasClickInput = inputAtoms.some(a => a.capability === 'click');
+    const hasClick = hasClickTrigger || hasClickInput;
     const hasHoverTrigger = animationAtoms.some(a =>
       (a.capability === 'scale' || a.capability === 'opacity' ||
         a.capability === 'rotate' || a.capability === 'height' ||
         a.capability === 'width') &&
       (a as any).trigger === 'hover'
     );
-    const collapseAtoms = animationAtoms.filter(a => a.capability === 'collapse') as CollapseAtom[];
 
     if (hasHoverTrigger) {
       this.element.addEventListener('mouseenter', () => this.trigger(`${id}-hover`));
@@ -320,12 +348,7 @@ export class BeakerManager {
     if (hasClick) {
       this.element.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.trigger(`${id}-click`);
-        setTimeout(() => this.untrigger(`${id}-click`), 200);
-
-        collapseAtoms.forEach(atom => {
-          this.collapseStates[atom.group] = !this.collapseStates[atom.group];
-        });
+        this.clickStates[id] = !this.clickStates[id];
         this.updateAnimation();
       });
     }
