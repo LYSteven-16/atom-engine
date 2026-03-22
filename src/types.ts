@@ -6,6 +6,7 @@ export interface Position {
 
 export interface BaseAtom {
   position?: Position;
+  duration?: number;
 }
 
 export interface TextAtom extends BaseAtom {
@@ -103,6 +104,7 @@ export interface TranslateAtom extends BaseAtom {
 
 export interface DragAtom extends BaseAtom {
   capability: 'drag';
+  spring?: boolean;
 }
 
 export interface ResizeAtom extends BaseAtom {

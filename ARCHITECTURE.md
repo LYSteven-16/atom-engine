@@ -249,6 +249,15 @@ decompose(
 ): { renderable: ContentAtom[]; others: Atom[] }
 ```
 
+### BaseAtom 通用属性
+
+所有原子都继承自 BaseAtom：
+
+| 属性 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| position | {x, y, z?} | ❌ | 位置 |
+| duration | number | ❌ | 动画时长（秒），默认 0.15 |
+
 ### 分类规则
 
 - **ContentAtom**: text, image, video, audio, code, icon
@@ -472,6 +481,7 @@ decompose(
 |------|------|------|------|
 | capability | 'drag' | ✅ | 原子类型 |
 | position | {x, y, z?} | ❌ | 位置，默认 {0,0} |
+| spring | boolean | ❌ | 拖拽结束后是否回弹，默认 true（回弹）；设为 false 时，拖拽位置会累积，不会跳回原位 |
 
 #### resize
 | 属性 | 类型 | 必需 | 说明 |

@@ -41,8 +41,11 @@
           { capability: 'background', color: [255, 100, 100] },
           { capability: 'border', width: 2, color: [200, 50, 50], radius: 8 },
           { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 A', size: 18, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [255, 220, 220] }
+          { capability: 'text', position: { x: 15, y: 20 }, text: '悬停缩放', size: 16, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 45 }, text: 'hover scale+opacity', size: 11, color: [255, 220, 220] },
+          { capability: 'scale', value: 1.1, trigger: 'hover', duration: 0.3 },
+          { capability: 'opacity', value: 0.8, trigger: 'hover' },
+          { capability: 'drag' }
         ]
       },
       {
@@ -54,8 +57,10 @@
           { capability: 'background', color: [100, 150, 255] },
           { capability: 'border', width: 2, color: [50, 100, 200], radius: 8 },
           { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 B', size: 18, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [200, 220, 255] }
+          { capability: 'text', position: { x: 15, y: 20 }, text: '悬停旋转', size: 16, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 45 }, text: 'hover rotate', size: 11, color: [200, 220, 255] },
+          { capability: 'rotate', value: 15, trigger: 'hover' },
+          { capability: 'drag' }
         ]
       },
       {
@@ -67,8 +72,10 @@
           { capability: 'background', color: [100, 200, 100] },
           { capability: 'border', width: 2, color: [50, 150, 50], radius: 8 },
           { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 C', size: 18, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [200, 255, 200] }
+          { capability: 'text', position: { x: 15, y: 20 }, text: '点击展开', size: 16, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 45 }, text: 'click expand', size: 11, color: [200, 255, 200] },
+          { capability: 'height', value: 160, trigger: 'click', collapsedValue: 80 },
+          { capability: 'drag' }
         ]
       },
       {
@@ -80,8 +87,10 @@
           { capability: 'background', color: [255, 180, 100] },
           { capability: 'border', width: 2, color: [200, 150, 50], radius: 8 },
           { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 D', size: 18, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [255, 230, 200] }
+          { capability: 'text', position: { x: 15, y: 20 }, text: '拖拽移动', size: 16, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 45 }, text: 'drag me!', size: 11, color: [255, 230, 200] },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', spring: false }
         ]
       },
       {
@@ -93,8 +102,10 @@
           { capability: 'background', color: [180, 100, 255] },
           { capability: 'border', width: 2, color: [150, 50, 200], radius: 8 },
           { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
-          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 E', size: 18, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [230, 200, 255] }
+          { capability: 'text', position: { x: 15, y: 20 }, text: '点击缩放', size: 16, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 45 }, text: 'click scale', size: 11, color: [230, 200, 255] },
+          { capability: 'scale', value: 1.2, trigger: 'click' },
+          { capability: 'drag' }
         ]
       }
     ];

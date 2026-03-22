@@ -1,6 +1,6 @@
 import type {
   Molecule, ContentAtom, DecorationAtom, AnimationAtom, InputAtom,
-  CollapseAtom
+  CollapseAtom, DragAtom
 } from './types';
 import { Catalyst } from './Catalyst';
 import { AtomRenderer } from './AtomRenderer';
@@ -12,6 +12,7 @@ export class BeakerManager {
   private isDragging: boolean = false;
   private draggingId: string | null = null;
   private dragOffset: { x: number; y: number } = { x: 0, y: 0 };
+  private totalDragOffset: { x: number; y: number } = { x: 0, y: 0 };
   private collapseStates: Record<string, boolean> = {};
   private atomRenderer: AtomRenderer;
 
@@ -39,7 +40,6 @@ export class BeakerManager {
       this.element.style.top = `${position.y}px`;
     }
     this.element.style.overflow = 'visible';
-    this.element.style.transition = 'width 0.3s ease, height 0.3s ease, transform 0.2s ease, opacity 0.3s ease';
     this.element.style.cursor = 'default';
   }
 
@@ -62,6 +62,10 @@ export class BeakerManager {
       a.capability === 'drag' || a.capability === 'resize' ||
       a.capability === 'scroll' || a.capability === 'click'
     ) as InputAtom[];
+
+    const userDuration = animationAtoms.find(a => a.duration !== undefined)?.duration;
+    const duration = userDuration !== undefined ? userDuration : 0.15;
+    this.element.style.transition = `width ${duration}s ease, height ${duration}s ease, transform ${duration}s ease, opacity ${duration}s ease`;
 
     const contentAtoms = renderable;
 
@@ -197,6 +201,9 @@ export class BeakerManager {
           if (atom.trigger === 'hover' && isHovered) {
             scale = atom.value;
             hasScale = true;
+          } else if (atom.trigger === 'hover' && !isHovered) {
+            scale = 1;
+            hasScale = true;
           } else if (atom.trigger === 'click' && isClicked) {
             scale = atom.value;
             hasScale = true;
@@ -208,6 +215,9 @@ export class BeakerManager {
         case 'opacity':
           if (atom.trigger === 'hover' && isHovered) {
             opacity = atom.value;
+            hasOpacity = true;
+          } else if (atom.trigger === 'hover' && !isHovered) {
+            opacity = 1;
             hasOpacity = true;
           } else if (atom.trigger === 'click' && isClicked) {
             opacity = atom.value;
@@ -221,6 +231,9 @@ export class BeakerManager {
           if (atom.trigger === 'hover' && isHovered) {
             rotate = atom.value;
             hasRotate = true;
+          } else if (atom.trigger === 'hover' && !isHovered) {
+            rotate = 0;
+            hasRotate = true;
           } else if (atom.trigger === 'click' && isClicked) {
             rotate = atom.value;
             hasRotate = true;
@@ -228,8 +241,8 @@ export class BeakerManager {
           break;
         case 'translate':
           if (isCurrentlyDragging) {
-            translateX = atom.x + this.dragOffset.x;
-            translateY = atom.y + this.dragOffset.y;
+            translateX = this.dragOffset.x;
+            translateY = this.dragOffset.y;
             hasTranslate = true;
           }
           break;
@@ -288,7 +301,8 @@ export class BeakerManager {
 
   private setupInputHandlers(inputAtoms: InputAtom[], animationAtoms: AnimationAtom[]): void {
     const { id } = this.molecule;
-    const hasDrag = inputAtoms.some(a => a.capability === 'drag');
+    const dragAtom = inputAtoms.find(a => a.capability === 'drag') as DragAtom | undefined;
+    const hasDrag = dragAtom !== undefined;
     const hasClick = inputAtoms.some(a => a.capability === 'click');
     const hasHoverTrigger = animationAtoms.some(a =>
       (a.capability === 'scale' || a.capability === 'opacity' ||
@@ -318,7 +332,7 @@ export class BeakerManager {
 
     if (hasDrag) {
       this.element.style.cursor = 'move';
-      this.element.addEventListener('mousedown', (e) => this.startDrag(e, id));
+      this.element.addEventListener('mousedown', (e) => this.startDrag(e, id, dragAtom!.spring));
     }
   }
 
@@ -349,14 +363,14 @@ export class BeakerManager {
     this.applyAnimationStyles(animationAtoms);
   }
 
-  private startDrag(e: MouseEvent, id: string): void {
+  private startDrag(e: MouseEvent, id: string, spring?: boolean): void {
     e.preventDefault();
     this.isDragging = true;
     this.draggingId = id;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      const dx = moveEvent.clientX - e.clientX;
-      const dy = moveEvent.clientY - e.clientY;
+      const dx = moveEvent.clientX - e.clientX + this.totalDragOffset.x;
+      const dy = moveEvent.clientY - e.clientY + this.totalDragOffset.y;
       this.dragOffset = { x: dx, y: dy };
       this.updateAnimation();
     };
@@ -366,7 +380,12 @@ export class BeakerManager {
       document.removeEventListener('mouseup', handleMouseUp);
       this.isDragging = false;
       this.draggingId = null;
-      this.dragOffset = { x: 0, y: 0 };
+      if (spring !== false) {
+        this.dragOffset = { x: 0, y: 0 };
+        this.totalDragOffset = { x: 0, y: 0 };
+      } else {
+        this.totalDragOffset = { ...this.dragOffset };
+      }
       this.updateAnimation();
     };
 
