@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>调试页面</title>
+</head>
+<body>
+  <h1 id="main-title">调试页面</h1>
+  
+  <div id="debug"></div>
+  
+  <h2 id="expect-title">期望的结果:</h2>
+  <p id="expect-text">应该显示一个粉色背景的卡片，包含白色文字 "Hello World!"</p>
+  
+  <h2 id="actual-title">实际渲染结果:</h2>
+  <div id="test-container"></div>
+  
+  <script type="module">
+    import { AtomEngine } from '/dist/index.mjs';
+    
+    const debugEl = document.getElementById('debug');
+    const container = document.getElementById('test-container');
+    
+    const body = document.body;
+    body.style.cssText = 'font-family: monospace; padding: 20px; background: #f0f0f0;';
+    
+    const mainTitle = document.getElementById('main-title');
+    mainTitle.style.cssText = 'margin: 0 0 20px; color: #333;';
+    
+    debugEl.style.cssText = 'background: #333; color: #0f0; padding: 10px; border-radius: 4px; margin-bottom: 20px; white-space: pre-wrap; max-height: 300px; overflow-y: auto;';
+    
+    const expectTitle = document.getElementById('expect-title');
+    expectTitle.style.cssText = 'margin: 20px 0 10px;';
+    
+    const expectText = document.getElementById('expect-text');
+    expectText.style.cssText = 'margin: 0 0 10px; color: #666;';
+    
+    const actualTitle = document.getElementById('actual-title');
+    actualTitle.style.cssText = 'margin: 20px 0 10px;';
+    
+    container.style.cssText = 'border: 3px solid red; min-height: 100px; padding: 10px; background: white;';
+    
+    let logs = [];
+    function log(msg) {
+      logs.push(msg);
+      debugEl.textContent = logs.join('\n');
+      console.log(msg);
+    }
+    
+    log('1. 开始测试');
+    
+    try {
+      log('2. 创建 AtomEngine，传入容器');
+      const engine = new AtomEngine(container);
+      
+      log('3. 调用 render');
+      const beaker = engine.render({
+        id: 'test-card',
+        position: { x: 0, y: 0 },
+        atoms: [
+          { capability: 'background', color: [255, 192, 203] },
+          { capability: 'text', position: { x: 10, y: 10 }, text: 'Hello World!', size: 24, color: [255, 255, 255] }
+        ]
+      });
+      
+      log('4. 获取元素');
+      const element = beaker.getElement();
+      log('   element tagName: ' + element.tagName);
+      log('   element id: ' + element.id);
+      log('   element innerHTML: ' + element.innerHTML.substring(0, 300));
+      
+      log('5. 检查 container.children');
+      log('   children.length: ' + container.children.length);
+      
+      log('6. 测试完成');
+    } catch (e) {
+      log('错误: ' + e.message);
+      log('堆栈: ' + e.stack);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>最小测试</title>
+</head>
+<body>
+  <div id="container" style="border: 2px solid red; width: 500px; height: 300px; position: relative; background: #fff;"></div>
+  <div id="log" style="margin-top: 20px; padding: 10px; background: #f0f0f0; font-family: monospace; white-space: pre-wrap;"></div>
+  
+  <script type="module">
+    import { AtomEngine } from '/dist/index.mjs';
+    
+    const log = document.getElementById('log');
+    const container = document.getElementById('container');
+    
+    function debug(msg) {
+      log.textContent += msg + '\n';
+      console.log(msg);
+    }
+    
+    debug('1. 创建 AtomEngine');
+    const engine = new AtomEngine(container);
+    
+    debug('2. 渲染简单分子');
+    const beaker = engine.render({
+      id: 'simple-card',
+      position: { x: 0, y: 0 },
+      atoms: [
+        { capability: 'background', color: [255, 192, 203] },
+        { capability: 'text', position: { x: 10, y: 10 }, text: 'Hello World!', size: 24, color: [255, 255, 255] }
+      ]
+    });
+    
+    debug('3. 检查容器内容');
+    debug('   container.children.length: ' + container.children.length);
+    
+    if (container.children.length > 0) {
+      const child = container.children[0];
+      debug('4. 检查子元素');
+      debug('   tagName: ' + child.tagName);
+      debug('   id: ' + child.id);
+      debug('   className: ' + child.className);
+      debug('   innerHTML: ' + child.innerHTML.substring(0, 200));
+      debug('   style.cssText: ' + child.style.cssText.substring(0, 300));
+      
+      if (child.children.length > 0) {
+        const grandchild = child.children[0];
+        debug('5. 检查孙子元素');
+        debug('   tagName: ' + grandchild.tagName);
+        debug('   innerHTML: ' + grandchild.innerHTML);
+        debug('   style.cssText: ' + grandchild.style.cssText.substring(0, 200));
+      }
+    }
+    
+    debug('6. 完成');
+  </script>
+</body>
+</html>

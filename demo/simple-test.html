@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>简单渲染测试</title>
+</head>
+<body>
+  <div id="page" style="width: 100vw; height: 100vh; background: #f0f0f0; padding: 20px;">
+    <h1 style="margin: 0 0 20px; color: #333;">渲染测试</h1>
+    <div id="container" style="border: 2px dashed blue; width: 600px; height: 400px; position: relative; background: white;"></div>
+  </div>
+  
+  <script type="module">
+    import { AtomEngine } from '/dist/index.mjs';
+    
+    const container = document.getElementById('container');
+    
+    console.log('1. Container found:', container);
+    console.log('2. Container size:', container.offsetWidth, 'x', container.offsetHeight);
+    
+    const engine = new AtomEngine(container);
+    console.log('3. Engine created');
+    
+    const beaker = engine.render({
+      id: 'test-card',
+      position: { x: 0, y: 0 },
+      atoms: [
+        { capability: 'background', color: [255, 192, 203] },
+        { capability: 'text', position: { x: 10, y: 10 }, text: 'Hello World!', size: 24, color: [255, 255, 255] },
+        { capability: 'text', position: { x: 10, y: 50 }, text: 'This is a test', size: 16, color: [50, 50, 50] }
+      ]
+    });
+    
+    console.log('4. Molecule rendered');
+    console.log('5. Beaker element:', beaker.getElement());
+    console.log('6. Container children:', container.children.length);
+    
+    if (container.children.length > 0) {
+      const child = container.children[0];
+      console.log('7. Child tag:', child.tagName);
+      console.log('8. Child id:', child.id);
+      console.log('9. Child style:', child.style.cssText);
+      console.log('10. Child innerHTML:', child.innerHTML);
+    }
+    
+    // Test hover interaction
+    console.log('11. Testing hover...');
+    setTimeout(() => {
+      const child = container.children[0];
+      if (child) {
+        console.log('12. Dispatching mouseenter');
+        child.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
-  "name": "@component-chemistry/atom-renderer",
-  "version": "2.0.0",
-  "description": "A recursive component renderer based on level-based decomposition (atom/molecule/substance)",
+  "name": "@component-chemistry/atom-engine",
+  "version": "3.0.0",
+  "description": "A pure JavaScript recursive component renderer based on level-based decomposition (atom/molecule/substance)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -17,25 +17,20 @@
     "src"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --external react",
+    "build": "tsup src/index.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
-    "react",
     "renderer",
     "recursive",
     "atomic-design",
-    "editor"
+    "editor",
+    "dom"
   ],
   "author": "",
   "license": "MIT",
-  "peerDependencies": {
-    "react": ">=17.0.0",
-    "react-dom": ">=17.0.0"
-  },
   "devDependencies": {
-    "@types/react": "^18.2.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0"
   }

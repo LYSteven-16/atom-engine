@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AtomEngine Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script type="module">
+    import { BeakerManager, SubstanceManager } from '../dist/index.mjs?v=9';
+
+    function applyStyles(element, styles) {
+      Object.assign(element.style, styles);
+    }
+
+    function rgb(r, g, b) {
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    applyStyles(document.body, {
+      margin: '0',
+      padding: '0',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif',
+      backgroundColor: rgb(30, 30, 30),
+      color: rgb(255, 255, 255),
+      minHeight: '100vh'
+    });
+
+    const molecules = [
+      {
+        id: 'mol-A',
+        position: { x: 0, y: 0 },
+        width: 160,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [255, 100, 100] },
+          { capability: 'border', width: 2, color: [200, 50, 50], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 A', size: 18, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [255, 220, 220] }
+        ]
+      },
+      {
+        id: 'mol-B',
+        position: { x: 220, y: 0 },
+        width: 160,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 150, 255] },
+          { capability: 'border', width: 2, color: [50, 100, 200], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 B', size: 18, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [200, 220, 255] }
+        ]
+      },
+      {
+        id: 'mol-C',
+        position: { x: 0, y: 170 },
+        width: 160,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 200, 100] },
+          { capability: 'border', width: 2, color: [50, 150, 50], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 C', size: 18, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [200, 255, 200] }
+        ]
+      },
+      {
+        id: 'mol-D',
+        position: { x: 220, y: 170 },
+        width: 160,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [255, 180, 100] },
+          { capability: 'border', width: 2, color: [200, 150, 50], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 D', size: 18, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [255, 230, 200] }
+        ]
+      },
+      {
+        id: 'mol-E',
+        position: { x: 440, y: 0 },
+        width: 160,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [180, 100, 255] },
+          { capability: 'border', width: 2, color: [150, 50, 200], radius: 8 },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0] },
+          { capability: 'text', position: { x: 15, y: 20 }, text: '分子 E', size: 18, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 50 }, text: 'width: 160, height: 80', size: 12, color: [230, 200, 255] }
+        ]
+      }
+    ];
+
+    const app = document.getElementById('app');
+    applyStyles(app, {
+      position: 'relative',
+      width: '550px',
+      height: '400px',
+      margin: '0',
+      left: '0',
+      top: '0'
+    });
+
+    const calculatedMolecules = SubstanceManager.process(molecules);
+
+    calculatedMolecules.forEach(mol => {
+      console.log(`Molecule ${mol.id}:`, mol.position);
+      const beaker = new BeakerManager(mol);
+      app.appendChild(beaker.getElement());
+    });
+
+    console.log('📐 AtomEngine Demo 已加载');
+  </script>
+</body>
+</html>
