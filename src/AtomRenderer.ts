@@ -3,7 +3,7 @@ import type {
   BackgroundAtom, BorderAtom, ShadowAtom, ResizeHandleAtom, CSSProperties
 } from './types';
 
-export interface RenderResult {
+interface RenderResult {
   id: string;
   success: boolean;
   element?: HTMLElement;
@@ -548,8 +548,9 @@ export class AtomRenderer {
       zIndex: atom.position?.z ?? 0,
       width: hasCustomSize ? `${atom.shadowWidth ?? '100%'}` : '100%',
       height: hasCustomSize ? `${atom.shadowHeight ?? '100%'}` : '100%',
-      boxShadow: `${atom.x}px ${atom.y}px ${atom.blur}px rgba(${atom.color[0]}, ${atom.color[1]}, ${atom.color[2]}, 0.25)`,
       borderRadius: atom.radius !== undefined ? `${atom.radius}px` : '0px',
+      boxShadow: `${atom.x}px ${atom.y}px ${atom.blur}px rgba(${atom.color[0]}, ${atom.color[1]}, ${atom.color[2]}, 0.25)`,
+      background: 'transparent',
     };
     
     this.applyStyles(el, styles);

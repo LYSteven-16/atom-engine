@@ -17,8 +17,8 @@
     "src"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsup src/SubstanceManager.ts --format cjs,esm --dts",
+    "dev": "tsup src/SubstanceManager.ts --format cjs,esm --dts --watch",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [

@@ -1,8 +1,14 @@
-import { Molecule } from './types';
+import type { Molecule } from './types';
+import { BeakerManager } from './BeakerManager';
 
 export class SubstanceManager {
-  static process(molecules: Molecule[], cellWidth: number = 100, cellHeight: number = 100): Molecule[] {
-    const hasVerticalOrHorizontal = molecules.some(m => 
+  constructor(molecules: Molecule[]) {
+    const processedMolecules = this.process(molecules);
+    new BeakerManager(processedMolecules);
+  }
+
+  private process(molecules: Molecule[], cellWidth: number = 100, cellHeight: number = 100): Molecule[] {
+    const hasVerticalOrHorizontal = molecules.some(m =>
       m.vertical !== undefined || m.horizontal !== undefined
     );
 
@@ -34,9 +40,9 @@ export class SubstanceManager {
 
       if (hasVertical && !hasHorizontal) {
         y = (currentMolecule.vertical! - 1) * (cellHeight + (currentMolecule.verticalGap ?? defaultGap));
-        
-        const sameRowMolecules = moleculesWithDefaults.filter(m => 
-          m.vertical === currentMolecule.vertical && 
+
+        const sameRowMolecules = moleculesWithDefaults.filter(m =>
+          m.vertical === currentMolecule.vertical &&
           m.id !== currentMolecule.id
         );
 
