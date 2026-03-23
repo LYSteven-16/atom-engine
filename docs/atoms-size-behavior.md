@@ -2,27 +2,31 @@
 
 ## 概述
 
-`background`、`border`、`shadow` 这三个原子能力的尺寸是**可选关键字**。
+`background`、`border`、`shadow` 这三个装饰原子的尺寸和位置是**独立可选的**，可以单独设置其中一个，也可以同时设置。
 
-## 尺寸规则
+## 尺寸与位置逻辑
 
-### 1. 如果传入了 width/height（或对应字段）
+### 尺寸字段
 
-- 必须同时传入 `position`（包含 x, y, z）
-- 使用传入的具体像素值
+| 原子类型 | 尺寸字段 | 默认值 |
+|---------|---------|--------|
+| background | `width`, `height` | 100%（填满父容器） |
+| border | `borderWidth`, `borderHeight` | 100%（填满父容器） |
+| shadow | `shadowWidth`, `shadowHeight` | 100%（填满父容器） |
 
-### 2. 如果什么都没传
+### 位置字段
 
-- 默认填满父容器（100% width, 100% height）
-- `position` 也可选
+| 原子类型 | 位置字段 |
+|---------|---------|
+| background | `position.x`, `position.y`, `position.z` |
+| border | `position.x`, `position.y`, `position.z` |
+| shadow | `position.x`, `position.y`, `position.z` |
 
-## 各原子字段对照
+### 独立规则
 
-| 原子类型 | 尺寸字段 | 示例 |
-|---------|---------|------|
-| background | `width`, `height` | `{ width: 200, height: 100 }` |
-| border | `borderWidth`, `borderHeight` | `{ borderWidth: 200, borderHeight: 100 }` |
-| shadow | `shadowWidth`, `shadowHeight` | `{ shadowWidth: 200, shadowHeight: 100 }` |
+- **尺寸**：设置了 `width`/`height`（或对应字段）就使用该值，否则默认 100%
+- **位置**：设置了 `position.x` 或 `position.y` 就使用该值，否则默认 `0, 0`
+- 尺寸和位置**互不影响**，可以只设置其中一个
 
 ## 示例
 
@@ -31,24 +35,60 @@
 { capability: 'background', color: [255, 200, 200] }
 ```
 
-### 指定尺寸和位置
+### 只设置尺寸（position 默认为 0, 0）
 ```typescript
-{ 
-  capability: 'background', 
+{
+  capability: 'background',
   color: [255, 200, 200],
   width: 200,
-  height: 100,
+  height: 100
+}
+```
+
+### 只设置位置（尺寸默认为 100%）
+```typescript
+{
+  capability: 'background',
+  color: [255, 200, 200],
   position: { x: 10, y: 20 }
 }
 ```
 
-### 只有尺寸（默认 position 为 0,0）
+### 同时设置尺寸和位置
 ```typescript
-{ 
+{
+  capability: 'background',
+  color: [255, 200, 200],
+  width: 200,
+  height: 100,
+  position: { x: 10, y: 20, z: 1 }
+}
+```
+
+### border 原子
+```typescript
+{
   capability: 'border',
   width: 2,
   color: [100, 100, 100],
   borderWidth: 300,
-  borderHeight: 150
+  borderHeight: 150,
+  position: { x: 0, y: 0 },
+  radius: 8
+}
+```
+
+### shadow 原子
+```typescript
+{
+  capability: 'shadow',
+  x: 3,
+  y: 3,
+  blur: 10,
+  color: [0, 0, 0],
+  shadowWidth: 200,
+  shadowHeight: 100,
+  position: { x: 5, y: 5 },
+  radius: 4
 }
 ```
