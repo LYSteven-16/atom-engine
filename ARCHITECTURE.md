@@ -370,6 +370,18 @@ interface Molecule {
 
 原子是渲染的最小单元。原子分为四类：内容原子、装饰原子、动画原子、交互原子。
 
+### 属性可选性
+
+原子的大部分属性都是**可选的**，使用 `?` 标记。未设置的属性会使用默认值或自动计算。
+
+| 属性 | 默认值 |
+|------|--------|
+| `position` | `{ x: 0, y: 0 }` |
+| `width`/`height` 等尺寸 | 父容器的 100% |
+| `radius` | `0`（无圆角） |
+| `duration` | `0`（无动画过渡） |
+| `z` | `0` |
+
 ```typescript
 type Atom = TextAtom | ImageAtom | VideoAtom | AudioAtom | CodeAtom | IconAtom | CanvasAtom |
   BackgroundAtom | BorderAtom | ShadowAtom |
