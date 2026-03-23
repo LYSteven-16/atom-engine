@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AtomEngine - 原子能力展示</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { position: relative; margin: 0; padding: 20px; background: rgb(240, 240, 245); min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import { SubstanceManager } from '../dist/SubstanceManager.mjs';
+
+    new SubstanceManager([
+      // ========================================================================
+      // 内容原子 (Content Atoms)
+      // ========================================================================
+
+      // 1. text - 文本显示
+      // 使用原子: text
+      // 预期效果: 显示纯文本,支持字号和颜色设置
+      {
+        id: 'atom-text',
+        position: { x: 0, y: 0 },
+        width: 200,
+        height: 50,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 30 }, text: 'Text: Hello!', size: 18, color: [50, 100, 200] },
+          { capability: 'border', width: 1, color: [200, 200, 200], radius: 8 },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.1] }
+        ]
+      },
+
+      // 2. image - 图片显示
+      // 使用原子: image
+      // 预期效果: 显示图片,支持宽高和替代文本
+      {
+        id: 'atom-image',
+        position: { x: 220, y: 0 },
+        width: 200,
+        height: 50,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'image', position: { x: 10, y: 10 }, src: 'https://via.placeholder.com/100x30/6699ff/ffffff?text=Image', width: 180, height: 30, alt: '示例图片' },
+          { capability: 'border', width: 1, color: [200, 200, 200], radius: 8 },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.1] }
+        ]
+      },
+
+      // 3. video - 视频播放
+      // 使用原子: video
+      // 预期效果: 显示视频播放器,支持 controls
+      {
+        id: 'atom-video',
+        position: { x: 440, y: 0 },
+        width: 200,
+        height: 50,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'video', position: { x: 10, y: 10 }, src: '', width: 180, height: 30 },
+          { capability: 'text', position: { x: 60, y: 22 }, text: 'Video', size: 12, color: [150, 150, 150] },
+          { capability: 'border', width: 1, color: [200, 200, 200], radius: 8 },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.1] }
+        ]
+      },
+
+      // 4. audio - 音频播放
+      // 使用原子: audio
+      // 预期效果: 显示音频播放器
+      {
+        id: 'atom-audio',
+        position: { x: 660, y: 0 },
+        width: 200,
+        height: 50,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'audio', position: { x: 10, y: 15 }, src: '' },
+          { capability: 'text', position: { x: 60, y: 22 }, text: 'Audio', size: 12, color: [150, 150, 150] },
+          { capability: 'border', width: 1, color: [200, 200, 200], radius: 8 },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.1] }
+        ]
+      },
+
+      // 5. code - 代码显示
+      // 使用原子: code
+      // 预期效果: 显示代码块,带等宽字体
+      {
+        id: 'atom-code',
+        position: { x: 880, y: 0 },
+        width: 200,
+        height: 50,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'code', position: { x: 10, y: 10 }, code: 'const x = 10;', language: 'javascript' },
+          { capability: 'text', position: { x: 70, y: 22 }, text: 'Code', size: 12, color: [150, 150, 150] },
+          { capability: 'border', width: 1, color: [200, 200, 200], radius: 8 },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.1] }
+        ]
+      },
+
+      // 6. icon - 图标显示
+      // 使用原子: icon
+      // 预期效果: 显示图标文字,支持大小设置
+      {
+        id: 'atom-icon',
+        position: { x: 0, y: 70 },
+        width: 100,
+        height: 70,
+        atoms: [
+          { capability: 'background', color: [255, 200, 200] },
+          { capability: 'icon', position: { x: 30, y: 10 }, icon: '🎯', size: 30 },
+          { capability: 'text', position: { x: 20, y: 50 }, text: 'Icon', size: 12, color: [80, 80, 80] },
+          { capability: 'border', width: 1, color: [200, 150, 150], radius: 8 },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.1] }
+        ]
+      },
+
+      // 7. canvas - 画布(绘图板)
+      // 使用原子: canvas
+      // 预期效果: 可绘图的画布,支持颜色、线条粗细、橡皮擦、清除功能
+      {
+        id: 'atom-canvas',
+        position: { x: 120, y: 70 },
+        width: 280,
+        height: 180,
+        atoms: [
+          { capability: 'canvas', position: { x: 10, y: 10 }, width: 260, height: 160, strokeColor: [50, 50, 50], strokeWidth: 3, backgroundColor: [250, 250, 250], showToolbar: true, resizable: true, minWidth: 100, minHeight: 60 },
+          { capability: 'border', width: 1, color: [200, 200, 200], radius: 8 },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.1] }
+        ]
+      },
+
+      // ========================================================================
+      // 装饰原子 (Decoration Atoms)
+      // ========================================================================
+
+      // 1. background - 背景色
+      // 使用原子: background
+      // 预期效果: 设置背景颜色,支持圆角
+      {
+        id: 'atom-background',
+        position: { x: 420, y: 70 },
+        width: 150,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 180, 255], radius: 12 },
+          { capability: 'text', position: { x: 35, y: 45 }, text: 'Background', size: 14, color: [255, 255, 255] },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 2. border - 边框
+      // 使用原子: border
+      // 预期效果: 设置边框,支持宽度、颜色、圆角
+      {
+        id: 'atom-border',
+        position: { x: 590, y: 70 },
+        width: 150,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [240, 240, 245] },
+          { capability: 'border', width: 3, color: [255, 100, 100], radius: 12 },
+          { capability: 'text', position: { x: 45, y: 45 }, text: 'Border', size: 14, color: [80, 80, 80] },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.1] }
+        ]
+      },
+
+      // 3. shadow - 阴影
+      // 使用原子: shadow
+      // 预期效果: 设置阴影效果,支持偏移、模糊、颜色
+      {
+        id: 'atom-shadow',
+        position: { x: 760, y: 70 },
+        width: 150,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'text', position: { x: 45, y: 45 }, text: 'Shadow', size: 14, color: [80, 80, 80] },
+          { capability: 'shadow', x: 5, y: 5, blur: 15, color: [0, 0, 0, 0.2] }
+        ]
+      },
+
+      // ========================================================================
+      // 动画原子 (Animation Atoms)
+      // ========================================================================
+
+      // 1. scale - 缩放动画
+      // 使用原子: scale, hover
+      // 预期效果: 悬停时放大到指定倍数
+      {
+        id: 'atom-scale',
+        position: { x: 0, y: 270 },
+        width: 120,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [255, 100, 100] },
+          { capability: 'border', width: 2, color: [200, 50, 50], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 35 }, text: '悬停缩放', size: 12, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 55 }, text: 'scale: 1.2', size: 10, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.2, trigger: 'hover', duration: 0.3 },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 2. opacity - 透明度动画
+      // 使用原子: opacity, hover
+      // 预期效果: 悬停时透明度变为指定值
+      {
+        id: 'atom-opacity',
+        position: { x: 140, y: 270 },
+        width: 120,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 200, 100] },
+          { capability: 'border', width: 2, color: [50, 150, 50], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 35 }, text: '悬停透明', size: 12, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 55 }, text: 'opacity: 0.4', size: 10, color: [255, 255, 255] },
+          { capability: 'opacity', value: 0.4, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 3. rotate - 旋转动画
+      // 使用原子: rotate, hover
+      // 预期效果: 悬停时旋转指定角度
+      {
+        id: 'atom-rotate',
+        position: { x: 280, y: 270 },
+        width: 120,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 150, 255] },
+          { capability: 'border', width: 2, color: [50, 100, 200], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 35 }, text: '悬停旋转', size: 12, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 55 }, text: 'rotate: 15°', size: 10, color: [255, 255, 255] },
+          { capability: 'rotate', value: 15, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 4. translate - 位移动画
+      // 使用原子: translate, drag
+      // 预期效果: 拖拽时移动到指定位置
+      {
+        id: 'atom-translate',
+        position: { x: 420, y: 270 },
+        width: 150,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [255, 180, 100] },
+          { capability: 'border', width: 2, color: [200, 150, 50], radius: 10 },
+          { capability: 'text', position: { x: 15, y: 30 }, text: '拖拽移动', size: 12, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 48 }, text: 'translate+drag', size: 10, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 64 }, text: '(不回弹)', size: 9, color: [255, 255, 255] },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', keepOnRelease: false },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 5. height - 高度动画
+      // 使用原子: height, click
+      // 预期效果: 点击时高度从 collapsedValue 展开到 value,再次点击收起
+      {
+        id: 'atom-height',
+        position: { x: 590, y: 270 },
+        width: 150,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [180, 100, 255] },
+          { capability: 'border', width: 2, color: [150, 50, 200], radius: 10 },
+          { capability: 'text', position: { x: 15, y: 30 }, text: '点击展开/收起', size: 12, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 48 }, text: 'height: 150', size: 10, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 15, y: 64 }, text: 'collapsed: 80', size: 9, color: [255, 255, 255] },
+          { capability: 'height', value: 150, trigger: 'click', collapsedValue: 80, duration: 0.5 },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 6. width - 宽度动画
+      // 使用原子: width, click
+      // 预期效果: 点击时宽度从 collapsedValue 展开到 value
+      {
+        id: 'atom-width',
+        position: { x: 760, y: 270 },
+        width: 150,
+        height: 80,
+        atoms: [
+          { capability: 'background', color: [100, 255, 200] },
+          { capability: 'border', width: 2, color: [50, 200, 150], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 30 }, text: '点击展开宽度', size: 12, color: [80, 80, 80] },
+          { capability: 'text', position: { x: 20, y: 48 }, text: 'width: 250', size: 10, color: [80, 80, 80] },
+          { capability: 'text', position: { x: 20, y: 64 }, text: 'collapsed: 150', size: 9, color: [80, 80, 80] },
+          { capability: 'width', value: 250, trigger: 'click', collapsedValue: 150, duration: 0.5 },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // ========================================================================
+      // 交互原子 (Input Atoms)
+      // ========================================================================
+
+      // 1. drag - 拖拽交互
+      // 使用原子: drag
+      // 预期效果: 可拖拽移动,keepOnRelease 控制是否回弹
+      {
+        id: 'atom-drag-no-return',
+        position: { x: 0, y: 380 },
+        width: 180,
+        height: 70,
+        atoms: [
+          { capability: 'background', color: [100, 180, 255] },
+          { capability: 'border', width: 2, color: [80, 150, 230], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 30 }, text: '拖拽(不回弹)', size: 13, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 50 }, text: 'keepOnRelease: false', size: 10, color: [255, 255, 255] },
+          { capability: 'drag', keepOnRelease: false },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+      {
+        id: 'atom-drag-return',
+        position: { x: 200, y: 380 },
+        width: 180,
+        height: 70,
+        atoms: [
+          { capability: 'background', color: [255, 150, 100] },
+          { capability: 'border', width: 2, color: [230, 120, 70], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 30 }, text: '拖拽(回弹)', size: 13, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 50 }, text: 'keepOnRelease: true', size: 10, color: [255, 255, 255] },
+          { capability: 'drag', keepOnRelease: true },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 2. click - 点击交互
+      // 使用原子: click
+      // 预期效果: 点击触发效果,keepOnRelease 控制是否保持状态
+      {
+        id: 'atom-click-no-keep',
+        position: { x: 400, y: 380 },
+        width: 180,
+        height: 70,
+        atoms: [
+          { capability: 'background', color: [150, 255, 150] },
+          { capability: 'border', width: 2, color: [120, 230, 120], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 30 }, text: '点击(不保持)', size: 13, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 50 }, text: 'keepOnRelease: false', size: 10, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.1, trigger: 'click' },
+          { capability: 'click', keepOnRelease: false },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+      {
+        id: 'atom-click-keep',
+        position: { x: 600, y: 380 },
+        width: 180,
+        height: 70,
+        atoms: [
+          { capability: 'background', color: [255, 200, 100] },
+          { capability: 'border', width: 2, color: [230, 180, 70], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 30 }, text: '点击(保持)', size: 13, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 50 }, text: 'keepOnRelease: true', size: 10, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.1, trigger: 'click' },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 3. hover - 悬停交互
+      // 使用原子: hover
+      // 预期效果: 悬停时触发效果
+      {
+        id: 'atom-hover',
+        position: { x: 800, y: 380 },
+        width: 180,
+        height: 70,
+        atoms: [
+          { capability: 'background', color: [200, 150, 255] },
+          { capability: 'border', width: 2, color: [180, 120, 230], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 30 }, text: '悬停交互', size: 13, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 50 }, text: 'hover 原子', size: 10, color: [255, 255, 255] },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.15] }
+        ]
+      },
+
+      // 4. resize-handle - 调整大小
+      // 使用原子: resize-handle
+      // 预期效果: 支持调整大小,可通过 edge 指定控制手柄位置
+      {
+        id: 'atom-resize',
+        position: { x: 0, y: 480 },
+        width: 220,
+        height: 90,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [200, 200, 200], radius: 10 },
+          { capability: 'text', position: { x: 15, y: 25 }, text: '可调整大小', size: 13, color: [80, 80, 80] },
+          { capability: 'text', position: { x: 15, y: 45 }, text: 'resize-handle: se', size: 10, color: [120, 120, 120] },
+          { capability: 'text', position: { x: 15, y: 65 }, text: '拖拽右下角调整', size: 10, color: [120, 120, 120] },
+          { capability: 'resize-handle', edge: 'se', minWidth: 100, minHeight: 60, handleSize: 20, handleColor: [180, 180, 190] },
+          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0, 0.1] }
+        ]
+      }
+    ]);
+
+    console.log('🎯 AtomEngine - 原子能力展示已加载');
+    console.log('共计 20 个原子能力:');
+    console.log('  - 内容原子(7): text, image, video, audio, code, icon, canvas');
+    console.log('  - 装饰原子(3): background, border, shadow');
+    console.log('  - 动画原子(6): scale, opacity, rotate, translate, height, width');
+    console.log('  - 交互原子(4): drag, click, hover, resize-handle');
+  </script>
+</body>
+</html>

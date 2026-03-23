@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AtomEngine - 复杂复合展示</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { position: relative; margin: 0; padding: 20px; background: rgb(240, 240, 245); min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import { SubstanceManager } from '../dist/SubstanceManager.mjs';
+
+    new SubstanceManager([
+      // ========================================================================
+      // 复杂复合示例 - 多个原子组合,包含多种交互和状态
+      // ========================================================================
+
+      // 1. 黑板风格绘图板
+      // 使用原子: canvas, border, shadow
+      // 预期效果: 可绘图的画布,支持颜色选择、线条粗细、橡皮擦、清除功能
+      {
+        id: 'complex-blackboard',
+        position: { x: 0, y: 0 },
+        width: 500,
+        height: 400,
+        atoms: [
+          { capability: 'canvas', position: { x: 10, y: 10 }, width: 480, height: 350, blackboardStyle: true, strokeColor: [200, 220, 200], strokeWidth: 3, defaultColors: [[200, 220, 200], [255, 255, 255], [255, 220, 100], [255, 150, 150]], defaultWidths: [2, 4, 8], showToolbar: true, resizable: true, minWidth: 200, minHeight: 150 },
+          { capability: 'border', width: 2, color: [100, 80, 60], radius: 12 },
+          { capability: 'shadow', x: 4, y: 4, blur: 15, color: [0, 0, 0, 0.2] }
+        ]
+      },
+
+      // 2. 可编辑资料卡片
+      // 使用原子: background, border, icon, text, scale, hover, drag, translate
+      // 预期效果: 既可编辑又可拖拽
+      {
+        id: 'complex-profile-card',
+        position: { x: 520, y: 0 },
+        width: 350,
+        height: 180,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'icon', position: { x: 20, y: 20 }, icon: '👨‍💻', size: 50 },
+          { capability: 'text', position: { x: 90, y: 35 }, text: '张三', size: 22, color: [40, 40, 40] },
+          { capability: 'text', position: { x: 90, y: 60 }, text: '全栈开发工程师', size: 14, color: [100, 100, 100] },
+          { capability: 'text', position: { x: 20, y: 100 }, text: '📧 zhangsan@example.com', size: 12, color: [120, 120, 120] },
+          { capability: 'text', position: { x: 20, y: 125 }, text: '📱 138-0000-0000', size: 12, color: [120, 120, 120] },
+          { capability: 'text', position: { x: 20, y: 150 }, text: '📍 北京市朝阳区', size: 12, color: [120, 120, 120] },
+          { capability: 'background', color: [66, 133, 244], radius: 20, width: 80, height: 36, position: { x: 250, y: 40 } },
+          { capability: 'text', position: { x: 263, y: 63 }, text: '编辑', size: 13, color: [255, 255, 255] },
+          { capability: 'background', color: [50, 200, 100], radius: 20, width: 80, height: 36, position: { x: 250, y: 90 } },
+          { capability: 'text', position: { x: 263, y: 113 }, text: '保存', size: 13, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.02, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', keepOnRelease: false },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0, 0.12] }
+        ]
+      },
+
+      // 3. 商品卡片
+      // 使用原子: background, border, image, text, icon, scale, hover, shadow
+      // 预期效果: 悬停放大,显示收藏和购物车按钮
+      {
+        id: 'complex-product-card',
+        position: { x: 890, y: 0 },
+        width: 280,
+        height: 320,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'image', position: { x: 10, y: 10 }, src: 'https://via.placeholder.com/260x160/ff9999/ffffff?text=Product', width: 260, height: 160, alt: '商品图片' },
+          { capability: 'icon', position: { x: 230, y: 20 }, icon: '❤️', size: 24 },
+          { capability: 'text', position: { x: 15, y: 185 }, text: '¥299.00', size: 20, color: [255, 80, 80] },
+          { capability: 'text', position: { x: 15, y: 210 }, text: '无线蓝牙耳机 Pro', size: 15, color: [40, 40, 40] },
+          { capability: 'text', position: { x: 15, y: 235 }, text: '高品质降噪耳机', size: 12, color: [120, 120, 120] },
+          { capability: 'text', position: { x: 15, y: 258 }, text: '销量 1.2万 | 好评率 98%', size: 11, color: [150, 150, 150] },
+          { capability: 'background', color: [255, 100, 100], radius: 20, width: 120, height: 36, position: { x: 15, y: 275 } },
+          { capability: 'text', position: { x: 45, y: 298 }, text: '加入购物车', size: 13, color: [255, 255, 255] },
+          { capability: 'background', color: [255, 180, 0], radius: 20, width: 80, height: 36, position: { x: 145, y: 275 } },
+          { capability: 'text', position: { x: 162, y: 298 }, text: '立即购买', size: 13, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.03, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 4, y: 4, blur: 12, color: [0, 0, 0, 0.12] }
+        ]
+      },
+
+      // 4. 任务列表项
+      // 使用原子: background, border, checkbox(icon), text, scale, hover, shadow
+      // 预期效果: 悬停高亮,可点击切换状态
+      {
+        id: 'complex-task-list',
+        position: { x: 0, y: 220 },
+        width: 450,
+        height: 200,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [220, 220, 220], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 25 }, text: '📋 今日任务', size: 16, color: [40, 40, 40] },
+          { capability: 'icon', position: { x: 20, y: 50 }, icon: '☑️', size: 20 },
+          { capability: 'text', position: { x: 50, y: 65 }, text: '完成项目文档', size: 14, color: [80, 80, 80] },
+          { capability: 'text', position: { x: 300, y: 65 }, text: '已完成', size: 12, color: [50, 200, 100] },
+          { capability: 'icon', position: { x: 20, y: 90 }, icon: '⬜', size: 20 },
+          { capability: 'text', position: { x: 50, y: 105 }, text: '修复 bug #1234', size: 14, color: [40, 40, 40] },
+          { capability: 'text', position: { x: 300, y: 105 }, text: '进行中', size: 12, color: [255, 180, 0] },
+          { capability: 'icon', position: { x: 20, y: 130 }, icon: '⬜', size: 20 },
+          { capability: 'text', position: { x: 50, y: 145 }, text: '代码审查 Pull Request', size: 14, color: [40, 40, 40] },
+          { capability: 'text', position: { x: 300, y: 145 }, text: '待处理', size: 12, color: [200, 200, 200] },
+          { capability: 'background', color: [245, 250, 255], radius: 20, width: 120, height: 32, position: { x: 300, y: 160 } },
+          { capability: 'text', position: { x: 330, y: 180 }, text: '+ 添加任务', size: 13, color: [66, 133, 244] },
+          { capability: 'scale', value: 1.01, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.08] }
+        ]
+      },
+
+      // 5. 聊天消息气泡
+      // 使用原子: background, border, icon, text, scale, hover, shadow
+      // 预期效果: 显示聊天气泡,悬停高亮
+      {
+        id: 'complex-chat-bubble',
+        position: { x: 470, y: 220 },
+        width: 350,
+        height: 200,
+        atoms: [
+          { capability: 'background', color: [245, 245, 250] },
+          { capability: 'border', width: 1, color: [220, 220, 220], radius: 10 },
+          { capability: 'text', position: { x: 20, y: 25 }, text: '💬 聊天记录', size: 16, color: [40, 40, 40] },
+          { capability: 'icon', position: { x: 20, y: 50 }, icon: '👤', size: 30 },
+          { capability: 'background', color: [255, 255, 255], radius: 12, width: 180, height: 50, position: { x: 60, y: 50 } },
+          { capability: 'text', position: { x: 75, y: 65 }, text: '在吗?有个问题想请教', size: 13, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 60, y: 108 }, text: '10:30', size: 10, color: [180, 180, 180] },
+          { capability: 'background', color: [66, 133, 244], radius: 12, width: 160, height: 50, position: { x: 180, y: 110 } },
+          { capability: 'text', position: { x: 195, y: 125 }, text: '在的,请说～', size: 13, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 260, y: 168 }, text: '10:32', size: 10, color: [180, 180, 180] },
+          { capability: 'scale', value: 1.01, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.08] }
+        ]
+      },
+
+      // 6. 日历组件
+      // 使用原子: background, border, text, icon, scale, hover, shadow
+      // 预期效果: 显示日历网格,悬停高亮日期
+      {
+        id: 'complex-calendar',
+        position: { x: 840, y: 220 },
+        width: 330,
+        height: 280,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'text', position: { x: 20, y: 25 }, text: '📅 2026年3月', size: 16, color: [40, 40, 40] },
+          { capability: 'icon', position: { x: 260, y: 15 }, icon: '◀️', size: 16 },
+          { capability: 'icon', position: { x: 290, y: 15 }, icon: '▶️', size: 16 },
+          { capability: 'text', position: { x: 20, y: 55 }, text: '日', size: 12, color: [180, 180, 180] },
+          { capability: 'text', position: { x: 60, y: 55 }, text: '一', size: 12, color: [180, 180, 180] },
+          { capability: 'text', position: { x: 100, y: 55 }, text: '二', size: 12, color: [180, 180, 180] },
+          { capability: 'text', position: { x: 140, y: 55 }, text: '三', size: 12, color: [180, 180, 180] },
+          { capability: 'text', position: { x: 180, y: 55 }, text: '四', size: 12, color: [180, 180, 180] },
+          { capability: 'text', position: { x: 220, y: 55 }, text: '五', size: 12, color: [180, 180, 180] },
+          { capability: 'text', position: { x: 260, y: 55 }, text: '六', size: 12, color: [180, 180, 180] },
+          { capability: 'text', position: { x: 20, y: 85 }, text: '1', size: 14, color: [200, 200, 200] },
+          { capability: 'text', position: { x: 60, y: 85 }, text: '2', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 100, y: 85 }, text: '3', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 140, y: 85 }, text: '4', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 180, y: 85 }, text: '5', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 220, y: 85 }, text: '6', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 260, y: 85 }, text: '7', size: 14, color: [255, 100, 100] },
+          { capability: 'background', color: [66, 133, 244], radius: 15, width: 30, height: 30, position: { x: 98, y: 98 } },
+          { capability: 'text', position: { x: 108, y: 118 }, text: '8', size: 14, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 145 }, text: '9', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 60, y: 145 }, text: '10', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 100, y: 145 }, text: '11', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 140, y: 145 }, text: '12', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 180, y: 145 }, text: '13', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 220, y: 145 }, text: '14', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 260, y: 145 }, text: '15', size: 14, color: [255, 100, 100] },
+          { capability: 'text', position: { x: 20, y: 205 }, text: '16', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 60, y: 205 }, text: '17', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 100, y: 205 }, text: '18', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 140, y: 205 }, text: '19', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 180, y: 205 }, text: '20', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 220, y: 205 }, text: '21', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 260, y: 205 }, text: '22', size: 14, color: [255, 100, 100] },
+          { capability: 'text', position: { x: 20, y: 265 }, text: '23', size: 14, color: [60, 60, 60] },
+          { capability: 'text', position: { x: 60, y: 265 }, text: '24', size: 14, color: [60, 60, 60] },
+          { capability: 'scale', value: 1.01, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.08] }
+        ]
+      },
+
+      // 7. 设置面板
+      // 使用原子: background, border, text, icon, toggle(background), scale, hover, shadow
+      // 预期效果: 显示设置项列表,带开关按钮
+      {
+        id: 'complex-settings',
+        position: { x: 0, y: 440 },
+        width: 400,
+        height: 280,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'text', position: { x: 20, y: 25 }, text: '⚙️ 设置', size: 16, color: [40, 40, 40] },
+          { capability: 'icon', position: { x: 20, y: 50 }, icon: '🔔', size: 20 },
+          { capability: 'text', position: { x: 50, y: 65 }, text: '消息通知', size: 14, color: [60, 60, 60] },
+          { capability: 'background', color: [66, 133, 244], radius: 12, width: 50, height: 24, position: { x: 320, y: 55 } },
+          { capability: 'text', position: { x: 337, y: 72 }, text: 'ON', size: 11, color: [255, 255, 255] },
+          { capability: 'icon', position: { x: 20, y: 90 }, icon: '🌙', size: 20 },
+          { capability: 'text', position: { x: 50, y: 105 }, text: '深色模式', size: 14, color: [60, 60, 60] },
+          { capability: 'background', color: [200, 200, 200], radius: 12, width: 50, height: 24, position: { x: 320, y: 95 } },
+          { capability: 'text', position: { x: 338, y: 112 }, text: 'OFF', size: 11, color: [255, 255, 255] },
+          { capability: 'icon', position: { x: 20, y: 130 }, icon: '🔒', size: 20 },
+          { capability: 'text', position: { x: 50, y: 145 }, text: '隐私保护', size: 14, color: [60, 60, 60] },
+          { capability: 'background', color: [66, 133, 244], radius: 12, width: 50, height: 24, position: { x: 320, y: 135 } },
+          { capability: 'text', position: { x: 337, y: 152 }, text: 'ON', size: 11, color: [255, 255, 255] },
+          { capability: 'icon', position: { x: 20, y: 170 }, icon: '🔊', size: 20 },
+          { capability: 'text', position: { x: 50, y: 185 }, text: '声音', size: 14, color: [60, 60, 60] },
+          { capability: 'background', color: [66, 133, 244], radius: 12, width: 50, height: 24, position: { x: 320, y: 175 } },
+          { capability: 'text', position: { x: 337, y: 192 }, text: 'ON', size: 11, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 20, y: 220 }, text: '──────', size: 12, color: [220, 220, 220] },
+          { capability: 'icon', position: { x: 20, y: 240 }, icon: 'ℹ️', size: 20 },
+          { capability: 'text', position: { x: 50, y: 255 }, text: '关于我们', size: 14, color: [100, 100, 100] },
+          { capability: 'icon', position: { x: 350, y: 245 }, icon: '›', size: 20, color: [180, 180, 180] },
+          { capability: 'scale', value: 1.01, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.08] }
+        ]
+      },
+
+      // 8. 音乐播放器卡片
+      // 使用原子: background, border, image, text, icon, scale, hover, shadow
+      // 预期效果: 显示播放器界面,带封面和控件
+      {
+        id: 'complex-music-player',
+        position: { x: 420, y: 440 },
+        width: 400,
+        height: 280,
+        atoms: [
+          { capability: 'background', color: [45, 45, 50] },
+          { capability: 'border', width: 1, color: [60, 60, 65], radius: 12 },
+          { capability: 'image', position: { x: 130, y: 20 }, src: 'https://via.placeholder.com/140x140/ff6b6b/ffffff?text=Album', width: 140, height: 140, alt: '专辑封面' },
+          { capability: 'text', position: { x: 130, y: 175 }, text: '夜曲', size: 20, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 130, y: 200 }, text: '周杰伦', size: 14, color: [180, 180, 180] },
+          { capability: 'background', color: [80, 80, 90], radius: 15, width: 360, height: 6, position: { x: 20, y: 225 } },
+          { capability: 'background', color: [66, 133, 244], radius: 15, width: 180, height: 6, position: { x: 20, y: 225 } },
+          { capability: 'text', position: { x: 20, y: 240 }, text: '1:24', size: 11, color: [150, 150, 150] },
+          { capability: 'text', position: { x: 340, y: 240 }, text: '3:45', size: 11, color: [150, 150, 150] },
+          { capability: 'icon', position: { x: 140, y: 250 }, icon: '⏮️', size: 24, color: [255, 255, 255] },
+          { capability: 'icon', position: { x: 185, y: 245 }, icon: '▶️', size: 32, color: [255, 255, 255] },
+          { capability: 'icon', position: { x: 235, y: 250 }, icon: '⏭️', size: 24, color: [255, 255, 255] },
+          { capability: 'shadow', x: 4, y: 4, blur: 15, color: [0, 0, 0, 0.3] }
+        ]
+      },
+
+      // 9. 评分组件
+      // 使用原子: background, border, icon, text, scale, hover, shadow
+      // 预期效果: 显示星级评分,悬停高亮
+      {
+        id: 'complex-rating',
+        position: { x: 840, y: 520 },
+        width: 330,
+        height: 200,
+        atoms: [
+          { capability: 'background', color: [255, 255, 255] },
+          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'text', position: { x: 20, y: 25 }, text: '⭐ 商品评分', size: 16, color: [40, 40, 40] },
+          { capability: 'text', position: { x: 20, y: 55 }, text: '4.8', size: 36, color: [255, 180, 0] },
+          { capability: 'text', position: { x: 80, y: 70 }, text: '分', size: 14, color: [120, 120, 120] },
+          { capability: 'text', position: { x: 20, y: 100 }, text: '⭐⭐⭐⭐⭐', size: 18, color: [255, 180, 0] },
+          { capability: 'text', position: { x: 20, y: 130 }, text: '1.2万人评价', size: 12, color: [150, 150, 150] },
+          { capability: 'background', color: [255, 240, 230], radius: 15, width: 80, height: 28, position: { x: 20, y: 155 } },
+          { capability: 'text', position: { x: 35, y: 173 }, text: '⭐⭐⭐⭐⭐ 8000+', size: 11, color: [200, 150, 100] },
+          { capability: 'background', color: [240, 250, 230], radius: 15, width: 70, height: 28, position: { x: 110, y: 155 } },
+          { capability: 'text', position: { x: 120, y: 173 }, text: '⭐⭐⭐⭐ 3000+', size: 11, color: [150, 180, 100] },
+          { capability: 'scale', value: 1.01, trigger: 'hover' },
+          { capability: 'hover' },
+          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0, 0.08] }
+        ]
+      }
+    ]);
+
+    console.log('🎯 AtomEngine - 复杂复合展示已加载');
+    console.log('共计 9 个复杂复合示例');
+  </script>
+</body>
+</html>

@@ -301,12 +301,19 @@ Demo → new SubstanceManager(molecules)
 
 ## 导出说明
 
-本引擎**仅导出 SubstanceManager**，其他类均为内部实现：
+本引擎**仅导出 SubstanceManager**，其他类均为内部实现。
+
+### 导入路径
+
+构建后生成的入口文件为 `dist/SubstanceManager.mjs`（注意不是 `index.mjs`）：
 
 ```javascript
-// demo 端
 import { SubstanceManager } from './dist/SubstanceManager.mjs';
+```
 
+### 使用方式
+
+```javascript
 const molecules = [...];
 
 // 创建实例，自动渲染到页面
@@ -323,6 +330,21 @@ new SubstanceManager(molecules);
 - `position: absolute`
 - 相对于 document.body 定位
 - 位置由 molecule.position 或计算后的 position 决定
+
+### 容器默认透明
+
+Beaker 容器默认保持完全透明，不添加任何可见样式：
+
+```css
+background: transparent;
+border: none;
+outline: none;
+box-shadow: none;
+cursor: default;
+overflow: visible;
+```
+
+只有通过原子（如 background、border、shadow）显式添加装饰，内容才会可见。
 
 ## Molecule 分子
 

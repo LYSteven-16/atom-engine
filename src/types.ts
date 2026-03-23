@@ -79,6 +79,7 @@ export interface ShadowAtom extends BaseAtom {
 
 export interface CanvasAtom extends BaseAtom {
   capability: 'canvas';
+  position?: Position;
   width: number;
   height: number;
   strokeColor?: [number, number, number];
