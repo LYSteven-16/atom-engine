@@ -154,11 +154,10 @@
         id: 'drawing-board',
         position: { x: 0, y: 820 },
         width: 400,
-        height: 200,
+        height: 220,
         atoms: [
-          { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 2, color: [180, 180, 190], radius: 12 },
-          { capability: 'text', position: { x: 160, y: 95 }, text: '点击并拖动开始绘画', size: 16, color: [180, 180, 180] }
+          { capability: 'canvas', width: 380, height: 200, position: { x: 10, y: 10 }, blackboardStyle: true, strokeColor: [200, 220, 200], strokeWidth: 3, defaultColors: [[200, 220, 200], [255, 255, 255], [255, 220, 100], [255, 150, 150]], defaultWidths: [2, 4, 8], showToolbar: true, resizable: true, minWidth: 200, minHeight: 150 },
+          { capability: 'border', width: 2, color: [180, 180, 190], radius: 12 }
         ]
       },
       {
@@ -208,7 +207,7 @@
           { capability: 'text', position: { x: 15, y: 25 }, text: '今日学习清单', size: 14, color: [60, 60, 60] },
           { capability: 'text', position: { x: 25, y: 55 }, text: '☑ 观看视频课程', size: 14, color: [80, 80, 80] },
           { capability: 'text', position: { x: 25, y: 85 }, text: '☐ 完成练习题', size: 14, color: [80, 80, 80] },
-          { capability: 'scale', value: 1.02, trigger: 'hover' }
+          { capability: 'resize-handle', edge: 'se', minWidth: 200, minHeight: 80, handleSize: 16, handleColor: [180, 180, 190] }
         ]
       },
       {

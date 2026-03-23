@@ -89,25 +89,35 @@ const molecules = [
 │                           BeakerManager                                  │
 │                          (每个 molecule 一个实例)                         │
 │                                                                          │
-│   注：接收的 molecule.position 已是绝对坐标，                               │
-│   vertical、horizontal、gap 字段会被忽略                                  │
+│   运行时维护自己的 atoms 副本，不再访问原始 molecule 数据                    │
 │                                                                          │
 │   ┌─────────────────────────────────────────────────────────────────┐   │
 │   │ constructor(molecule)                                            │   │
-│   │   创建 DOM 容器                                                   │   │
-│   │   调用 init()                                                     │   │
+│   │   1. 创建 DOM 容器                                               │   │
+│   │   2. 复制 molecule.atoms 到 this.atoms                           │   │
+│   │   3. 调用 init()                                                 │   │
 │   └─────────────────────────────────────────────────────────────────┘   │
 │                                    ↓                                     │
 │   ┌─────────────────────────────────────────────────────────────────┐   │
 │   │ init()                                                           │   │
-│   │   1. BeakerManager 调用 Catalyst.decompose() → 分离 atoms        │   │
-│   │   2. 根据 content atoms 计算容器大小                               │   │
-│   │   3. 设置容器大小和位置                                           │   │
-│   │   4. BeakerManager 调用 AtomRenderer.render() → 渲染每个 atom      │   │
-│   │   5. attachEventListeners() → 绑定事件                           │   │
+│   │   1. setupElement() - 设置容器样式                                │   │
+│   │   2. decomposeAndRender() - 分解原子并渲染                        │   │
+│   │   3. attachEventListeners() - 绑定事件                           │   │
 │   └─────────────────────────────────────────────────────────────────┘   │
+│                                    ↓                                     │
+│   ┌─────────────────────────────────────────────────────────────────┐   │
+│   │ decomposeAndRender()                                             │   │
+│   │   1. Catalyst.decompose(this.atoms) → 分离 atoms               │   │
+│   │   2. 根据 content atoms 计算容器大小                              │   │
+│   │   3. 设置容器大小和位置                                           │   │
+│   │   4. AtomRenderer.render() → 渲染每个 atom                      │   │
+│   │   5. setupInputHandlers() → 设置输入处理                         │   │
+│   │   6. setupResizeHandlers() → 设置缩放处理                        │   │
+│   └─────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+│   运行时：BeakerManager 使用 this.atoms 响应用户输入                         │
+│   用户拖拽/缩放后，直接修改 this.atoms，重新渲染                            │
 └─────────────────────────────────────────────────────────────────────────┘
-                                    ↓
                                     ↓
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           独立组件                                       │
@@ -125,13 +135,36 @@ const molecules = [
 │   │                         AtomRenderer                             │   │
 │   │                        (独立模块)                                │   │
 │   │                                                                  │   │
-│   │   输入: atom                                                       │
-│   │   输出: HTMLElement                                               │
-│   │   行为: 按 atom.position 渲染到分子容器内                            │
-│   │        相对于分子容器的坐标系                                      │
-│   │                                                                  │
+│   │   输入: atom                                                       │   │
+│   │   输出: RenderResult { id, success, element?, error? }           │   │
+│   │   行为: 按 atom.position 渲染到分子容器内                            │   │
+│   │        相对于分子容器的坐标系                                      │   │
+│   │        每个元素用 data-atom-id 标记                                │   │
+│   │                                                                  │   │
 │   └─────────────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────────────┘
+```
+
+### 初始化 vs 运行时
+
+#### 初始化阶段（一次）
+
+```
+Demo → SubstanceManager.process() → BeakerManager(molecule) → init()
+                                              ↓
+                                    ┌────────────────────┐
+                                    │ 1. 复制 atoms       │
+                                    │ 2. decomposeAndRender │
+                                    │ 3. 渲染完成          │
+                                    └────────────────────┘
+```
+
+#### 运行时阶段
+
+```
+用户输入 → BeakerManager 处理 → 修改 this.atoms → 重新渲染
+                              ↑
+                    不再访问原始 molecule 数据
 ```
 
 ### 核心组件职责
@@ -139,9 +172,9 @@ const molecules = [
 | 组件 | 职责 | 说明 |
 |------|------|------|
 | **SubstanceManager** | 纯计算 | 接收 molecules，计算 position，返回格式一致的数据 |
-| **BeakerManager** | 分子容器 | 创建 DOM 容器，渲染 molecule，管理布局位置 |
+| **BeakerManager** | 分子容器 | 创建 DOM 容器，渲染 molecule，管理布局位置，维护运行时 atoms 副本 |
 | **Catalyst** | 原子分类器 | 分解分子中的原子，分类管理 |
-| **AtomRenderer** | 原子渲染器 | 根据原子类型渲染对应 DOM 元素 |
+| **AtomRenderer** | 原子渲染器 | 根据原子类型渲染对应 DOM 元素，返回 RenderResult |
 
 ---
 
@@ -224,15 +257,29 @@ y = (vertical - 1) * (cellHeight + verticalGap)
 
 BeakerManager：
 - 创建 DOM 容器
+- 维护自己的 atoms 副本（运行时使用）
 - 调用 Catalyst 拆解
 - 渲染 atoms
 
-### 生命周期
+### 运行时特性
 
-1. 构造函数接收 Molecule
+1. 构造函数接收 Molecule，复制 atoms 到 this.atoms
 2. setupElement() - 创建容器，设置大小
 3. decomposeAndRender() - 调用 Catalyst，渲染 atoms
 4. attachEventListeners() - 绑定事件
+
+### RenderResult
+
+AtomRenderer.render() 返回 RenderResult：
+
+```typescript
+interface RenderResult {
+  id: string;           // 原子 ID
+  success: boolean;     // 是否成功
+  element?: HTMLElement; // 渲染的 DOM 元素
+  error?: string;       // 错误信息（如果失败）
+}
+```
 
 ---
 
@@ -255,6 +302,7 @@ decompose(
 
 | 属性 | 类型 | 必需 | 说明 |
 |------|------|------|------|
+| id | string | ❌ | 原子唯一标识 |
 | position | {x, y, z?} | ❌ | 位置 |
 | duration | number | ❌ | 动画时长（秒），默认 0.15 |
 
@@ -281,6 +329,18 @@ decompose(
 | border | 边框渲染 |
 | shadow | 阴影效果 |
 | ... | ... |
+
+### RenderResult 返回值
+
+```typescript
+const result = AtomRenderer.render(atom);
+if (result.success) {
+  console.log(`Atom ${result.id} rendered successfully`);
+  container.appendChild(result.element);
+} else {
+  console.error(`Failed to render ${result.id}: ${result.error}`);
+}
+```
 
 ### 原子渲染行为
 
@@ -365,6 +425,28 @@ decompose(
 | position | {x, y, z?} | ❌ | 位置，默认 {0,0} |
 | icon | string | ✅ | 图标名称 |
 | size | number | ❌ | 图标大小 |
+
+#### canvas
+| 属性 | 类型 | 必需 | 说明 |
+|------|------|------|------|
+| capability | 'canvas' | ✅ | 原子类型 |
+| position | {x, y, z?} | ❌ | 位置，默认 {0,0} |
+| width | number | ✅ | 画布宽度 |
+| height | number | ✅ | 画布高度 |
+| strokeColor | [r,g,b] | ❌ | 画笔颜色，默认 [0,0,0] |
+| strokeWidth | number | ❌ | 画笔粗细，默认 2 |
+| backgroundColor | [r,g,b] | ❌ | 画布背景色 |
+| blackboardStyle | boolean | ❌ | 黑板风格，会渲染深绿色带纹理的背景和内阴影 |
+| defaultColors | [r,g,b][] | ❌ | 工具栏可选颜色，默认 [[0,0,0],[255,0,0],[0,128,0],[0,0,255]] |
+| defaultWidths | number[] | ❌ | 工具栏可选粗细，默认 [2,4,8] |
+| showToolbar | boolean | ❌ | 是否显示工具栏，默认 true |
+
+**黑板风格特性**：
+- 自动生成深绿色 (#2d5a2d) 带纹理的黑板背景
+- 提供内阴影效果增强立体感
+- 默认画笔颜色为浅绿色，适合在黑板上书写
+- 橡皮擦会恢复黑板背景色
+- 清除功能会重新生成黑板纹理
 
 ---
 
@@ -516,17 +598,19 @@ decompose(
    - 根据 vertical、horizontal 计算 position
    - 根据 gap 计算间距
        ↓
-3. 遍历 molecules，创建 BakerManager
+3. 遍历 molecules，创建 BeakerManager
        ↓
-4. BakerManager 接收 molecule
+4. BeakerManager 接收 molecule
+   - 复制 molecule.atoms 到 this.atoms
        ↓
-5. BakerManager.setupElement()
+5. BeakerManager.setupElement()
    - 创建 div 容器
    - 计算并设置大小和位置
        ↓
-6. BakerManager.decomposeAndRender()
+6. BeakerManager.decomposeAndRender()
    - Catalyst.decompose() 分离 atoms
    - AtomRenderer.render() 渲染每个 atom
+   - 处理 RenderResult
        ↓
-7. 完成渲染
+7. 运行时：BeakerManager 使用 this.atoms 响应用户输入
 ```

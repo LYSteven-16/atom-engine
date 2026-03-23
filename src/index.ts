@@ -1,6 +1,6 @@
 export { BeakerManager } from './BeakerManager';
 export { Catalyst } from './Catalyst';
-export { AtomRenderer, renderAtom } from './AtomRenderer';
+export { AtomRenderer, renderAtom, RenderResult } from './AtomRenderer';
 export { SubstanceManager } from './SubstanceManager';
 
 export type {

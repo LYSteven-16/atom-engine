@@ -1,6 +1,6 @@
 import type { Atom, ContentAtom, Position } from './types';
 
-const CONTENT_CAPABILITIES = ['text', 'image', 'video', 'audio', 'code', 'icon'];
+const CONTENT_CAPABILITIES = ['text', 'image', 'video', 'audio', 'code', 'icon', 'canvas'];
 const DECORATION_CAPABILITIES = ['background', 'border', 'shadow'];
 
 const getAbsolutePosition = (

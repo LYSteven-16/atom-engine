@@ -5,6 +5,7 @@ export interface Position {
 }
 
 export interface BaseAtom {
+  id?: string;
   position?: Position;
   duration?: number;
 }
@@ -76,6 +77,22 @@ export interface ShadowAtom extends BaseAtom {
   radius?: number;
 }
 
+export interface CanvasAtom extends BaseAtom {
+  capability: 'canvas';
+  width: number;
+  height: number;
+  strokeColor?: [number, number, number];
+  strokeWidth?: number;
+  backgroundColor?: [number, number, number];
+  blackboardStyle?: boolean;
+  defaultColors?: [number, number, number][];
+  defaultWidths?: number[];
+  showToolbar?: boolean;
+  resizable?: boolean;
+  minWidth?: number;
+  minHeight?: number;
+}
+
 export type Trigger = 'hover' | 'click' | 'drag';
 
 export interface ScaleAtom extends BaseAtom {
@@ -113,6 +130,16 @@ export interface ResizeAtom extends BaseAtom {
   direction?: 'horizontal' | 'vertical' | 'both';
 }
 
+export interface ResizeHandleAtom extends BaseAtom {
+  capability: 'resize-handle';
+  edge?: 'nw' | 'ne' | 'sw' | 'se';
+  minWidth?: number;
+  minHeight?: number;
+  handleSize?: number;
+  handleColor?: [number, number, number];
+  scaleMode?: 'container' | 'proportional';
+}
+
 export interface ScrollAtom extends BaseAtom {
   capability: 'scroll';
 }
@@ -138,17 +165,28 @@ export interface WidthAtom extends BaseAtom {
 export interface CollapseAtom extends BaseAtom {
   capability: 'collapse';
   group: string;
-  collapsedValue?: number;
   expandedValue?: number;
 }
 
-export type Atom = TextAtom | ImageAtom | VideoAtom | AudioAtom | CodeAtom | IconAtom |
+export interface StrokePoint {
+  x: number;
+  y: number;
+}
+
+export interface Stroke {
+  points: StrokePoint[];
+  color: [number, number, number];
+  width: number;
+  isEraser: boolean;
+}
+
+export type Atom = TextAtom | ImageAtom | VideoAtom | AudioAtom | CodeAtom | IconAtom | CanvasAtom |
   BackgroundAtom | BorderAtom | ShadowAtom |
   ScaleAtom | OpacityAtom | RotateAtom | TranslateAtom |
-  DragAtom | ResizeAtom | ScrollAtom | ClickAtom |
+  DragAtom | ResizeAtom | ResizeHandleAtom | ScrollAtom | ClickAtom |
   HeightAtom | WidthAtom | CollapseAtom;
 
-export type ContentAtom = TextAtom | ImageAtom | VideoAtom | AudioAtom | CodeAtom | IconAtom;
+export type ContentAtom = TextAtom | ImageAtom | VideoAtom | AudioAtom | CodeAtom | IconAtom | CanvasAtom;
 export type DecorationAtom = BackgroundAtom | BorderAtom | ShadowAtom;
 export type AnimationAtom = ScaleAtom | OpacityAtom | RotateAtom | TranslateAtom | HeightAtom | WidthAtom | CollapseAtom;
 export type InputAtom = DragAtom | ResizeAtom | ScrollAtom | ClickAtom;
