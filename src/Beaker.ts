@@ -28,6 +28,7 @@ export class Beaker {
   private atomRenderer: AtomRenderer;
   private canvasStrokesMap: Map<HTMLCanvasElement, { strokes: any[]; atom: any }> = new Map();
   private onStateChange: StateChangeCallback | null = null;
+  private inputAtoms: InputAtom[] = [];
 
   constructor(id: string, molecule: Molecule, onStateChange?: StateChangeCallback) {
     this.id = id;
@@ -58,7 +59,7 @@ export class Beaker {
 
     this.atoms = [...(molecule.atoms || [])];
     this.init();
-    this.attachEventListeners();
+    this.attachEventListeners(this.inputAtoms);
   }
 
   private init(): void {
@@ -77,8 +78,10 @@ export class Beaker {
 
     const inputAtoms = others.filter(a =>
       a.capability === 'drag' || a.capability === 'resize' ||
-      a.capability === 'scroll' || a.capability === 'click'
+      a.capability === 'scroll' || a.capability === 'click' || a.capability === 'hover'
     ) as InputAtom[];
+
+    this.inputAtoms = inputAtoms;
 
     const resizeHandleAtoms = others.filter(a => a.capability === 'resize-handle');
 
@@ -177,7 +180,7 @@ export class Beaker {
       maxY = Math.max(maxY, y + atomHeight);
     });
 
-    const padding = 20;
+    const padding = 0;
     return {
       width: Math.max(maxX + padding, 50),
       height: Math.max(maxY + padding, 30)
@@ -541,10 +544,12 @@ export class Beaker {
   }
 
   private setupInputHandlers(inputAtoms: InputAtom[], animationAtoms: AnimationAtom[]): void {
-    const hasDrag = inputAtoms.some(a => a.capability === 'drag');
-    const hasClick = inputAtoms.some(a => a.capability === 'click');
+    const dragAtom = inputAtoms.find(a => a.capability === 'drag');
+    const clickAtom = inputAtoms.find(a => a.capability === 'click');
+    const dragKeepOnRelease = dragAtom?.keepOnRelease ?? true;
+    const clickKeepOnRelease = clickAtom?.keepOnRelease ?? false;
 
-    if (hasDrag) {
+    if (dragAtom) {
       let isDragging = false;
       let dragOffsetX = 0;
       let dragOffsetY = 0;
@@ -559,9 +564,6 @@ export class Beaker {
         dragOffsetY = e.clientY;
         totalDragOffsetX = 0;
         totalDragOffsetY = 0;
-
-        this.updateState({ isClicked: true });
-        this.applyAnimationStyles();
       };
 
       const onMouseMove = (e: MouseEvent) => {
@@ -588,16 +590,21 @@ export class Beaker {
 
       const onMouseUp = () => {
         if (isDragging) {
-          const finalX = (this.molecule.position?.x ?? 0) + totalDragOffsetX;
-          const finalY = (this.molecule.position?.y ?? 0) + totalDragOffsetY;
-          this.molecule.position = { x: finalX, y: finalY };
-          this.state.position = { x: finalX, y: finalY };
-          this.element.style.transform = '';
+          if (dragKeepOnRelease) {
+            const finalX = (this.molecule.position?.x ?? 0) + totalDragOffsetX;
+            const finalY = (this.molecule.position?.y ?? 0) + totalDragOffsetY;
+            this.molecule.position = { x: finalX, y: finalY };
+            this.state.position = { x: finalX, y: finalY };
+            this.element.style.transform = '';
+          } else {
+            totalDragOffsetX = 0;
+            totalDragOffsetY = 0;
+            this.element.style.transform = '';
+          }
         }
 
         isDragging = false;
-        this.updateState({ isClicked: false, isDragging: false });
-        this.applyAnimationStyles();
+        this.updateState({ isDragging: false });
       };
 
       this.element.addEventListener('mousedown', onMouseDown);
@@ -605,10 +612,17 @@ export class Beaker {
       document.addEventListener('mouseup', onMouseUp);
     }
 
-    if (hasClick) {
+    if (clickAtom) {
       this.element.addEventListener('click', () => {
-        this.updateState({ isClicked: !this.state.isClicked });
-        this.applyAnimationStyles();
+        if (clickKeepOnRelease) {
+          this.state.isClicked = !this.state.isClicked;
+          this.applyAnimationStyles();
+        } else {
+          this.state.isClicked = true;
+          this.applyAnimationStyles();
+          this.state.isClicked = false;
+          this.applyAnimationStyles();
+        }
       });
     }
 
@@ -626,18 +640,25 @@ export class Beaker {
     });
   }
 
-  private attachEventListeners(): void {
-    this.element.addEventListener('mouseenter', () => {
-      this.triggers.add(`${this.molecule.id}-hover`);
-      this.updateState({ isHovered: true });
-      this.applyAnimationStyles();
-    });
+  private attachEventListeners(inputAtoms: InputAtom[]): void {
+    const hoverAtom = inputAtoms.find(a => a.capability === 'hover');
+    const hoverKeepOnRelease = hoverAtom?.keepOnRelease ?? false;
 
-    this.element.addEventListener('mouseleave', () => {
-      this.triggers.delete(`${this.molecule.id}-hover`);
-      this.updateState({ isHovered: false });
-      this.applyAnimationStyles();
-    });
+    if (hoverAtom) {
+      this.element.addEventListener('mouseenter', () => {
+        this.triggers.add(`${this.molecule.id}-hover`);
+        this.updateState({ isHovered: true });
+        this.applyAnimationStyles();
+      });
+
+      this.element.addEventListener('mouseleave', () => {
+        this.triggers.delete(`${this.molecule.id}-hover`);
+        if (!hoverKeepOnRelease) {
+          this.updateState({ isHovered: false });
+          this.applyAnimationStyles();
+        }
+      });
+    }
   }
 
   private updateState(partial: Partial<BakerState>): void {

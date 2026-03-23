@@ -145,7 +145,7 @@ export class AtomRenderer {
       top: `${atom.position?.y ?? 0}px`,
       zIndex: atom.position?.z,
       backgroundColor: '#f5f5f5',
-      padding: '12px',
+      padding: '0px',
       borderRadius: '6px',
       overflow: 'auto',
       fontSize: '14px',

@@ -123,6 +123,7 @@ export interface TranslateAtom extends BaseAtom {
 export interface DragAtom extends BaseAtom {
   capability: 'drag';
   spring?: boolean;
+  keepOnRelease?: boolean;
 }
 
 export interface ResizeAtom extends BaseAtom {
@@ -146,6 +147,12 @@ export interface ScrollAtom extends BaseAtom {
 
 export interface ClickAtom extends BaseAtom {
   capability: 'click';
+  keepOnRelease?: boolean;
+}
+
+export interface HoverAtom extends BaseAtom {
+  capability: 'hover';
+  keepOnRelease?: boolean;
 }
 
 export interface HeightAtom extends BaseAtom {
@@ -189,7 +196,7 @@ export type Atom = TextAtom | ImageAtom | VideoAtom | AudioAtom | CodeAtom | Ico
 export type ContentAtom = TextAtom | ImageAtom | VideoAtom | AudioAtom | CodeAtom | IconAtom | CanvasAtom;
 export type DecorationAtom = BackgroundAtom | BorderAtom | ShadowAtom;
 export type AnimationAtom = ScaleAtom | OpacityAtom | RotateAtom | TranslateAtom | HeightAtom | WidthAtom | CollapseAtom;
-export type InputAtom = DragAtom | ResizeAtom | ScrollAtom | ClickAtom;
+export type InputAtom = DragAtom | ResizeAtom | ScrollAtom | ClickAtom | HoverAtom;
 
 export interface Molecule {
   id: string;

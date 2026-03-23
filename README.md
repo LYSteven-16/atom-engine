@@ -153,6 +153,42 @@ interface RenderResult {
 | resize | 调整大小 |
 | scroll | 滚动 |
 | click | 点击 |
+| hover | 悬停 |
+
+#### keepOnRelease 属性
+
+输入原子支持 `keepOnRelease` 属性，控制交互结束后状态是否保持：
+
+| 原子类型 | keepOnRelease: true | keepOnRelease: false (默认) |
+|----------|---------------------|----------------------------|
+| drag | 松开后保持新位置 | 松开后弹回原位 |
+| click | 切换点击状态（点击→展开，再点→收起） | 点击后立即恢复 |
+| hover | 鼠标离开后保持悬停状态 | 鼠标离开后恢复 |
+
+```javascript
+// 点击展开 - 保持状态
+{
+  capability: 'height', value: 160, trigger: 'click', collapsedValue: 80,
+  { capability: 'click', keepOnRelease: true }
+}
+
+// 点击缩放 - 保持状态
+{
+  capability: 'scale', value: 1.3, trigger: 'click',
+  { capability: 'click', keepOnRelease: true }
+}
+
+// 拖拽 - 回弹原位
+{
+  capability: 'drag', keepOnRelease: false
+}
+
+// 悬停保持 - 鼠标离开后保持悬停效果
+{
+  capability: 'scale', value: 1.02, trigger: 'hover',
+  { capability: 'hover', keepOnRelease: true }
+}
+```
 
 ### 特殊原子
 
