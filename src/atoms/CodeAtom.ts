@@ -203,7 +203,7 @@ export class CodeAtom {
         background: ${bgColor};
         padding: 10px;
         padding-top: 32px;
-        border-radius: 4px;
+        border-radius: 8px;
         overflow: auto;
         white-space: pre-wrap;
         word-break: break-all;
