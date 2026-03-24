@@ -519,9 +519,9 @@ private createDecorationAtoms(atoms: any[], moleculeWidth?: number, moleculeHeig
           new Atoms.ShadowAtom(context, this.element, {
             x: config.x,
             y: config.y,
-            blur: config.blur,
+            shadowBlur: config.shadowBlur,
             color: config.color,
-            spread: config.spread,
+            shadowWidth: config.shadowWidth,
             position: config.position,
             width: config.width ?? moleculeWidth,
             height: config.height ?? moleculeHeight,
@@ -720,8 +720,9 @@ export interface ShadowAtom {
   context: AtomContext;
   x: number;
   y: number;
-  blur: number;
+  shadowBlur?: number;
   color: [number, number, number];
+  shadowWidth?: number;
 }
 
 // 动画原子接口
@@ -893,7 +894,7 @@ BeakerManager 重新创建
 |---------|---------|---------|
 | BackgroundAtom | `background` | 背景装饰（独立DOM，position/width/height/radius） |
 | BorderAtom | `border` | 边框装饰（独立DOM，borderWidth/width/height/radius） |
-| ShadowAtom | `shadow` | 阴影装饰（独立DOM，x/y/blur/spread/width/height/radius） |
+| ShadowAtom | `shadow` | 阴影装饰（独立DOM，x/y/shadowBlur/shadowWidth/width/height/radius） |
 
 注意：装饰原子各自创建独立DOM元素，绝对定位；最先渲染（底层），内容原子后渲染（上层）；分子容器完全透明，不承载样式。
 

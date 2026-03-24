@@ -28,7 +28,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '1. Text 原子 - 文本显示', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: text', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 100 }, text: 'Hello, AtomEngine!', size: 32, color: [40, 40, 40] },
@@ -36,7 +36,7 @@
           { capability: 'text', position: { x: 20, y: 190 }, text: '支持多种字号、颜色、位置', size: 16, color: [120, 120, 120] },
           { capability: 'text', position: { x: 20, y: 230 }, text: '可用于显示任何文本内容', size: 14, color: [160, 160, 160] },
           { capability: 'text', position: { x: 20, y: 270 }, text: '支持中英文混合显示', size: 12, color: [180, 180, 180] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 1, color: [0, 0, 0] }
         ]
       },
 
@@ -50,14 +50,14 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '2. Image 原子 - 图片显示', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: image', size: 14, color: [150, 150, 150] },
           { capability: 'background', color: [240, 248, 255], position: { x: 20, y: 90 }, width: 360, height: 150 },
-          { capability: 'border', width: 1, color: [200, 220, 240], radius: 8, position: { x: 20, y: 90 }, width: 360, height: 150 },
+          { capability: 'border', borderWidth: 1, color: [200, 220, 240], radius: 8, position: { x: 20, y: 90 }, width: 360, height: 150 },
           { capability: 'image', position: { x: 80, y: 110 }, src: 'https://preview.redd.it/lobqb41deki61.jpg?auto=webp&s=acfc6bbf1bfdd890aa03029a4cb02fbab1c95eb1', width: 240, height: 400, alt: '示例图片' },
           { capability: 'text', position: { x: 20, y: 260 }, text: '支持本地图片、网络图片、base64', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -71,13 +71,13 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [40, 44, 52] },
-          { capability: 'border', width: 1, color: [60, 64, 72], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [60, 64, 72], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '3. Video 原子 - 视频播放', size: 22, color: [100, 200, 150] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: video', size: 14, color: [150, 150, 150] },
           { capability: 'background', color: [50, 54, 62], radius: 8, position: { x: 20, y: 90 }, width: 360, height: 150 },
           { capability: 'video', position: { x: 30, y: 100 }, src: 'http://upos-sz-mirrorcos.bilivideo.com/upgcxcode/78/24/36908502478/36908502478-1-192.mp4?e=ig8euxZM2rNcNbNVnWdVhwdlhbdHhwdVhoNvNC8BqJIzNbfq9rVEuxTEnE8L5F6VnEsSTx0vkX8fqJeYTj_lta53NCM=&og=hw&trid=9ba2a3ddd2084fe1b9914b2d0acda34O&deadline=1774344791&gen=playurlv3&nbs=1&platform=html5&mid=0&oi=1385955528&uipk=5&os=estghw&upsig=cf58ea08110ae62b0583f8cb3b758d88&uparams=e,og,trid,deadline,gen,nbs,platform,mid,oi,uipk,os&bvc=vod&nettype=1&bw=1678230&buvid=&build=7330300&dl=0&f=O_0_0&agrr=1&orderid=0,3', width: 340, height: 130 },
           { capability: 'text', position: { x: 20, y: 260 }, text: '支持本地/网络视频,带controls', size: 12, color: [150, 150, 150] }, 
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -91,7 +91,7 @@
         height: 350,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '4. Audio 原子 - 音频播放', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: audio', size: 14, color: [150, 150, 150] },
           { capability: 'background', color: [245, 248, 255], radius: 8, position: { x: 20, y: 90 }, width: 360, height: 80 },
@@ -102,7 +102,7 @@
           { capability: 'text', position: { x: 20, y: 250 }, text: '• 进度条/快进/快退', size: 14, color: [120, 120, 120] },
           { capability: 'text', position: { x: 20, y: 270 }, text: '• 音量控制', size: 14, color: [120, 120, 120] },
           { capability: 'text', position: { x: 20, y: 290 }, text: '• 循环播放', size: 14, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -116,13 +116,13 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [40, 44, 52] },
-          { capability: 'border', width: 1, color: [60, 64, 72], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [60, 64, 72], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '5. Code 原子 - 代码显示', size: 22, color: [100, 200, 150] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: code', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 85 }, text: 'JavaScript 示例:', size: 13, color: [200, 200, 200] },
           { capability: 'code', position: { x: 20, y: 105 }, code: '// 简单示例\nconst greet = (name) => {\n  return `Hello, ${name}!`;\n};\nconsole.log(greet("World"));',language: 'javascript',width: 350,height: 150},
           { capability: 'text', position: { x: 20, y: 270 }, text: '支持多种语言: JS/Python/HTML/CSS', size: 10, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -136,7 +136,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '6. Icon 原子 - 图标显示', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: icon', size: 14, color: [150, 150, 150] },
           { capability: 'icon', position: { x: 60, y: 100 }, icon: '🚀', size: 80 },
@@ -145,7 +145,7 @@
           { capability: 'icon', position: { x: 310, y: 130 }, icon: '⚡', size: 40 },
           { capability: 'text', position: { x: 50, y: 220 }, text: '图标大小示例', size: 18, color: [80, 80, 80] },
           { capability: 'text', position: { x: 50, y: 260 }, text: '支持任意 emoji 图标', size: 14, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -159,12 +159,12 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '7. Canvas 原子 - 画布', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: canvas', size: 14, color: [150, 150, 150] },
           { capability: 'canvas', position: { x: 20, y: 80 }, width: 360, height: 160, strokeColor: [50, 50, 50], strokeWidth: 3, backgroundColor: [255, 255, 255], showToolbar: true, resizable: true, blackboardStyle: true,showToolbar: true,resizable: true},
           { capability: 'text', position: { x: 20, y: 265 }, text: '可自由绘图,支持工具栏', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -182,7 +182,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '8. Background 原子 - 背景色', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: background', size: 14, color: [150, 150, 150] },
           { capability: 'background', color: [100, 180, 255], radius: 12, position: { x: 30, y: 90}, width: 150, height: 80 },
@@ -193,7 +193,7 @@
           { capability: 'text', position: { x: 70, y: 240 }, text: '绿色', size: 16, color: [255, 255, 255] },
           { capability: 'background', color: [255, 200, 100], radius: 12, position: { x: 220, y: 190 }, width: 150, height: 80 },
           { capability: 'text', position: { x: 260, y: 240 }, text: '橙色', size: 16, color: [255, 255, 255] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -207,22 +207,18 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '9. Border 原子 - 边框', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: border', size: 14, color: [150, 150, 150] },
-
           { capability: 'border', borderWidth: 3, color: [255, 100, 100], radius: 12, position: { x: 30, y: 90 }, width: 150, height: 80 },
           { capability: 'text', position: { x: 70, y: 140 }, text: '3px红边框', size: 12, color: [80, 80, 80] },
-          { capability: 'background', color: [245, 248, 255], position: { x: 220, y: 90 }, width: 150, height: 80 },
           { capability: 'border', borderWidth: 5, color: [100, 180, 255], radius: 20, position: { x: 220, y: 90 }, width: 150, height: 80 },
           { capability: 'text', position: { x: 250, y: 140 }, text: '5px蓝边框', size: 12, color: [80, 80, 80] },
-          { capability: 'background', color: [245, 248, 255], position: { x: 30, y: 190 }, width: 150, height: 80 },
           { capability: 'border', borderWidth: 2, color: [100, 200, 100], radius: 8, position: { x: 30, y: 190 }, width: 150, height: 80 },
           { capability: 'text', position: { x: 60, y: 240 }, text: '2px绿边框', size: 12, color: [80, 80, 80] },
-          { capability: 'background', color: [245, 248, 255], position: { x: 220, y: 190 }, width: 150, height: 80 },
-          { capability: 'border', width: 1, color: [255, 180, 100], radius: 30, position: { x: 220, y: 190 }, width: 150, height: 80 },
+          { capability: 'border', borderWidth: 1, color: [255, 180, 100], radius: 30, position: { x: 220, y: 190 }, width: 150, height: 80 },
           { capability: 'text', position: { x: 255, y: 240 }, text: '胶囊边框', size: 12, color: [80, 80, 80] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -236,22 +232,22 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '10. Shadow 原子 - 阴影', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: shadow', size: 14, color: [150, 150, 150] },
           { capability: 'background', color: [255, 255, 255], position: { x: 50, y: 100 }, width: 120, height: 80 },
-          { capability: 'shadow', x: 5, y: 5, blur: 15, color: [0, 0, 0], position: { x: 50, y: 100 }, width: 120, height: 80 },
+          { capability: 'shadow', x: 5, y: 5, shadowBlur: 15, shadowWidth: 8, color: [0, 0, 0], position: { x: 50, y: 100,z:99 }, width: 120, height: 80 },
           { capability: 'text', position: { x: 75, y: 145 }, text: '强阴影', size: 12, color: [80, 80, 80] },
           { capability: 'background', color: [255, 255, 255], position: { x: 230, y: 100 }, width: 120, height: 80 },
-          { capability: 'shadow', x: 2, y: 2, blur: 8, color: [0, 0, 0], position: { x: 230, y: 100 }, width: 120, height: 80 },
+          { capability: 'shadow', x: 2, y: 2, shadowBlur: 8, shadowWidth: 4, color: [0, 0, 0], position: { x: 230, y: 100,z:99 }, width: 120, height: 80 },
           { capability: 'text', position: { x: 250, y: 145 }, text: '弱阴影', size: 12, color: [80, 80, 80] },
           { capability: 'background', color: [255, 255, 255], position: { x: 50, y: 200 }, width: 120, height: 80 },
-          { capability: 'shadow', x: 0, y: 5, blur: 20, color: [66, 133, 244], position: { x: 50, y: 200 }, width: 120, height: 80 },
+          { capability: 'shadow', x: 0, y: 5, shadowBlur: 20, shadowWidth: 10, color: [66, 133, 244], position: { x: 50, y: 200,z:99 }, width: 120, height: 80 },
           { capability: 'text', position: { x: 65, y: 245 }, text: '彩色阴影', size: 12, color: [80, 80, 80] },
           { capability: 'background', color: [255, 255, 255], position: { x: 230, y: 200 }, width: 120, height: 80 },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0], position: { x: 230, y: 200 }, width: 120, height: 80 },
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0], position: { x: 230, y: 200,z:99 }, width: 120, height: 80 },
           { capability: 'text', position: { x: 245, y: 245 }, text: '普通阴影', size: 12, color: [80, 80, 80] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 11, color: [0, 0, 0] }
         ]
       },
 
@@ -274,7 +270,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '11. Scale 原子 - 缩放', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: 'trigger: "hover" | "click"', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '悬停方块查看效果:', size: 14, color: [80, 80, 80] },
@@ -291,7 +287,7 @@
           { capability: 'hover', position: { x: 280, y: 120 }, width: 100, height: 100 },
           { capability: 'scale', value: 0.8, trigger: 'hover', duration: 0.3 },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'hover 原子传递状态 + scale 原子响应', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -306,7 +302,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '12. Opacity 原子 - 透明度', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: 'trigger: "hover" | "click"', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '悬停方块查看效果:', size: 14, color: [80, 80, 80] },
@@ -323,7 +319,7 @@
           { capability: 'hover', position: { x: 280, y: 120 }, width: 100, height: 100 },
           { capability: 'opacity', value: 0.2, trigger: 'hover' },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'hover 原子传递状态 + opacity 原子响应', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -338,7 +334,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '13. Rotate 原子 - 旋转', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: 'trigger: "hover" | "click"', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '悬停方块查看效果:', size: 14, color: [80, 80, 80] },
@@ -355,7 +351,7 @@
           { capability: 'hover', position: { x: 280, y: 120 }, width: 100, height: 100 },
           { capability: 'rotate', value: 90, trigger: 'hover' },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'hover 原子传递状态 + rotate 原子响应', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -370,7 +366,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '14. Translate 原子 - 位移', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: 'trigger: "drag" (仅支持 drag)', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '拖拽方块查看效果 (不回弹):', size: 14, color: [80, 80, 80] },
@@ -383,7 +379,7 @@
           { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
           { capability: 'drag', keepOnRelease: false },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'drag 原子传递状态 + translate 原子响应', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -398,7 +394,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '15. Height 原子 - 高度动画', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: 'trigger: "hover" | "click"', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '点击方块查看效果:', size: 14, color: [80, 80, 80] },
@@ -413,7 +409,7 @@
           { capability: 'height', value: 200, trigger: 'click', collapsedValue: 80, duration: 0.5 },
           { capability: 'click', keepOnRelease: true },
           { capability: 'text', position: { x: 20, y: 260 }, text: 'click 原子传递状态 + height 原子响应', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -428,7 +424,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '16. Width 原子 - 宽度动画', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: 'trigger: "hover" | "click"', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '点击方块查看效果:', size: 14, color: [80, 80, 80] },
@@ -448,7 +444,7 @@
           { capability: 'width', value: 120, trigger: 'click', collapsedValue: 100, duration: 0.5 },
           { capability: 'click', keepOnRelease: true },
           { capability: 'text', position: { x: 20, y: 260 }, text: 'click 原子传递状态 + width 原子响应', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -471,7 +467,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '17. Drag 原子 - 拖拽交互', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: drag + translate', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '拖拽方块查看效果:', size: 14, color: [80, 80, 80] },
@@ -486,7 +482,7 @@
           { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
           { capability: 'drag', keepOnRelease: true },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'drag 传递状态 + translate 响应 drag 触发器', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -501,7 +497,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '18. Click 原子 - 点击交互', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: click + scale', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '点击方块查看效果:', size: 14, color: [80, 80, 80] },
@@ -516,7 +512,7 @@
           { capability: 'scale', value: 1.1, trigger: 'click' },
           { capability: 'click', keepOnRelease: true },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'keepOnRelease: true=保持效果,false=松开恢复', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -531,7 +527,7 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '19. Hover 原子 - 悬停交互', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: hover + scale + opacity', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '悬停方块查看组合效果:', size: 14, color: [80, 80, 80] },
@@ -540,7 +536,7 @@
           { capability: 'text', position: { x: 55, y: 185 }, text: '1.2', size: 10, color: [255, 255, 255] },
           { capability: 'hover', position: { x: 40, y: 120 }, width: 100, height: 100 },
           { capability: 'scale', value: 1.2, trigger: 'hover' },
-          { capability: 'shadow', x: 5, y: 5, blur: 15, color: [0, 0, 0], position: { x: 40, y: 120 }, width: 100, height: 100 },
+          { capability: 'shadow', x: 5, y: 5, shadowBlur: 15, shadowWidth: 8, color: [0, 0, 0], position: { x: 40, y: 120 }, width: 100, height: 100 },
           { capability: 'background', color: [255, 180, 120], radius: 10, position: { x: 160, y: 120 }, width: 100, height: 100 },
           { capability: 'text', position: { x: 175, y: 165 }, text: 'opacity', size: 12, color: [80, 80, 80] },
           { capability: 'text', position: { x: 175, y: 185 }, text: '0.5', size: 10, color: [80, 80, 80] },
@@ -552,7 +548,7 @@
           { capability: 'hover', position: { x: 280, y: 120 }, width: 100, height: 100 },
           { capability: 'rotate', value: 15, trigger: 'hover' },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'hover原子传递状态 + 动画原子响应', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -566,20 +562,20 @@
         height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
-          { capability: 'border', width: 1, color: [220, 220, 220], radius: 12 },
+          { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '20. Resize-handle 原子 - 调整大小', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: resize-handle', size: 14, color: [150, 150, 150] },
           { capability: 'text', position: { x: 20, y: 95 }, text: '拖拽右下角手柄调整大小:', size: 14, color: [80, 80, 80] },
           { capability: 'background', color: [245, 248, 255], position: { x: 40, y: 120 }, width: 200, height: 140 },
-          { capability: 'border', width: 1, color: [200, 220, 240], radius: 8, position: { x: 40, y: 120 }, width: 200, height: 140 },
+          { capability: 'border', borderWidth: 1, color: [200, 220, 240], radius: 8, position: { x: 40, y: 120 }, width: 200, height: 140 },
           { capability: 'text', position: { x: 60, y: 150 }, text: 'SE 手柄 (右下)', size: 14, color: [80, 80, 80] },
           { capability: 'text', position: { x: 60, y: 175 }, text: 'edge: "se"', size: 12, color: [120, 120, 120] },
           { capability: 'text', position: { x: 60, y: 195 }, text: 'minWidth: 100', size: 10, color: [120, 120, 120] },
           { capability: 'text', position: { x: 60, y: 210 }, text: 'minHeight: 80', size: 10, color: [120, 120, 120] },
           { capability: 'resize-handle', edge: 'se', minWidth: 100, minHeight: 80, handleSize: 20, handleColor: [180, 180, 190], position: { x: 40, y: 120 }, width: 200, height: 140 },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0], position: { x: 40, y: 120 }, width: 200, height: 140 },
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0], position: { x: 40, y: 120 }, width: 200, height: 140 },
           { capability: 'text', position: { x: 20, y: 280 }, text: 'edge: n/ne/e/se/s/sw/w/nw 控制手柄位置', size: 11, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, blur: 10, color: [0, 0, 0] }
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       }
     ]);

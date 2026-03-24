@@ -28,11 +28,9 @@ export interface ShadowAtom {
   context: AtomContext;
   x: number;
   y: number;
-  blur: number;
+  shadowBlur?: number;
   color: [number, number, number];
   shadowWidth?: number;
-  shadowHeight?: number;
-  radius?: number;
 }
 
 export interface ScaleAtom {

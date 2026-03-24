@@ -195,9 +195,9 @@ export class Beaker {
             new Atoms.ShadowAtom(context, this.element, {
               x: config.x,
               y: config.y,
-              blur: config.blur,
+              shadowBlur: config.shadowBlur,
               color: config.color,
-              spread: config.spread,
+              shadowWidth: config.shadowWidth,
               position: config.position,
               width: config.width ?? moleculeWidth,
               height: config.height ?? moleculeHeight,

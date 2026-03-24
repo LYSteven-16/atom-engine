@@ -794,10 +794,10 @@ const shadowAtom = {
   y: 2,
 
   // 阴影模糊
-  blur: 4,
+  shadowBlur: 4,
 
-  // 阴影扩散
-  spread: 0,
+  // 阴影宽度
+  shadowWidth: 0,
 
   // 阴影颜色（RGB数组）
   color: [0, 0, 0],
@@ -819,7 +819,7 @@ const shadowAtom = {
   color: [0, 0, 0],
   x: 3,
   y: 3,
-  blur: 10
+  shadowBlur: 10
 }
 
 // 示例：蓝色悬浮阴影
@@ -828,7 +828,7 @@ const shadowAtom = {
   color: [24, 144, 255],
   x: 0,
   y: 4,
-  blur: 12
+  shadowBlur: 12
 }
 ```
 
@@ -1069,7 +1069,7 @@ const molecules = [
         color: [0, 0, 0],
         x: 0,
         y: 2,
-        blur: 8
+        shadowBlur: 8
       },
       // 标题文本
       {
@@ -1250,7 +1250,7 @@ const molecules = [
         color: [0, 0, 0],
         x: 0,
         y: 4,
-        blur: 12
+        shadowBlur: 12
       }
     ]
   }
@@ -1331,7 +1331,7 @@ const molecules = [
         color: [0, 0, 0],
         x: 0,
         y: 4,
-        blur: 16
+        shadowBlur: 16
       },
       // 标题
       {
