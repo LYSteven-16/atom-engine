@@ -171,7 +171,7 @@ export class Beaker {
   }
 
   private createDecorationAtoms(atoms: any[], moleculeWidth?: number, moleculeHeight?: number): void {
-    const moleculeRadius = (this.molecule as any).radius;
+    const moleculeRadius = (this.molecule as any).radius ?? 12;
     atoms.forEach(config => {
       const context = this.createContext();
       try {
