@@ -1,37 +1,5 @@
 import type { AtomContext } from '../atoms';
 
-/**
- * 画布原子
- * 功能：在分子容器内渲染可绑图画的画布
- * DOM：✅ 有DOM - 创建一个div容器包裹canvas元素
- * 
- * 特点：
- * - 支持鼠标绑图画
- * - 支持黑板模式（深绿色背景、模拟粉笔效果）
- * - 支持自定义画笔颜色和线条宽度
- * - 支持橡皮擦模式
- * - 保存所有笔画历史，支持重绘
- * 
- * 使用场景：
- * - 电子白板
- * - 手写签名
- * - 简单绑图工具
- * 
- * 交互方式：
- * - mousedown: 开始绑图
- * - mousemove: 绑制线条
- * - mouseup/mouseleave: 结束当前笔画
- * 
- * @example
- * {
- *   capability: 'canvas',
- *   context: { bakerId: 'baker-0', bakerIndex: 0, atomIndex: 0 },
- *   width: 400,
- *   height: 300,
- *   strokeColor: [0, 0, 0],
- *   strokeWidth: 2
- * }
- */
 export interface CanvasAtomConfig {
   width: number;
   height: number;
@@ -63,15 +31,25 @@ export interface Stroke {
 export class CanvasAtom {
   readonly capability: 'canvas' = 'canvas';
   readonly context: AtomContext;
-  readonly width: number;
-  readonly height: number;
   private blackboardStyle = false;
+  private canvas?: HTMLCanvasElement;
+  private ctx?: CanvasRenderingContext2D;
+  private strokes: Stroke[] = [];
+  private currentColor: [number, number, number] = [0, 0, 0];
+  private currentWidth = 2;
+  private isEraser = false;
+  private isDrawing = false;
+  private currentStroke: Stroke | null = null;
+  private canvasWidth: number;
+  private canvasHeight: number;
 
   constructor(context: AtomContext, container: HTMLElement, config: CanvasAtomConfig) {
     this.context = context;
-    this.width = config.width;
-    this.height = config.height;
+    this.canvasWidth = config.width;
+    this.canvasHeight = config.height;
     this.blackboardStyle = config.blackboardStyle ?? false;
+    this.currentColor = config.strokeColor ?? [0, 0, 0];
+    this.currentWidth = config.strokeWidth ?? 2;
     this.render(container, config);
   }
 
@@ -82,42 +60,137 @@ export class CanvasAtom {
         position: absolute;
         left: ${config.position?.x ?? 0}px;
         top: ${config.position?.y ?? 0}px;
-        width: ${config.width}px;
-        height: ${config.height}px;
+        display: inline-block;
+      `;
+
+      if (config.showToolbar) {
+        const toolbar = document.createElement('div');
+        const colors = config.defaultColors ?? [[0, 0, 0], [255, 0, 0], [0, 128, 0], [0, 0, 255], [255, 165, 0], [128, 0, 128]];
+        const widths = config.defaultWidths ?? [2, 4, 6, 8];
+
+        toolbar.style.cssText = `
+          display: flex;
+          gap: 6px;
+          padding: 6px 8px;
+          background: #f0f0f0;
+          border-radius: 8px 8px 0 0;
+          border: 1px solid #ddd;
+          border-bottom: none;
+          flex-wrap: wrap;
+          align-items: center;
+        `;
+
+        colors.forEach(color => {
+          const btn = document.createElement('button');
+          btn.style.cssText = `
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            background: rgb(${color[0]},${color[1]},${color[2]});
+            cursor: pointer;
+          `;
+          btn.onclick = () => {
+            this.currentColor = color;
+            this.isEraser = false;
+            this.updateToolbarState(toolbar);
+          };
+          toolbar.appendChild(btn);
+        });
+
+        widths.forEach(w => {
+          const btn = document.createElement('button');
+          btn.style.cssText = `
+            width: 28px;
+            height: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 10px;
+          `;
+          btn.textContent = `${w}`;
+          btn.onclick = () => {
+            this.currentWidth = w;
+            this.updateToolbarState(toolbar);
+          };
+          toolbar.appendChild(btn);
+        });
+
+        const eraserBtn = document.createElement('button');
+        eraserBtn.textContent = '⌫';
+        eraserBtn.style.cssText = `
+          padding: 2px 8px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          background: #fff;
+          cursor: pointer;
+          font-size: 12px;
+        `;
+        eraserBtn.onclick = () => {
+          this.isEraser = !this.isEraser;
+          this.updateToolbarState(toolbar);
+        };
+        toolbar.appendChild(eraserBtn);
+
+        const clearBtn = document.createElement('button');
+        clearBtn.textContent = '✕';
+        clearBtn.style.cssText = `
+          padding: 2px 8px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          background: #fff;
+          cursor: pointer;
+          font-size: 12px;
+        `;
+        clearBtn.onclick = () => {
+          this.strokes = [];
+          this.redraw();
+        };
+        toolbar.appendChild(clearBtn);
+
+        wrapper.appendChild(toolbar);
+      }
+
+      const canvasWrapper = document.createElement('div');
+      canvasWrapper.style.cssText = `
+        position: relative;
+        width: ${this.canvasWidth}px;
+        height: ${this.canvasHeight}px;
+        border-radius: ${config.showToolbar ? '0 0 8px 8px' : '8px'};
+        overflow: hidden;
       `;
 
       const canvas = document.createElement('canvas');
-      canvas.width = config.width;
-      canvas.height = config.height;
+      canvas.width = this.canvasWidth;
+      canvas.height = this.canvasHeight;
       canvas.style.cssText = `
         display: block;
         position: absolute;
         top: 0;
         left: 0;
+        cursor: crosshair;
       `;
+      this.canvas = canvas;
+      this.ctx = canvas.getContext('2d')!;
 
       if (config.blackboardStyle) {
-        canvas.style.borderRadius = '8px';
         canvas.style.boxShadow = 'inset 0 2px 8px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)';
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#1a3a1a';
-          ctx.fillRect(0, 0, config.width, config.height);
-          ctx.fillStyle = '#2d5a2d';
-          ctx.fillRect(0, 0, config.width, config.height);
-        }
+        this.ctx.fillStyle = '#2d5a2d';
+        this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
       } else if (config.backgroundColor) {
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = `rgb(${config.backgroundColor[0]}, ${config.backgroundColor[1]}, ${config.backgroundColor[2]})`;
-          ctx.fillRect(0, 0, config.width, config.height);
-        }
+        this.ctx.fillStyle = `rgb(${config.backgroundColor[0]},${config.backgroundColor[1]},${config.backgroundColor[2]})`;
+        this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
       }
 
-      (canvas as any).strokes = [];
       this.setupDrawing(canvas, config);
+      canvasWrapper.appendChild(canvas);
 
-      wrapper.appendChild(canvas);
+      if (config.resizable) {
+        this.setupResize(canvasWrapper, canvas, config);
+      }
+
+      wrapper.appendChild(canvasWrapper);
       container.appendChild(wrapper);
       console.log(`[Atom] ${this.context.bakerId} - CanvasAtom渲染成功`);
     } catch (error) {
@@ -125,73 +198,112 @@ export class CanvasAtom {
     }
   }
 
-  private setupDrawing(canvas: HTMLCanvasElement, config: CanvasAtomConfig): void {
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  private updateToolbarState(_toolbar: HTMLElement): void {
+  }
 
-    let isDrawing = false;
-    let currentStroke: Stroke | null = null;
-    let currentColor = config.strokeColor ?? [0, 0, 0];
-    let currentWidth = config.strokeWidth ?? 2;
-    let isEraser = false;
-
-    const getStrokes = (): Stroke[] => (canvas as any).strokes || [];
-    const setStrokes = (strokes: Stroke[]) => { (canvas as any).strokes = strokes; };
-
-    const startDrawing = (e: MouseEvent) => {
-      isDrawing = true;
+  private setupDrawing(canvas: HTMLCanvasElement, _config: CanvasAtomConfig): void {
+    canvas.addEventListener('mousedown', (e) => {
+      this.isDrawing = true;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      currentStroke = {
+      this.currentStroke = {
         points: [{ x, y }],
-        color: currentColor,
-        width: currentWidth,
-        isEraser
+        color: this.currentColor,
+        width: this.currentWidth,
+        isEraser: this.isEraser
       };
-    };
+    });
 
-    const draw = (e: MouseEvent) => {
-      if (!isDrawing || !currentStroke) return;
+    canvas.addEventListener('mousemove', (e) => {
+      if (!this.isDrawing || !this.currentStroke) return;
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      currentStroke.points.push({ x, y });
-
-      ctx!.clearRect(0, 0, canvas.width, canvas.height);
-      if (config.blackboardStyle) {
-        ctx!.fillStyle = '#2d5a2d';
-        ctx!.fillRect(0, 0, canvas.width, canvas.height);
-      }
-      getStrokes().forEach(stroke => this.drawStroke(ctx!, stroke));
-      this.drawStroke(ctx!, currentStroke);
-    };
+      this.currentStroke.points.push({ x, y });
+      this.redraw();
+      this.drawStroke(this.currentStroke);
+    });
 
     const stopDrawing = () => {
-      if (isDrawing && currentStroke) {
-        getStrokes().push(currentStroke);
-        currentStroke = null;
+      if (this.isDrawing && this.currentStroke) {
+        this.strokes.push(this.currentStroke);
+        this.currentStroke = null;
       }
-      isDrawing = false;
+      this.isDrawing = false;
     };
 
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseleave', stopDrawing);
   }
 
-  private drawStroke(ctx: CanvasRenderingContext2D, stroke: Stroke): void {
-    if (stroke.points.length < 2) return;
-    ctx.beginPath();
-    ctx.strokeStyle = stroke.isEraser ? (this.blackboardStyle ? '#2d5a2d' : '#ffffff') : `rgb(${stroke.color[0]}, ${stroke.color[1]}, ${stroke.color[2]})`;
-    ctx.lineWidth = stroke.isEraser ? stroke.width * 3 : stroke.width;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-    for (let i = 1; i < stroke.points.length; i++) {
-      ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+  private setupResize(canvasWrapper: HTMLElement, _canvas: HTMLCanvasElement, config: CanvasAtomConfig): void {
+    const handle = document.createElement('div');
+    const minW = config.minWidth ?? 100;
+    const minH = config.minHeight ?? 60;
+
+    handle.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 16px;
+      height: 16px;
+      cursor: se-resize;
+      background: linear-gradient(135deg, transparent 50%, #aaa 50%);
+      border-radius: 0 0 8px 0;
+    `;
+
+    let startX = 0, startY = 0, startW = 0, startH = 0;
+
+    const onMouseMove = (e: MouseEvent) => {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const newW = Math.max(minW, startW + dx);
+      const newH = Math.max(minH, startH + dy);
+      canvasWrapper.style.width = `${newW}px`;
+      canvasWrapper.style.height = `${newH}px`;
+    };
+
+    const onMouseUp = () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    handle.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      startX = e.clientX;
+      startY = e.clientY;
+      startW = canvasWrapper.offsetWidth;
+      startH = canvasWrapper.offsetHeight;
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    });
+
+    canvasWrapper.appendChild(handle);
+  }
+
+  private redraw(): void {
+    if (!this.ctx || !this.canvas) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    if (this.blackboardStyle) {
+      this.ctx.fillStyle = '#2d5a2d';
+      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
-    ctx.stroke();
+    this.strokes.forEach(s => this.drawStroke(s));
+  }
+
+  private drawStroke(stroke: Stroke): void {
+    if (!this.ctx || stroke.points.length < 2) return;
+    this.ctx.beginPath();
+    this.ctx.strokeStyle = stroke.isEraser ? (this.blackboardStyle ? '#2d5a2d' : '#ffffff') : `rgb(${stroke.color[0]},${stroke.color[1]},${stroke.color[2]})`;
+    this.ctx.lineWidth = stroke.isEraser ? stroke.width * 3 : stroke.width;
+    this.ctx.lineCap = 'round';
+    this.ctx.lineJoin = 'round';
+    this.ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+    for (let i = 1; i < stroke.points.length; i++) {
+      this.ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+    }
+    this.ctx.stroke();
   }
 }
