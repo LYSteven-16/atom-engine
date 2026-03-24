@@ -4,6 +4,7 @@ export interface CodeAtomConfig {
   code: string;
   language?: string;
   position?: { x: number; y: number; z?: number };
+  backgroundColor?: [number, number, number];
 }
 
 const KEYWORDS = [
@@ -185,6 +186,11 @@ export class CodeAtom {
   private render(container: HTMLElement, config: CodeAtomConfig): void {
     try {
       const formatted = this.format(config.code, config.language);
+      const bg = config.backgroundColor ?? [30, 30, 30];
+      const bgColor = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
+      const textColor = (bg[0] * 0.299 + bg[1] * 0.587 + bg[2] * 0.114) > 150 ? '#1e1e1e' : '#d4d4d4';
+      const badgeBg = `rgb(${Math.min(255, bg[0] + 20)},${Math.min(255, bg[1] + 20)},${Math.min(255, bg[2] + 20)})`;
+
       const pre = document.createElement('pre');
       const code = document.createElement('code');
       code.innerHTML = this.highlight(formatted, config.language);
@@ -193,8 +199,9 @@ export class CodeAtom {
         position: absolute;
         left: ${config.position?.x ?? 0}px;
         top: ${config.position?.y ?? 0}px;
-        background: #f5f5f5;
+        background: ${bgColor};
         padding: 10px;
+        padding-top: 32px;
         border-radius: 4px;
         overflow: auto;
         white-space: pre-wrap;
@@ -204,7 +211,27 @@ export class CodeAtom {
         font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
         font-size: 13px;
         line-height: 1.5;
+        color: ${textColor};
       `;
+
+      if (config.language) {
+        const badge = document.createElement('div');
+        badge.textContent = config.language;
+        badge.style.cssText = `
+          position: absolute;
+          top: 6px;
+          right: 10px;
+          background: ${badgeBg};
+          color: ${textColor};
+          padding: 2px 8px;
+          border-radius: 3px;
+          font-size: 11px;
+          font-family: 'Consolas', monospace;
+          opacity: 0.8;
+        `;
+        pre.appendChild(badge);
+      }
+
       container.appendChild(pre);
       console.log(`[Atom] ${this.context.bakerId} - CodeAtom渲染成功`);
     } catch (error) {
