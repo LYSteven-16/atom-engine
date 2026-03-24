@@ -21,7 +21,7 @@ export class AudioAtom {
 
   private render(container: HTMLElement, config: AudioAtomConfig): void {
     try {
-      const element = document.createElement('video');
+      const element = document.createElement('audio');
       element.src = config.src;
       element.controls = true;
       if (config.autoplay) element.autoplay = true;
@@ -31,7 +31,6 @@ export class AudioAtom {
         position: absolute;
         left: ${config.position?.x ?? 0}px;
         top: ${config.position?.y ?? 0}px;
-        visibility: hidden;
       `;
       container.appendChild(element);
       console.log(`[Atom] ${this.context.bakerId} - AudioAtom渲染成功`);
