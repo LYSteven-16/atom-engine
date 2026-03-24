@@ -2,14 +2,14 @@
   "name": "@component-chemistry/atom-engine",
   "version": "3.0.0",
   "description": "A pure JavaScript recursive component renderer based on level-based decomposition (atom/molecule/substance)",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "dist/SubstanceManager.js",
+  "module": "dist/SubstanceManager.mjs",
+  "types": "dist/SubstanceManager.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "types": "./dist/SubstanceManager.d.ts",
+      "import": "./dist/SubstanceManager.mjs",
+      "require": "./dist/SubstanceManager.js"
     }
   },
   "files": [
