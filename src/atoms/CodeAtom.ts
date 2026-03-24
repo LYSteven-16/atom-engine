@@ -4,6 +4,8 @@ export interface CodeAtomConfig {
   code: string;
   language?: string;
   position?: { x: number; y: number; z?: number };
+  width?: number;
+  height?: number;
   backgroundColor?: [number, number, number];
   autoFormat?: boolean;
 }
@@ -211,6 +213,8 @@ export class CodeAtom {
         position: absolute;
         left: ${config.position?.x ?? 0}px;
         top: ${config.position?.y ?? 0}px;
+        width: ${config.width ?? 400}px;
+        height: ${config.height ?? 200}px;
         background: ${bgColor};
         padding: 10px;
         padding-top: 32px;
