@@ -216,7 +216,7 @@ export class CanvasAtom {
       return btn;
     };
 
-    // eraser — Lucide MIT
+    // eraser icon — Lucide (MIT), https://lucide.dev
     const eraserBtn = svgBtn(
       () => {
         this.isEraser = !this.isEraser;
@@ -227,7 +227,7 @@ export class CanvasAtom {
     );
     toolbar.appendChild(eraserBtn);
 
-    // trash — Heroicons MIT
+    // trash icon — Heroicons (MIT), https://heroicons.com
     const clearBtn = svgBtn(
       () => {
         this.strokes = [];
@@ -237,7 +237,7 @@ export class CanvasAtom {
     );
     toolbar.appendChild(clearBtn);
 
-    // save (floppy) — Heroicons MIT
+    // save (floppy) icon — Heroicons (MIT), https://heroicons.com
     const saveBtn = svgBtn(
       () => {
         const link = document.createElement('a');
@@ -252,7 +252,7 @@ export class CanvasAtom {
     return toolbar;
   }
 
-  private setupResize(canvasWrapper: HTMLElement, _canvas: HTMLCanvasElement, config: CanvasAtomConfig): void {
+  private setupResize(canvasWrapper: HTMLElement, canvas: HTMLCanvasElement, config: CanvasAtomConfig): void {
     const handle = document.createElement('div');
     const minW = config.minWidth ?? 100;
     const minH = config.minHeight ?? 60;
@@ -277,6 +277,12 @@ export class CanvasAtom {
       const newH = Math.max(minH, startH + dy);
       canvasWrapper.style.width = `${newW}px`;
       canvasWrapper.style.height = `${newH}px`;
+      // 同步更新canvas实际像素尺寸，确保绘画区域真实缩放
+      canvas.width = newW;
+      canvas.height = newH;
+      this.canvasWidth = newW;
+      this.canvasHeight = newH;
+      this.redraw();
     };
 
     const onMouseUp = () => {
