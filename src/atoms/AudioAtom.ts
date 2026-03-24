@@ -3,6 +3,8 @@ import type { AtomContext } from '../atoms';
 export interface AudioAtomConfig {
   src: string;
   position?: { x: number; y: number; z?: number };
+  /** 宽度（默认300） */
+  width?: number;
   /** 自动播放 */
   autoplay?: boolean;
   /** 循环播放 */
@@ -31,6 +33,7 @@ export class AudioAtom {
         position: absolute;
         left: ${config.position?.x ?? 0}px;
         top: ${config.position?.y ?? 0}px;
+        width: ${config.width ?? 300}px;
       `;
       container.appendChild(element);
       console.log(`[Atom] ${this.context.bakerId} - AudioAtom渲染成功`);
