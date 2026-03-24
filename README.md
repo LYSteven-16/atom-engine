@@ -1,556 +1,1625 @@
-# AtomEngine 原子引擎
+# AtomEngine
 
-> 纯 JavaScript 组件渲染引擎，无需任何框架依赖
+AtomEngine 是一个基于层级分解（原子/分子/物质）的纯 JavaScript 组件渲染引擎。它采用数据驱动架构，通过声明式配置生成复杂的交互式用户界面。
 
-## 特性
+## 核心特性
 
-- **零依赖**: 纯原生 JavaScript，无框架依赖
-- **原子化设计**: UI 组件拆分为最小单元「原子」，通过组合构建复杂界面
-- **自动布局**: 支持相对定位和网格排列
-- **声明式描述**: 用户描述"原子有什么表现"，而非"如何构建 CSS"
-- **事件驱动**: 内置拖拽、缩放、点击等交互支持
+- **零框架依赖**：仅依赖原生 JavaScript，可运行于任何现代浏览器
+- **数据驱动渲染**：通过 JSON 配置声明界面，引擎自动处理 DOM 创建和交互
+- **原子化设计**：组件由原子（Atom）组成，支持高度复用和组合
+- **完整交互支持**：内置点击、拖拽、悬停、调整大小、滚动等交互原子
+- **动画系统**：支持缩放、透明度、旋转、平移等 CSS 动画
+- **样式装饰**：支持背景、边框、阴影等视觉装饰
 
 ## 快速开始
+
+### 1. 安装
+
+```bash
+npm install @component-chemistry/atom-engine
+```
+
+### 2. 在 HTML 中引入
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
+  <title>AtomEngine Demo</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { margin: 0; padding: 20px; }
+    #app {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
   </style>
 </head>
 <body>
+  <div id="app"></div>
   <script type="module">
     import { SubstanceManager } from './dist/SubstanceManager.mjs';
 
     const molecules = [
       {
-        id: 'mol-A',
+        id: 'my-first-molecule',
         position: { x: 100, y: 100 },
         atoms: [
-          { capability: 'background', color: [240, 240, 240], radius: 8 },
-          { capability: 'border', width: 2, color: [200, 200, 200], radius: 8 },
-          { capability: 'text', text: 'Hello World', size: 24, color: [51, 51, 51], position: { x: 20, y: 20 } }
+          {
+            capability: 'text',
+            text: 'Hello AtomEngine!',
+            size: 24,
+            color: [51, 51, 51]
+          }
         ]
       }
     ];
 
-    new SubstanceManager(molecules);
+    const manager = new SubstanceManager(molecules);
+    document.getElementById('app').appendChild(manager.getBakerManager().getBaker('baker-0').element);
   </script>
 </body>
 </html>
 ```
 
-## ⚠️ 使用前检查 CSS
+### 3. 构建项目
 
-引擎依赖浏览器的 `left`/`top` 定位，宿主页面需确保：
+```bash
+# 构建
+npm run build
 
-```css
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+# 开发模式（监视文件变化）
+npm run dev
 
-body {
-  margin: 0;
-  padding: 0;
-}
+# 类型检查
+npm run typecheck
 ```
 
-**常见问题**：
-- 浏览器默认 `body { margin: 8px }` 会导致元素偏移
-- 容器的 `margin: 0 auto` 居中会影响子元素定位基准
-- `position: relative` 的祖先元素会作为定位参考
+## 核心概念
 
-### 容器默认透明
+### 物质（Substance）
 
-引擎的分子容器（Beaker）默认保持完全透明，不添加任何可见样式。只有通过原子（如 `background`、`border`、`shadow`）显式添加装饰，内容才会可见。
-
-```css
-/* 容器默认样式 */
-background: transparent;
-border: none;
-outline: none;
-box-shadow: none;
-```
-
-## 核心理念
-
-将 UI 组件拆分为最小单元「原子」，通过组合原子构建复杂界面。引擎自动处理渲染、样式、动画和交互。
-
-**数据格式统一原则**：从 Demo 到引擎内部，数据格式完全一致，只有数据值变化。
+物质是应用级别容器，管理所有分子（分子）：
 
 ```javascript
-const molecules = [
-  {
-    id: 'mol-A',
-    position: { x: 0, y: 0 },
-    atoms: [...],
-    vertical: 1,       // 网格垂直位置
-    horizontal: 1,      // 网格水平位置
-    verticalGap: 10,   // 与上下分子的间距
-    horizontalGap: 10, // 与左右分子的间距
-  },
-  ...
-];
+const substance = new SubstanceManager(molecules);
 ```
 
-## 架构总览
+### 分子（Molecule）
 
-### 组件关系
+分子是 UI 组件的基本单位：
 
-| 组件 | 是否导出 | 类型 | 由谁创建 |
-|------|---------|------|---------|
-| SubstanceManager | 是 | 实例类 | demo 创建 |
-| BeakerManager | 否 | 实例类 | SubstanceManager 创建 |
-| Beaker | 否 | 实例类 | BeakerManager 创建 |
-| AtomRenderer | 否 | 独立模块 | Beaker 使用 |
-
-### 代码调用关系
-
-```
-SubstanceManager (导出)
-    │
-    └── BeakerManager (非导出)
-           │
-           └── Beaker (非导出)
-                  │
-                  ├── 创建 element，设置 position: absolute，left，top
-                  ├── 把 element 添加到 document.body
-                  │
-                  └── AtomRenderer (非导出)
-                         │
-                         └── 渲染原子到 Beaker.element 内
+```javascript
+const molecule = {
+  id: 'unique-molecule-id',        // 唯一标识符（必需）
+  position: { x: 0, y: 0, z: 1 },  // 位置（可选）
+  vertical: 1,                      // 垂直网格行数（可选）
+  horizontal: 1,                    // 水平网格列数（可选）
+  verticalGap: 10,                  // 垂直间距（可选）
+  horizontalGap: 10,                 // 水平间距（可选）
+  atoms: [],                         // 原子数组（必需）
+  width: 200,                       // 宽度（可选）
+  height: 100,                      // 高度（可选）
+  radius: 8                         // 圆角（可选）
+};
 ```
 
-### 渲染流程
+### 原子（Atom）
 
-```
-1. demo 调用：new SubstanceManager(molecules)
-2. SubstanceManager 构造函数执行：
-   2.1 调用 this.process(molecules) 计算每个分子的 position
-   2.2 创建 this.beakerManager = new BeakerManager(processedMolecules)
-3. BeakerManager 构造函数执行：
-   3.1 遍历 processedMolecules，对每个 molecule 创建 Beaker
-   3.2 document.body.appendChild(baker.element)
-4. Beaker 构造函数执行：
-   4.1 创建 element，设置 position: absolute
-   4.2 调用 this.init() 渲染所有原子
-5. 渲染完成，页面显示完成
-```
+原子是界面的最小单元，分为四类：
 
-### 渲染位置
+1. **内容原子**：显示文本、图片、视频等
+2. **输入原子**：处理点击、拖拽、滚动等交互
+3. **装饰原子**：设置背景、边框、阴影等样式
+4. **动画原子**：控制元素的动态效果
 
-- **Beaker 渲染到页面**：渲染容器为 **document.body**，定位基准为页面左上角 (0, 0)
-- **AtomRenderer 渲染到分子容器**：渲染容器为 **Beaker.element**，定位基准为分子容器左上角 (0, 0)
-
-## 核心组件职责
-
-| 组件 | 类型 | 职责 |
-|------|------|------|
-| **SubstanceManager** | 实例类，导出 | 入口点，布局计算 |
-| **BeakerManager** | 实例类，非导出 | 管理多个 Beaker |
-| **Beaker** | 实例类，非导出 | 单个分子渲染器 |
-| **AtomRenderer** | 独立模块，非导出 | 原子渲染器 |
-
-## API
-
-### SubstanceManager
-
-**仅导出此类**，其他类均为内部实现。
-
-> **注意**：构建后生成的入口文件为 `dist/SubstanceManager.mjs`（注意不是 `index.mjs`）
-
-```typescript
-import { SubstanceManager } from './dist/SubstanceManager.mjs';
-
-const molecules = [...];
-new SubstanceManager(molecules);
-```
-
-构造函数 `new SubstanceManager(molecules: Molecule[])`：
-- 计算每个分子的 position
-- 创建 BeakerManager
-- 自动渲染到页面
-- 不返回任何值
-
-## Molecule 分子
-
-分子是原子的容器，也是渲染的基本单元。
-
-```typescript
-interface Molecule {
-  id: string;
-  position?: { x: number; y: number; z?: number };  // 绝对位置
-  vertical?: number;       // 网格垂直位置
-  horizontal?: number;     // 网格水平位置
-  verticalGap?: number;     // 与上下分子的间距，默认 10
-  horizontalGap?: number;  // 与左右分子的间距，默认 10
-  width?: number;          // 分子宽度
-  height?: number;         // 分子高度
-  atoms: Atom[];
-}
-```
-
-## Atom 原子
-
-原子是渲染的最小单元，分为四类：
-
-- **内容原子**：渲染实际内容（文本、图片、视频等）
-- **装饰原子**：修改容器外观（背景、边框、阴影）
-- **动画原子**：响应触发事件改变样式
-- **交互原子**：响应用户交互
-
-### 属性可选性说明
-
-原子的大部分属性都是**可选的**，使用 `?` 标记。未设置的属性会使用默认值或自动计算。
-
-常见可选属性的默认值：
-- `position`: 默认为 `{ x: 0, y: 0 }`
-- `width`/`height` 等尺寸: 默认为父容器的 100%
-- `radius`: 默认为 `0`（无圆角）
-- `duration`: 默认为 `0`（无动画过渡）
-- `z`: 默认为 `0`
-
-### BaseAtom 通用属性
-
-```typescript
-interface BaseAtom {
-  id?: string;                    // 原子 ID，可选
-  position?: Position;            // 位置，相对于分子容器
-  duration?: number;              // 动画时长（秒）
-}
-
-interface Position {
-  x: number;
-  y: number;
-  z?: number;
-}
-```
+## 原子类型详解
 
 ### 内容原子
 
-#### TextAtom - 文本
-```typescript
-interface TextAtom extends BaseAtom {
-  capability: 'text';
-  text: string;                    // 文本内容
-  size: number;                    // 字体大小
-  color: [number, number, number]; // RGB 颜色
+#### TextAtom - 文本显示
+
+在界面上显示文本内容：
+
+```javascript
+const textAtom = {
+  capability: 'text',
+
+  // 文本内容
+  text: '显示的文本内容',
+
+  // 位置
+  position: { x: 10, y: 10 },    // 相对于分子的偏移
+
+  // 样式
+  size: 16,                        // 字号（默认16）
+  color: [51, 51, 51]             // 文字颜色（RGB数组）
+};
+
+// 示例：带样式的标题
+{
+  capability: 'text',
+  text: 'Welcome',
+  size: 32,
+  color: [24, 144, 255],
+  position: { x: 10, y: 10 }
+}
+
+// 示例：响应事件的文本（需要配合 ClickAtom）
+{
+  capability: 'text',
+  text: 'Click me',
+  size: 16,
+  color: [0, 0, 0],
+  position: { x: 10, y: 10 }
 }
 ```
 
-#### ImageAtom - 图片
-```typescript
-interface ImageAtom extends BaseAtom {
-  capability: 'image';
-  src: string;                     // 图片 URL
-  width: number;                   // 图片宽度
-  height: number;                  // 图片高度
-  alt?: string;                    // alt 文本
+#### ImageAtom - 图片显示
+
+显示图片资源：
+
+```javascript
+const imageAtom = {
+  capability: 'image',
+
+  // 图片源
+  src: 'https://example.com/image.png',
+
+  // 尺寸
+  width: 200,                      // 图片宽度
+  height: 150,                     // 图片高度
+
+  // 可选属性
+  alt: '图片描述',                  // alt 文本
+  position: { x: 0, y: 0 }         // 位置偏移
+};
+
+// 示例：带边框的头像
+{
+  capability: 'image',
+  src: '/avatar.png',
+  width: 80,
+  height: 80,
+  position: { x: 10, y: 10 }
+}
+
+// 注意：边框效果应作为独立的原子添加
+// {
+//   capability: 'border',
+//   width: 3,
+//   color: [24, 144, 255],
+//   radius: 40
+// }
+```
+
+#### VideoAtom - 视频播放
+
+嵌入视频播放器：
+
+```javascript
+const videoAtom = {
+  capability: 'video',
+
+  // 视频源
+  src: 'https://example.com/video.mp4',
+
+  // 尺寸
+  width: 640,
+  height: 360,
+
+  // 位置
+  position: { x: 0, y: 0 }
+};
+
+// 示例：自动播放静音视频
+{
+  capability: 'video',
+  src: '/background-video.mp4',
+  width: 640,
+  height: 360,
+  position: { x: 0, y: 0 }
 }
 ```
 
-#### VideoAtom - 视频
-```typescript
-interface VideoAtom extends BaseAtom {
-  capability: 'video';
-  src: string;                     // 视频 URL
-  width?: number;
-  height?: number;
+#### AudioAtom - 音频播放
+
+嵌入音频播放器：
+
+```javascript
+const audioAtom = {
+  capability: 'audio',
+
+  // 音频源
+  src: 'https://example.com/audio.mp3',
+
+  // 位置
+  position: { x: 0, y: 0 }
+};
+
+// 示例：背景音乐
+{
+  capability: 'audio',
+  src: '/bgm.mp3',
+  position: { x: 0, y: 0 }
 }
 ```
 
-#### AudioAtom - 音频
-```typescript
-interface AudioAtom extends BaseAtom {
-  capability: 'audio';
-  src: string;                     // 音频 URL
+#### CodeAtom - 代码显示
+
+显示代码片段：
+
+```javascript
+const codeAtom = {
+  capability: 'code',
+
+  // 代码内容
+  code: 'const hello = "world";',
+
+  // 语言（用于语法高亮可选）
+  language: 'javascript',
+
+  // 位置
+  position: { x: 0, y: 0 }
+};
+
+// 示例：显示 TypeScript 代码
+{
+  capability: 'code',
+  code: `interface User {
+  name: string;
+  age: number;
+}
+
+function greet(user: User): string {
+  return \`Hello, \${user.name}!\`;
+}`,
+  language: 'typescript',
+  position: { x: 0, y: 0 }
 }
 ```
 
-#### CodeAtom - 代码
-```typescript
-interface CodeAtom extends BaseAtom {
-  capability: 'code';
-  code: string;                    // 代码内容
-  language?: string;               // 编程语言
+#### IconAtom - 图标显示
+
+显示图标（emoji 或字体图标）：
+
+```javascript
+const iconAtom = {
+  capability: 'icon',
+
+  // 图标内容（emoji 或 HTML 实体）
+  icon: '🚀',
+
+  // 尺寸
+  size: 32,
+
+  // 位置
+  position: { x: 0, y: 0 }
+};
+
+// 示例：多种图标
+{
+  capability: 'icon',
+  icon: '⭐',
+  size: 24,
+  position: { x: 0, y: 0 }
 }
 ```
 
-#### IconAtom - 图标
-```typescript
-interface IconAtom extends BaseAtom {
-  capability: 'icon';
-  icon: string;                    // 图标名称/字符
-  size?: number;                   // 图标大小
+#### CanvasAtom - 画布绘图
+
+创建可绘图的画布：
+
+```javascript
+const canvasAtom = {
+  capability: 'canvas',
+
+  // 尺寸
+  width: 400,
+  height: 300,
+
+  // 位置
+  position: { x: 0, y: 0 },
+
+  // 画布模式
+  strokeColor: [0, 0, 0],           // 描边颜色（RGB数组）
+  strokeWidth: 2,                   // 描边宽度
+  backgroundColor: [255, 255, 255], // 背景颜色（RGB数组）
+
+  // 可选：黑板模式
+  blackboardStyle?: boolean,
+
+  // 可选：预设颜色
+  defaultColors?: [number, number, number][],
+
+  // 可选：预设线宽
+  defaultWidths?: number[],
+
+  // 可选：显示工具栏
+  showToolbar?: boolean,
+
+  // 可选：是否可调整大小
+  resizable?: boolean,
+
+  // 可选：最小宽度
+  minWidth?: number,
+
+  // 可选：最小高度
+  minHeight?: number
+};
+
+// 示例：黑板画布
+{
+  capability: 'canvas',
+  width: 600,
+  height: 400,
+  blackboardStyle: true,
+  strokeColor: [255, 255, 255],
+  strokeWidth: 3,
+  position: { x: 0, y: 0 }
+}
+
+// 示例：带工具栏的可调整画布
+{
+  capability: 'canvas',
+  width: 400,
+  height: 300,
+  strokeColor: [0, 0, 0],
+  strokeWidth: 2,
+  backgroundColor: [250, 250, 250],
+  showToolbar: true,
+  resizable: true,
+  minWidth: 200,
+  minHeight: 100,
+  position: { x: 0, y: 0 }
 }
 ```
 
-#### CanvasAtom - 画布
-```typescript
-interface CanvasAtom extends BaseAtom {
-  capability: 'canvas';
-  width: number;                   // 画布宽度
-  height: number;                  // 画布高度
-  strokeColor?: [number, number, number];     // 画笔颜色
-  strokeWidth?: number;            // 画笔宽度
-  backgroundColor?: [number, number, number]; // 背景颜色
-  blackboardStyle?: boolean;       // 黑板风格
-  defaultColors?: [number, number, number][]; // 默认颜色数组
-  defaultWidths?: number[];        // 默认线宽数组
-  showToolbar?: boolean;           // 显示工具栏
-  resizable?: boolean;             // 可调整大小
-  minWidth?: number;               // 最小宽度
-  minHeight?: number;              // 最小高度
+### 输入原子
+
+#### ClickAtom - 点击交互
+
+处理鼠标点击事件：
+
+```javascript
+const clickAtom = {
+  capability: 'click',
+
+  // 点击回调
+  onClick?: (e: MouseEvent) => void,
+
+  // 双击回调
+  onDoubleClick?: (e: MouseEvent) => void,
+
+  // 鼠标按下/抬起
+  onMouseDown?: (e: MouseEvent) => void,
+
+  onMouseUp?: (e: MouseEvent) => void
+};
+
+// 示例：按钮点击
+{
+  capability: 'click',
+  onClick: () => {
+    console.log('按钮被点击');
+  }
+}
+
+// 示例：双击编辑
+{
+  capability: 'click',
+  onDoubleClick: () => {
+    console.log('进入编辑模式');
+  }
+}
+```
+
+#### HoverAtom - 悬停交互
+
+处理鼠标悬停事件：
+
+```javascript
+const hoverAtom = {
+  capability: 'hover',
+
+  // 鼠标进入容器回调
+  onMouseEnter?: (e: MouseEvent) => void,
+
+  // 鼠标离开容器回调
+  onMouseLeave?: (e: MouseEvent) => void,
+
+  // 悬停开始回调（鼠标进入）
+  onHoverStart?: (e: MouseEvent) => void,
+
+  // 悬停结束回调（鼠标离开）
+  onHoverEnd?: (e: MouseEvent) => void
+};
+
+// 示例：显示提示
+{
+  capability: 'hover',
+  onMouseEnter: (e) => {
+    console.log('Mouse enter at', e.clientX, e.clientY);
+  },
+  onMouseLeave: (e) => {
+    console.log('Mouse leave at', e.clientX, e.clientY);
+  }
+}
+```
+
+#### DragAtom - 拖拽交互
+
+实现元素拖拽功能：
+
+```javascript
+const dragAtom = {
+  capability: 'drag',
+
+  // 拖拽手柄元素（可选，默认是整个容器）
+  // 可以指定某个子元素作为拖拽手柄
+  // handle: document.getElementById('drag-handle'),
+
+  // 拖拽边界限制
+  bounds: {
+    x: 0,                           // 边界左上角 X
+    y: 0,                           // 边界左上角 Y
+    width: 1000,                     // 边界宽度
+    height: 800                     // 边界高度
+  },
+
+  // 拖拽回调
+  onDragStart?: (pos: { x: number; y: number }) => void,
+
+  onDragMove?: (pos: { x: number; y: number }) => void,
+
+  onDragEnd?: (pos: { x: number; y: number }) => void
+};
+
+// 示例：自由拖拽（无边界）
+{
+  capability: 'drag'
+}
+
+// 示例：受限拖拽
+{
+  capability: 'drag',
+  bounds: {
+    x: 0,
+    y: 0,
+    width: window.innerWidth - 100,
+    height: window.innerHeight - 100
+  },
+  onDragEnd: (pos) => {
+    console.log('Final position:', pos);
+  }
+}
+```
+
+#### ResizeAtom - 缩放交互
+
+实现元素缩放功能：
+
+```javascript
+const resizeAtom = {
+  capability: 'resize',
+
+  // 最小宽度
+  minWidth?: number,
+
+  // 最大宽度
+  maxWidth?: number,
+
+  // 最小高度
+  minHeight?: number,
+
+  // 最大高度
+  maxHeight?: number,
+
+  // 缩放回调
+  onResizeStart?: (size: { width: number; height: number }) => void,
+
+  onResize?: (size: { width: number; height: number }) => void,
+
+  onResizeEnd?: (size: { width: number; height: number }) => void
+};
+
+// 示例：自由缩放
+{
+  capability: 'resize'
+}
+
+// 示例：限制尺寸范围
+{
+  capability: 'resize',
+  minWidth: 100,
+  maxWidth: 500,
+  minHeight: 100,
+  maxHeight: 400,
+  onResizeEnd: (size) => {
+    console.log('Final size:', size);
+  }
+}
+```
+
+#### ResizeHandleAtom - 调整把手
+
+为元素添加可视化的调整大小把手：
+
+```javascript
+const resizeHandleAtom = {
+  capability: 'resize-handle',
+
+  // 把手样式
+  handleSize: 10,                   // 把手大小
+  handleColor: [24, 144, 255],      // 把手颜色（RGB数组）
+
+  // 把手位置（可选值：'nw' | 'ne' | 'sw' | 'se'）
+  edge: 'se'
+};
+
+// 示例：四角调整把手
+{
+  capability: 'resize-handle',
+  handleSize: 8,
+  handleColor: [24, 144, 255],
+  edge: 'se'
+}
+
+// 示例：仅右下角调整
+{
+  capability: 'resize-handle',
+  handleSize: 10,
+  edge: 'se'
+}
+```
+
+#### ScrollAtom - 滚动交互
+
+处理鼠标滚轮滚动事件：
+
+```javascript
+const scrollAtom = {
+  capability: 'scroll',
+
+  // 滚动方向限制（可选值：'horizontal' | 'vertical' | 'both'）
+  // 注意：必须指定direction，否则不会启用滚动
+  direction: 'vertical',              // 滚动方向
+
+  // 滚动边界限制
+  maxScrollX: 1000,                 // 最大水平滚动距离
+  maxScrollY: 500,                 // 最大垂直滚动距离
+
+  // 滚动回调
+  onScroll: (pos) => {
+    console.log('滚动位置:', pos);
+  }
+};
+
+// 示例：仅垂直滚动
+{
+  capability: 'scroll',
+  direction: 'vertical'
+}
+
+// 示例：仅水平滚动
+{
+  capability: 'scroll',
+  direction: 'horizontal'
 }
 ```
 
 ### 装饰原子
 
-#### BackgroundAtom - 背景
-```typescript
-interface BackgroundAtom extends BaseAtom {
-  capability: 'background';
-  color: [number, number, number]; // 背景颜色 RGB
-  width?: number;                  // 背景宽度
-  height?: number;                 // 背景高度
-  radius?: number;                 // 圆角半径
+#### BackgroundAtom - 背景装饰
+
+设置元素的背景样式：
+
+```javascript
+const backgroundAtom = {
+  capability: 'background',
+
+  // 背景颜色（RGB数组）
+  color: [255, 255, 255]
+};
+
+// 示例：纯色背景
+{
+  capability: 'background',
+  color: [245, 245, 245]
 }
 ```
 
-#### BorderAtom - 边框
-```typescript
-interface BorderAtom extends BaseAtom {
-  capability: 'border';
-  width: number;                   // 边框宽度
-  color: [number, number, number]; // 边框颜色 RGB
-  radius?: number;                 // 圆角半径
-  borderWidth?: number;            // 边框宽度
-  borderHeight?: number;           // 边框高度
+#### BorderAtom - 边框装饰
+
+设置元素的边框样式：
+
+```javascript
+const borderAtom = {
+  capability: 'border',
+
+  // 边框宽度
+  width: 1,
+
+  // 边框颜色（RGB数组）
+  color: [217, 217, 217],
+
+  // 边框圆角
+  radius: 4
+};
+
+// 示例：卡片边框
+{
+  capability: 'border',
+  width: 1,
+  color: [232, 232, 232],
+  radius: 8
+}
+
+// 示例：圆形边框
+{
+  capability: 'border',
+  width: 3,
+  color: [24, 144, 255],
+  radius: 50
 }
 ```
 
-#### ShadowAtom - 阴影
-```typescript
-interface ShadowAtom extends BaseAtom {
-  capability: 'shadow';
-  x: number;                       // 阴影 X 偏移
-  y: number;                       // 阴影 Y 偏移
-  blur: number;                    // 模糊半径
-  color: [number, number, number]; // 阴影颜色 RGB
-  shadowWidth?: number;            // 阴影宽度
-  shadowHeight?: number;           // 阴影高度
-  radius?: number;                 // 圆角半径
+#### ShadowAtom - 阴影装饰
+
+设置元素的阴影效果：
+
+```javascript
+const shadowAtom = {
+  capability: 'shadow',
+
+  // 阴影颜色（RGB数组）
+  color: [0, 0, 0],
+
+  // 阴影偏移
+  x: 0,
+  y: 2,
+
+  // 阴影模糊
+  blur: 4
+};
+
+// 示例：卡片阴影
+{
+  capability: 'shadow',
+  color: [0, 0, 0],
+  x: 0,
+  y: 2,
+  blur: 8
+}
+
+// 示例：悬浮阴影
+{
+  capability: 'shadow',
+  color: [24, 144, 255],
+  x: 0,
+  y: 4,
+  blur: 12
 }
 ```
 
 ### 动画原子
 
-Trigger 触发类型：`'hover'` | `'click'` | `'drag'`
+#### ScaleAtom - 缩放动画
 
-#### ScaleAtom - 缩放
-```typescript
-interface ScaleAtom extends BaseAtom {
-  capability: 'scale';
-  value: number;                   // 缩放值，如 1.2 表示放大 20%
-  trigger: Trigger;                // 触发方式
+控制元素的缩放效果：
+
+```javascript
+const scaleAtom = {
+  capability: 'scale',
+
+  // 缩放值
+  value: 1,                         // 缩放比例
+
+  // 触发方式
+  trigger: 'hover' | 'click'        // 必须指定触发方式
+
+  // 可选：动画时长
+  duration?: number;
+};
+
+// 示例：悬停放大
+{
+  capability: 'scale',
+  value: 1.1,
+  trigger: 'hover'
+}
+
+// 示例：点击缩放
+{
+  capability: 'scale',
+  value: 0.8,
+  trigger: 'click'
 }
 ```
 
-#### OpacityAtom - 透明度
-```typescript
-interface OpacityAtom extends BaseAtom {
-  capability: 'opacity';
-  value: number;                   // 透明度 0-1
-  trigger: Trigger;                // 触发方式
+#### OpacityAtom - 透明度动画
+
+控制元素的透明度：
+
+```javascript
+const opacityAtom = {
+  capability: 'opacity',
+
+  // 触发条件
+  trigger: 'hover',  // 'hover' | 'click'
+
+  // 透明度值（0-1）
+  value: 1
+};
+
+// 示例：悬停时半透明
+{
+  capability: 'opacity',
+  trigger: 'hover',
+  value: 0.5
+}
+
+// 示例：点击时淡出
+{
+  capability: 'opacity',
+  trigger: 'click',
+  value: 0
 }
 ```
 
-#### RotateAtom - 旋转
-```typescript
-interface RotateAtom extends BaseAtom {
-  capability: 'rotate';
-  value: number;                   // 旋转角度（度）
-  trigger: 'hover' | 'click';     // 触发方式（不支持 drag）
+#### RotateAtom - 旋转动画
+
+控制元素的旋转角度：
+
+```javascript
+const rotateAtom = {
+  capability: 'rotate',
+
+  // 触发条件
+  trigger: 'hover',  // 'hover' | 'click'
+
+  // 旋转角度（度）
+  value: 0
+};
+
+// 示例：悬停时旋转45度
+{
+  capability: 'rotate',
+  trigger: 'hover',
+  value: 45
+}
+
+// 示例：点击时旋转90度
+{
+  capability: 'rotate',
+  trigger: 'click',
+  value: 90
 }
 ```
 
-#### TranslateAtom - 平移
-```typescript
-interface TranslateAtom extends BaseAtom {
-  capability: 'translate';
-  x: number;                       // X 轴平移距离
-  y: number;                       // Y 轴平移距离
-  trigger: 'drag';                 // 触发方式（仅支持 drag）
+#### TranslateAtom - 平移动画
+
+控制元素的位移：
+
+```javascript
+const translateAtom = {
+  capability: 'translate',
+
+  // X 轴位移
+  x: 0,
+
+  // Y 轴位移
+  y: 0
+};
+
+// 示例：向右下方移动
+{
+  capability: 'translate',
+  x: 10,
+  y: 10
+}
+
+// 示例：向左上方移动
+{
+  capability: 'translate',
+  x: -20,
+  y: -20
 }
 ```
 
 #### HeightAtom - 高度动画
-```typescript
-interface HeightAtom extends BaseAtom {
-  capability: 'height';
-  value: number;                   // 高度值
-  trigger: 'click' | 'hover';
-  collapsedValue?: number;         // 折叠时的高度
+
+动态控制元素高度：
+
+```javascript
+const heightAtom = {
+  capability: 'height',
+
+  // 高度值
+  height: 100
+};
+
+// 示例：收起状态
+{
+  capability: 'height',
+  height: 0
+}
+
+// 示例：自动高度
+{
+  capability: 'height',
+  height: 'auto'
 }
 ```
 
 #### WidthAtom - 宽度动画
-```typescript
-interface WidthAtom extends BaseAtom {
-  capability: 'width';
-  value: number;                   // 宽度值
-  trigger: 'click' | 'hover';
-  collapsedValue?: number;        // 折叠时的宽度
-}
-```
 
-#### CollapseAtom - 折叠
-```typescript
-interface CollapseAtom extends BaseAtom {
-  capability: 'collapse';
-  group: string;                   // 折叠组 ID
-  expandedValue?: number;          // 展开时的高度
-}
-```
-
-### 交互原子
-
-#### DragAtom - 拖拽
-```typescript
-interface DragAtom extends BaseAtom {
-  capability: 'drag';
-  spring?: boolean;                // 是否使用弹性拖拽
-  keepOnRelease?: boolean;        // 松开后是否保持位置
-}
-```
-
-#### ResizeAtom - 调整大小
-```typescript
-interface ResizeAtom extends BaseAtom {
-  capability: 'resize';
-  direction?: 'horizontal' | 'vertical' | 'both';
-}
-```
-
-#### ResizeHandleAtom - 缩放句柄
-```typescript
-interface ResizeHandleAtom extends BaseAtom {
-  capability: 'resize-handle';
-  edge?: 'nw' | 'ne' | 'sw' | 'se';              // 句柄位置
-  minWidth?: number;                             // 最小宽度
-  minHeight?: number;                            // 最小高度
-  handleSize?: number;                           // 句柄大小
-  handleColor?: [number, number, number];       // 句柄颜色
-  scaleMode?: 'container' | 'proportional';     // 缩放模式
-}
-```
-
-#### ScrollAtom - 滚动
-```typescript
-interface ScrollAtom extends BaseAtom {
-  capability: 'scroll';
-}
-```
-
-#### ClickAtom - 点击
-```typescript
-interface ClickAtom extends BaseAtom {
-  capability: 'click';
-  keepOnRelease?: boolean;         // 松开后是否保持状态
-}
-```
-
-#### HoverAtom - 悬停
-```typescript
-interface HoverAtom extends BaseAtom {
-  capability: 'hover';
-  keepOnRelease?: boolean;         // 离开后是否保持状态
-}
-```
-
-## keepOnRelease 属性
-
-交互原子支持 `keepOnRelease` 属性，控制交互结束后状态是否保持：
-
-| 原子类型 | keepOnRelease: true | keepOnRelease: false |
-|----------|---------------------|----------------------|
-| drag | 松开后保持新位置 | 松开后弹回原位 |
-| click | 切换点击状态 | 点击后立即恢复 |
-| hover | 鼠标离开后保持悬停效果 | 鼠标离开后恢复 |
+动态控制元素宽度：
 
 ```javascript
-{ capability: 'scale', value: 1.2, trigger: 'click' },
-{ capability: 'click', keepOnRelease: true }
+const widthAtom = {
+  capability: 'width',
+
+  // 宽度值
+  width: 200
+};
+
+// 示例：展开宽度
+{
+  capability: 'width',
+  width: 400
+}
 ```
 
-## scaleMode 缩放模式
+#### CollapseAtom - 折叠动画
 
-当 ResizeHandleAtom 的 scaleMode 为 `proportional` 时，内容自动等比缩放：
+控制元素的折叠状态：
 
 ```javascript
-position.x = originalX * (newWidth / initialWidth)
-position.y = originalY * (newHeight / initialHeight)
-width = originalWidth * (newWidth / initialWidth)
-height = originalHeight * (newHeight / initialHeight)
-size = originalSize * Math.min(ratioX, ratioY)
+const collapseAtom = {
+  capability: 'collapse',
+
+  // 折叠分组名称（用于分组控制）
+  group: 'group1',
+
+  // 展开时的值（可选）
+  expandedValue: 200,
+
+  // 折叠时的值（可选）
+  collapsedValue: 50,
+
+  // 动画时长（可选）
+  duration: 300
+};
+
+// 示例：默认折叠
+{
+  capability: 'collapse',
+  group: 'accordion'
+}
+
+// 示例：带展开值的折叠
+{
+  capability: 'collapse',
+  group: 'accordion',
+  expandedValue: 200,
+  duration: 300
+}
 ```
 
-## 设计理念：描述表现，而非构建样式
+## 完整示例
 
-AtomEngine 采用**声明式描述**而非**命令式构建**：
+### 示例 1：可拖拽卡片
 
 ```javascript
-{ capability: 'shadow', x: 4, y: 4, blur: 16, color: [0, 0, 0] }
+const molecules = [
+  {
+    id: 'draggable-card',
+    position: { x: 100, y: 100 },
+    atoms: [
+      // 背景装饰
+      {
+        capability: 'background',
+        color: [255, 255, 255]
+      },
+      // 边框装饰
+      {
+        capability: 'border',
+        width: 1,
+        color: [232, 232, 232],
+        radius: 8
+      },
+      // 阴影装饰
+      {
+        capability: 'shadow',
+        color: [0, 0, 0],
+        x: 0,
+        y: 2,
+        blur: 8
+      },
+      // 标题文本
+      {
+        capability: 'text',
+        text: '可拖拽卡片',
+        position: { x: 20, y: 20 },
+        size: 18,
+        color: [51, 51, 51]
+      },
+      // 描述文本
+      {
+        capability: 'text',
+        text: '拖拽此卡片到任意位置',
+        position: { x: 20, y: 50 },
+        size: 14,
+        color: [102, 102, 102]
+      },
+      // 拖拽交互
+      {
+        capability: 'drag',
+        onDragMove: (pos) => {
+          console.log('拖拽中:', pos);
+        }
+      }
+    ],
+    width: 200,
+    height: 120
+  }
+];
+
+const manager = new SubstanceManager(molecules);
+document.getElementById('app').appendChild(manager.getBakerManager().getBaker('baker-0').element);
 ```
 
-用户只需描述**原子有什么表现**，引擎负责将描述转换为 CSS。这种设计：
+### 示例 2：可调整大小的图片展示
 
-1. **无需 CSS 知识**: 用户不需要学习 CSS 语法
-2. **语义清晰**: `{ capability: 'shadow' }` 比 `box-shadow: 4px 4px 16px` 更易理解
-3. **跨平台一致**: 同一份描述，在任何环境下渲染效果一致
+```javascript
+const molecules = [
+  {
+    id: 'resizable-image',
+    position: { x: 50, y: 50 },
+    atoms: [
+      // 图片内容
+      {
+        capability: 'image',
+        src: 'https://picsum.photos/400/300',
+        width: 400,
+        height: 300,
+        alt: '示例图片'
+      },
+      // 边框装饰
+      {
+        capability: 'border',
+        width: 1,
+        color: [232, 232, 232],
+        radius: 4
+      },
+      // 调整大小交互
+      {
+        capability: 'resize',
+        minWidth: 200,
+        maxWidth: 800,
+        minHeight: 150,
+        maxHeight: 600,
+        onResize: (size) => {
+          console.log('新尺寸:', size);
+        }
+      },
+      // 调整把手
+      {
+        capability: 'resize-handle',
+        handleSize: 8,
+        handleColor: [24, 144, 255]
+      }
+    ]
+  }
+];
 
-## 容器透明化
-
-> **重要**: 容器（Beaker）本身是**直角方形**（`border-radius: 0`），完全透明，不产生任何视觉输出。
-
-AtomEngine 的容器默认设置为完全透明：
-- `background: transparent`
-- 无 box-shadow
-- 无 border-radius
-
-所有视觉效果（背景、边框、阴影、圆角）完全由原子负责渲染。
-
-## 布局计算
-
-### 情况一：所有分子都没有设置 vertical 和 horizontal
-跳过网格计算，保持原有 position 不变。
-
-### 情况二：至少有一个分子设置了 vertical 或 horizontal
-所有分子会吸附到最近的分子旁边。
-
-| 设置情况 | 行为 |
-|----------|------|
-| 仅 vertical | 吸附到 horizontal 最近的分子边 |
-| 仅 horizontal | 吸附到 vertical 最近的分子边 |
-| 两者都有 | 按网格计算位置 |
-
-### Gap 默认值
-- verticalGap 和 horizontalGap 没有定义时，默认 10px
-- **仅在有分子设置了 vertical/horizontal 时生效**
-
-### 核心公式
+const manager = new SubstanceManager(molecules);
+document.getElementById('app').appendChild(manager.getBakerManager().getBaker('baker-0').element);
 ```
-x = (horizontal - 1) * (cellWidth + horizontalGap)
-y = (vertical - 1) * (cellHeight + verticalGap)
+
+### 示例 3：带动画的可折叠列表
+
+```javascript
+const molecules = [
+  {
+    id: 'collapsible-list',
+    position: { x: 100, y: 100 },
+    atoms: [
+      // 列表背景
+      {
+        capability: 'background',
+        color: [245, 245, 245]
+      },
+      // 边框
+      {
+        capability: 'border',
+        width: 1,
+        color: [232, 232, 232],
+        radius: 8
+      },
+      // 列表标题
+      {
+        capability: 'text',
+        text: '点击展开/收起',
+        position: { x: 20, y: 20 },
+        size: 16,
+        color: [51, 51, 51]
+      },
+      // 内容项 1
+      {
+        capability: 'text',
+        text: '列表项 1',
+        position: { x: 20, y: 60 },
+        size: 14,
+        color: [102, 102, 102]
+      },
+      // 内容项 2
+      {
+        capability: 'text',
+        text: '列表项 2',
+        position: { x: 20, y: 90 },
+        size: 14,
+        color: [102, 102, 102]
+      },
+      // 内容项 3
+      {
+        capability: 'text',
+        text: '列表项 3',
+        position: { x: 20, y: 120 },
+        size: 14,
+        color: [102, 102, 102]
+      },
+      // 折叠动画（点击会自动切换折叠状态）
+      {
+        capability: 'collapse',
+        group: 'accordion',
+        expandedValue: 200,
+        collapsedValue: 50
+      }
+    ],
+    width: 200,
+    height: 200
+  }
+];
+
+const manager = new SubstanceManager(molecules);
+document.getElementById('app').appendChild(manager.getBakerManager().getBaker('baker-0').element);
 ```
 
-其中 cellWidth 和 cellHeight 默认为 100。
+### 示例 4：画板应用
 
-## License
+```javascript
+const molecules = [
+  {
+    id: 'drawing-board',
+    position: { x: 50, y: 50 },
+    atoms: [
+      // 画布
+      {
+        capability: 'canvas',
+        width: 800,
+        height: 600,
+        strokeColor: [0, 0, 0],
+        strokeWidth: 2
+      },
+      // 边框装饰
+      {
+        capability: 'border',
+        width: 2,
+        color: [51, 51, 51],
+        radius: 4
+      },
+      // 阴影
+      {
+        capability: 'shadow',
+        color: [0, 0, 0],
+        x: 0,
+        y: 4,
+        blur: 12
+      }
+    ]
+  }
+];
 
-MIT
+const manager = new SubstanceManager(molecules);
+document.getElementById('app').appendChild(manager.getBakerManager().getBaker('baker-0').element);
+```
+
+### 示例 5：多媒体展示面板
+
+```javascript
+const molecules = [
+  {
+    id: 'media-panel',
+    position: { x: 50, y: 50 },
+    atoms: [
+      // 背景
+      {
+        capability: 'background',
+        color: [26, 26, 46]
+      },
+      // 标题
+      {
+        capability: 'text',
+        text: '多媒体展示',
+        position: { x: 20, y: 20 },
+        size: 24,
+        color: [255, 255, 255]
+      },
+      // 视频
+      {
+        capability: 'video',
+        src: 'https://example.com/video.mp4',
+        position: { x: 20, y: 70 },
+        width: 400,
+        height: 225
+      },
+      // 音频
+      {
+        capability: 'audio',
+        src: 'https://example.com/audio.mp3',
+        position: { x: 20, y: 310 }
+      }
+    ],
+    width: 440,
+    height: 400
+  }
+];
+
+const manager = new SubstanceManager(molecules);
+document.getElementById('app').appendChild(manager.getBakerManager().getBaker('baker-0').element);
+```
+
+### 示例 6：交互式表单卡片
+
+```javascript
+const molecules = [
+  {
+    id: 'form-card',
+    position: { x: 100, y: 100 },
+    atoms: [
+      // 卡片背景
+      {
+        capability: 'background',
+        color: [255, 255, 255]
+      },
+      // 边框
+      {
+        capability: 'border',
+        width: 1,
+        color: [232, 232, 232],
+        radius: 12
+      },
+      // 阴影
+      {
+        capability: 'shadow',
+        color: [0, 0, 0],
+        x: 0,
+        y: 4,
+        blur: 16
+      },
+      // 标题
+      {
+        capability: 'text',
+        text: '用户信息',
+        position: { x: 24, y: 24 },
+        size: 20,
+        color: [51, 51, 51]
+      },
+      // 用户名标签
+      {
+        capability: 'text',
+        text: '用户名',
+        position: { x: 24, y: 70 },
+        size: 14,
+        color: [102, 102, 102]
+      },
+      // 用户名输入占位
+      {
+        capability: 'text',
+        text: '[输入框: username]',
+        position: { x: 24, y: 95 },
+        size: 14,
+        color: [153, 153, 153]
+      },
+      // 邮箱标签
+      {
+        capability: 'text',
+        text: '邮箱',
+        position: { x: 24, y: 140 },
+        size: 14,
+        color: [102, 102, 102]
+      },
+      // 邮箱输入占位
+      {
+        capability: 'text',
+        text: '[输入框: email]',
+        position: { x: 24, y: 165 },
+        size: 14,
+        color: [153, 153, 153]
+      },
+      // 提交按钮背景
+      {
+        capability: 'background',
+        color: [24, 144, 255],
+        position: { x: 24, y: 220 }
+      },
+      // 提交按钮文本
+      {
+        capability: 'text',
+        text: '提交',
+        position: { x: 24, y: 220 },
+        size: 14,
+        color: [255, 255, 255]
+      },
+      // 按钮边框
+      {
+        capability: 'border',
+        width: 0,
+        radius: 4,
+        position: { x: 24, y: 220 }
+      },
+      // 按钮点击交互
+      {
+        capability: 'click',
+        onClick: () => {
+          console.log('表单提交');
+        }
+      },
+      // 按钮悬停效果
+      {
+        capability: 'hover',
+        onMouseEnter: () => {
+          console.log('鼠标进入按钮');
+        },
+        onMouseLeave: () => {
+          console.log('鼠标离开按钮');
+        }
+      }
+    ],
+    width: 300,
+    height: 300
+  }
+];
+
+const manager = new SubstanceManager(molecules);
+document.getElementById('app').appendChild(manager.getBakerManager().getBaker('baker-0').element);
+```
+
+## API 参考
+
+### SubstanceManager
+
+应用入口类，管理所有分子：
+
+```typescript
+class SubstanceManager {
+  constructor(molecules: Molecule[]);
+
+  getBakerManager(): BeakerManager;
+}
+```
+
+**构造函数参数**：
+- `molecules: Molecule[]` - 分子配置数组
+
+**方法**：
+- `getBakerManager()` - 获取 BeakerManager 实例
+
+### BeakerManager
+
+管理所有 Beaker 实例：
+
+```typescript
+class BeakerManager {
+  constructor(molecules: Molecule[]);
+
+  getBaker(id: string): Beaker | undefined;
+  getAllBakers(): Beaker[];
+  getBakerState(id: string): BakerState | undefined;
+  getAllBakerStates(): BakerState[];
+  getBakerCount(): number;
+}
+```
+
+**方法**：
+- `getBaker(id)` - 获取指定 Baker（ID 格式为 `baker-${index}`，如 `baker-0`）
+- `getAllBakers()` - 获取所有 Baker（返回数组）
+- `getBakerState(id)` - 获取指定 Baker 的状态
+- `getAllBakerStates()` - 获取所有 Baker 的状态（返回数组）
+- `getBakerCount()` - 获取 Baker 数量
+
+### Beaker
+
+分子的运行时表示：
+
+```typescript
+class Beaker {
+  readonly id: string;
+  readonly molecule: Molecule;
+  readonly element: HTMLElement;
+  readonly bakerIndex: number;
+  state: BakerState;
+
+  constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback);
+
+  getState(): BakerState;
+  updateState(newState: Partial<BakerState>): void;
+  updatePosition(x: number, y: number): void;
+}
+```
+
+**属性**：
+- `id` - Baker 实例 ID
+- `molecule` - 关联的分子配置对象
+- `element` - DOM 容器元素
+- `bakerIndex` - Baker 在 SubstanceManager 中的索引
+- `state` - 当前状态
+
+**方法**：
+- `getState()` - 获取当前状态的副本
+- `updateState(newState)` - 更新状态并触发回调
+- `updatePosition(x, y)` - 更新位置并同步 DOM
+
+### BakerState
+
+Baker 的状态对象：
+
+```typescript
+interface BakerState {
+  id: string;
+  moleculeId: string;
+  isHovered: boolean;
+  isClicked: boolean;
+  isDragging: boolean;
+  isResizing: boolean;
+  position: { x: number; y: number };
+  width?: number;
+  height?: number;
+  scrollX?: number;
+  scrollY?: number;
+  collapsedGroups: Set<string>;
+}
+```
+
+**状态属性**：
+- `id` - 状态 ID
+- `moleculeId` - 关联的分子 ID
+- `isHovered` - 是否悬停
+- `isClicked` - 是否点击
+- `isDragging` - 是否拖拽中
+- `isResizing` - 是否调整大小中
+- `position` - 位置坐标（x, y）
+- `width?` - 宽度（可选）
+- `height?` - 高度（可选）
+- `scrollX?` - 水平滚动位置（可选）
+- `scrollY?` - 垂直滚动位置（可选）
+- `collapsedGroups` - 折叠组状态（Set 集合）
+
+### Molecule
+
+分子配置接口：
+
+```typescript
+interface Molecule {
+  id: string;
+  position?: { x: number; y: number; z?: number };
+  vertical?: number;
+  horizontal?: number;
+  verticalGap?: number;
+  horizontalGap?: number;
+  atoms: any[];
+  width?: number;
+  height?: number;
+  radius?: number;
+}
+```
+
+**配置属性**：
+- `id` - 唯一标识符（必需）
+- `position` - 位置坐标（可选）
+- `vertical` - 垂直网格行数（可选）
+- `horizontal` - 水平网格列数（可选）
+- `verticalGap` - 垂直间距（可选）
+- `horizontalGap` - 水平间距（可选）
+- `atoms` - 原子配置数组（必需）
+- `width` - 宽度（可选）
+- `height` - 高度（可选）
+- `radius` - 圆角（可选）
+
+## 常见问题
+
+### Q: 如何获取分子的当前状态？
+
+```javascript
+const baker = manager.getBakerManager().getBaker('baker-0');
+const state = baker.getState();
+console.log(state.position, state.width, state.height);
+```
+
+### Q: 如何更新分子的状态？
+
+```javascript
+const baker = manager.getBakerManager().getBaker('baker-0');
+baker.updateState({
+  position: { x: 200, y: 100 },
+  width: 300,
+  height: 200
+});
+```
+
+### Q: 如何处理原子之间的状态共享？
+
+```javascript
+const baker = manager.getBakerManager().getBaker('baker-0');
+baker.updateState({
+  customData: { sharedValue: 'test' }
+});
+// 在原子回调中访问
+const state = baker.getState();
+console.log(state.customData?.sharedValue);
+```
+
+### Q: 如何销毁不再需要的分子？
+
+当前版本尚未实现`destroy()`方法。如需移除分子，可直接从DOM中移除元素：
+
+```javascript
+const baker = manager.getBakerManager().getBaker('baker-0');
+if (baker) {
+  baker.element.remove();
+}
+```
+
+### Q: 如何动态添加新的分子？
+
+```javascript
+const newMolecule = {
+  id: 'new-molecule',
+  position: { x: 300, y: 200 },
+  atoms: [
+    {
+      capability: 'text',
+      text: 'New Molecule'
+    }
+  ]
+};
+
+const currentMolecules = [...existingMolecules, newMolecule];
+manager.process(currentMolecules);
+```
+
+### Q: 如何实现自定义原子类型？
+
+原子系统设计为可扩展的，你可以在项目中创建自定义原子：
+
+```javascript
+// 1. 创建原子类
+class CustomAtom {
+  static type = 'CustomAtom';
+
+  static create(config, context) {
+    const element = document.createElement('div');
+    // 自定义逻辑
+    return {
+      element,
+      update(newConfig) {
+        // 更新逻辑
+      },
+      destroy() {
+        // 清理逻辑
+      }
+    };
+  }
+}
+
+// 2. 在分子中使用
+const molecule = {
+  id: 'custom-molecule',
+  atoms: [
+    {
+      capability: 'custom',
+      // 自定义配置
+    }
+  ]
+};
+```
+
+## 类型定义
+
+完整的 TypeScript 类型定义已包含在包中：
+
+```typescript
+// 分子类型
+interface Molecule {
+  id: string;
+  position?: { x: number; y: number; z?: number };
+  vertical?: number;
+  horizontal?: number;
+  verticalGap?: number;
+  horizontalGap?: number;
+  atoms: Atom[];
+  width?: number;
+  height?: number;
+  radius?: number;
+}
+
+// 原子类型
+type Atom = ContentAtom | InputAtom | DecorationAtom | AnimationAtom;
+
+// 内容原子
+type ContentAtom =
+  | TextAtom
+  | ImageAtom
+  | VideoAtom
+  | AudioAtom
+  | CodeAtom
+  | IconAtom
+  | CanvasAtom;
+
+// 输入原子
+type InputAtom =
+  | ClickAtom
+  | DragAtom
+  | HoverAtom
+  | ResizeAtom
+  | ResizeHandleAtom
+  | ScrollAtom;
+
+// 装饰原子
+type DecorationAtom =
+  | BackgroundAtom
+  | BorderAtom
+  | ShadowAtom;
+
+// 动画原子
+type AnimationAtom =
+  | ScaleAtom
+  | OpacityAtom
+  | RotateAtom
+  | TranslateAtom
+  | HeightAtom
+  | WidthAtom
+  | CollapseAtom;
+
+// Baker 状态
+interface BakerState {
+  id: string;
+  moleculeId: string;
+  isHovered: boolean;
+  isClicked: boolean;
+  isDragging: boolean;
+  isResizing: boolean;
+  position: { x: number; y: number };
+  width?: number;
+  height?: number;
+  scrollX?: number;
+  scrollY?: number;
+  collapsedGroups: Set<string>;
+}
+```
+
+## 更新日志
+
+### v3.0.0
+- 全新架构重构
+- 支持 TypeScript
+- 优化渲染性能
+- 增加新的原子类型
+- 完善文档和示例
+
+### v2.0.0
+- 支持 ES Module
+- 增加动画系统
+- 完善交互功能
+
+### v1.0.0
+- 初始版本发布
+- 基础渲染功能
+- 核心原子类型
+
+## 许可证
+
+MIT License

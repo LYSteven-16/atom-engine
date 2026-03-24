@@ -1,1024 +1,1487 @@
-# AtomEngine 原子引擎
+# AtomEngine 架构文档
 
-> 纯 JavaScript 组件渲染引擎，无需任何框架依赖
+本文档详细描述 AtomEngine 的内部架构设计，帮助开发者理解引擎的工作原理，以便更好地使用、扩展和定制引擎。
 
-## ⚠️ 使用前检查 CSS
+## 架构概述
 
-引擎依赖浏览器的 `left`/`top` 定位，宿主页面需确保：
+AtomEngine 是一个基于层级分解（Atomic Design）的纯 JavaScript 组件渲染引擎，采用数据驱动架构。引擎通过声明式配置生成复杂的交互式用户界面，无需依赖任何前端框架。
 
-```css
-/* 必须重置的默认样式 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+### 核心设计目标
 
-body {
-  margin: 0;
-  padding: 0;
+1. **零依赖**：仅依赖原生 JavaScript 和 DOM API，可运行于任何现代浏览器
+2. **数据驱动**：通过 JSON 配置声明界面，引擎自动处理 DOM 创建和交互
+3. **原子化设计**：组件由原子组成，支持高度复用和组合
+4. **可扩展性**：支持自定义原子类型，方便扩展功能
+
+### 技术选型理由
+
+**TypeScript**：
+- 提供完整的类型系统，支持编译时检查
+- 增强代码可读性和可维护性
+- IDE 支持更好，提高开发效率
+
+**ES Module + CommonJS 双格式输出**：
+- ES Module 支持现代浏览器的原生模块加载
+- CommonJS 支持 Node.js 环境和传统打包工具
+
+**tsup 构建工具**：
+- 基于 esbuild，速度极快
+- 配置简单，支持 TypeScript 和 Bundle
+- 内置 DTS 生成，支持类型声明
+
+## 系统架构
+
+### 整体架构图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        应用层                                │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              SubstanceManager (物质管理器)            │    │
+│  │  - 管理所有分子                                      │    │
+│  │  - 处理布局计算                                      │    │
+│  │  - 创建 BeakerManager 实例                           │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            │                                 │
+│                            ▼                                 │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │              BeakerManager (焙烤管理器)               │    │
+│  │  - 管理所有 Beaker 实例                               │    │
+│  │  - 提供 Baker 查询接口                                │    │
+│  │  - 维护 Baker 状态快照                                │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                            │                                 │
+│          ┌─────────────────┼─────────────────┐             │
+│          ▼                 ▼                 ▼             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │    Beaker    │  │    Beaker    │  │    Beaker    │      │
+│  │  (分子-1)     │  │  (分子-2)     │  │  (分子-N)     │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│          │                 │                 │             │
+│          ▼                 ▼                 ▼             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                      原子层                          │    │
+│  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐       │    │
+│  │  │ 内容原子 │ │ 输入原子 │ │ 装饰原子 │ │ 动画原子 │       │    │
+│  │  └────────┘ └────────┘ └────────┘ └────────┘       │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 架构分层
+
+1. **应用层**：用户代码，定义分子配置
+2. **管理层**：SubstanceManager、BeakerManager 管理组件生命周期
+3. **组件层**：Beaker 表示分子的运行时实例
+4. **原子层**：Atom 实现具体功能
+
+## 核心组件详解
+
+### 1. SubstanceManager (物质管理器)
+
+**文件位置**：`/src/SubstanceManager.ts`
+
+**职责**：
+- 作为引擎的入口点
+- 管理所有分子（Molecule）的配置
+- 处理布局计算
+- 创建和销毁 BeakerManager 实例
+
+**关键属性**：
+```typescript
+private _beakerManager: BeakerManager;   // BeakerManager 实例
+```
+
+**关键方法**：
+
+#### constructor(molecules: Molecule[])
+```typescript
+constructor(molecules: Molecule[]) {
+  // 1. 处理分子配置（计算位置、网格等）
+  const processedMolecules = this.process(molecules);
+
+  // 2. 创建 BeakerManager 实例
+  this._beakerManager = new BeakerManager(processedMolecules);
 }
 ```
 
-**常见问题**：
-- 浏览器默认 `body { margin: 8px }` 会导致分子偏移
-- 容器的 `margin: 0 auto` 居中会影响子元素定位基准
-- `position: relative` 的祖先元素会作为定位参考
+#### process(molecules: Molecule[], cellWidth?: number, cellHeight?: number): Molecule[]
+```typescript
+private process(molecules: Molecule[], cellWidth: number = 100, cellHeight: number = 100): Molecule[] {
+  // 内部私有方法，处理分子布局计算
+  
+  // 1. 检查是否有 vertical 或 horizontal 属性
+  const hasVerticalOrHorizontal = molecules.some(m =>
+    m.vertical !== undefined || m.horizontal !== undefined
+  );
 
-## 核心理念
+  // 2. 如果没有网格属性，直接返回原始位置
+  if (!hasVerticalOrHorizontal) {
+    return molecules.map(molecule => ({
+      ...molecule,
+      position: molecule.position ?? { x: 0, y: 0 }
+    }));
+  }
 
-将 UI 组件拆分为最小单元「原子」，通过组合原子构建复杂界面。引擎自动处理渲染、样式、动画和交互。
+  // 3. 为所有分子设置默认值
+  const moleculesWithDefaults = molecules.map(molecule => ({
+    ...molecule,
+    vertical: molecule.vertical ?? 1,
+    horizontal: molecule.horizontal ?? 1,
+    verticalGap: molecule.verticalGap ?? 10,
+    horizontalGap: molecule.horizontalGap ?? 10,
+    position: molecule.position ?? { x: 0, y: 0 }
+  }));
 
-## 数据格式统一原则
+  // 4. 根据网格计算位置
+  const defaultGap = 10;
+  return moleculesWithDefaults.map(currentMolecule => {
+    const hasVertical = currentMolecule.vertical !== undefined;
+    const hasHorizontal = currentMolecule.horizontal !== undefined;
+    const originalPosition = currentMolecule.position;
 
-从 Demo 到引擎内部，数据格式完全一致，只有数据值变化。
+    let x: number;
+    let y: number;
 
-```javascript
-// Demo 直接写 molecules 数组
+    if (hasVertical && !hasHorizontal) {
+      y = (currentMolecule.vertical! - 1) * (cellHeight + (currentMolecule.verticalGap ?? defaultGap));
+      x = originalPosition?.x ?? 0;
+    } else if (hasHorizontal && !hasVertical) {
+      x = (currentMolecule.horizontal! - 1) * (cellWidth + (currentMolecule.horizontalGap ?? defaultGap));
+      y = originalPosition?.y ?? 0;
+    } else {
+      const row = Math.floor((currentMolecule.vertical! - 1));
+      const col = currentMolecule.horizontal! - 1;
+      x = col * (cellWidth + (currentMolecule.horizontalGap ?? defaultGap));
+      y = row * (cellHeight + (currentMolecule.verticalGap ?? defaultGap));
+    }
+
+    return {
+      ...currentMolecule,
+      position: { x, y }
+    };
+  });
+}
+```
+
+#### getBakerManager(): BeakerManager
+```typescript
+public getBakerManager(): BeakerManager {
+  return this._beakerManager;
+}
+```
+
+**使用示例**：
+```typescript
 const molecules = [
   {
-    id: 'mol-A',
-    position: { x: 0, y: 0 },  // 初始为相对坐标或 0
-    atoms: [...],
-    vertical: 1,       // 网格垂直位置
-    horizontal: 1,     // 网格水平位置
-    verticalGap: 10,   // 与上下分子的间距
-    horizontalGap: 10, // 与左右分子的间距
-  },
-  ...
+    id: 'my-molecule',
+    position: { x: 100, y: 100 },
+    atoms: [...]
+  }
 ];
+
+const manager = new SubstanceManager(molecules);
+// BeakerManager 会自动将 Baker 的 DOM 元素添加到 document.body
 ```
 
-## 架构总览
+### 2. BeakerManager (焙烤管理器)
 
-### 组件关系
+**文件位置**：`/src/BeakerManager.ts`
 
-| 组件 | 是否导出 | 类型 | 由谁创建 |
-|------|---------|------|---------|
-| SubstanceManager | 是 | 实例类 | demo 创建 |
-| BeakerManager | 否 | 实例类 | SubstanceManager 创建 |
-| Beaker | 否 | 实例类 | BeakerManager 创建 |
-| AtomRenderer | 否 | 独立模块 | Beaker 使用 |
+**职责**：
+- 管理所有 Beaker 实例的生命周期
+- 提供 Baker 查询接口
+- 维护 Baker 状态快照
 
-### 渲染位置
-
-#### Beaker 渲染到页面
-- 渲染容器：**document.body**（页面本身）
-- 定位基准：**页面左上角 (0, 0)**
-- 定位方式：每个 Beaker 的 element 设置 `style.position = 'absolute'`
-- 相对定位：element.style.left 和 element.style.top 相对于 document.body
-
-#### AtomRenderer 渲染到分子容器
-- 渲染容器：**Beaker.element**（分子 DOM 容器）
-- 定位基准：**分子容器左上角 (0, 0)**
-- 定位方式：原子 DOM 元素设置 `style.position = 'absolute'`
-- 相对定位：原子元素的 style.left 和 style.top 相对于 Beaker.element
-- Beaker 负责把分子容器添加到页面
-
-### 渲染流程（逐行描述）
-
-```
-1. demo 调用：new SubstanceManager(molecules)
-2. SubstanceManager 构造函数执行：
-   2.1 调用 this.process(molecules) 计算每个分子的 position
-   2.2 创建 this.beakerManager = new BeakerManager(processedMolecules)
-   2.3 构造函数结束，不返回任何值（返回 undefined）
-3. BeakerManager 构造函数执行：
-   3.1 创建 this.bakers = new Map()
-   3.2 遍历 processedMolecules，对每个 molecule：
-       3.2.1 生成 baker-id（如 'baker-0'）
-       3.2.2 创建 baker = new Beaker(baker-id, molecule, this.handleBakerStateChange.bind(this))
-       3.2.3 this.bakers.set(baker-id, baker)
-       3.2.4 document.body.appendChild(baker.element)
-   3.3 构造函数结束
-4. Beaker 构造函数执行：
-   4.1 保存 this.id = id
-   4.2 保存 this.molecule = molecule
-   4.3 创建 this.element = document.createElement('div')
-   4.4 设置 this.element.style.position = 'absolute'
-   4.5 设置 this.element.style.left = `${molecule.position.x}px`
-   4.6 设置 this.element.style.top = `${molecule.position.y}px`
-   4.7 调用 this.init()
-   4.8 构造函数结束
-5. Beaker.init() 执行：
-   5.1 this.decompose() 分解原子为 renderable 和 others
-   5.2 this.calculateContainerSize() 计算容器宽高
-   5.3 设置 this.element.style.width 和 this.element.style.height
-   5.4 this.renderDecorationAtoms() 渲染背景、边框、阴影
-   5.5 this.renderContentAtoms() 渲染文本、图片、视频、音频、代码、图标、画布
-   5.6 this.renderResizeHandles() 渲染缩放句柄
-   5.7 this.applyAnimationStyles() 应用 scale、opacity、rotate、translate 动画
-   5.8 this.setupInputHandlers() 设置 drag、resize、scroll、click 交互
-   5.9 this.attachEventListeners() 绑定 hover、click、drag 事件监听
-6. Beaker 渲染完成，element 已在步骤 3.2.4 添加到 document.body
-7. 所有 Beaker 渲染完成，页面显示完成
-```
-
-### 代码调用关系图
-
-```
-页面 (document.body，定位基准 0,0)
-    │
-    └── Beaker.element (position: absolute, left: x, top: y)
-           │
-           └── 原子 DOM 元素们 (position: absolute，相对于 Beaker.element 定位)
-                │
-                └── AtomRenderer.render() 生成
-
-SubstanceManager (导出)
-    │
-    └── BeakerManager (非导出)
-           │
-           └── Beaker (非导出)
-                  │
-                  ├── 创建 element，设置 position: absolute，left，top
-                  ├── 把 element 添加到 document.body
-                  │
-                  └── AtomRenderer (非导出)
-                         │
-                         └── 渲染原子到 Beaker.element 内
-```
-
-### 详细类定义
-
-#### SubstanceManager
+**关键属性**：
 ```typescript
-// 导出
-class SubstanceManager {
-  private beakerManager: BeakerManager;
+private bakers: Map<string, Beaker>;           // Baker 实例映射
+private bakerStates: Map<string, BakerState>;  // Baker 状态快照
+private bakerIdCounter: number;                // Baker ID 计数器
+```
 
-  constructor(molecules: Molecule[]) {
-    // 1. 计算位置
-    const processedMolecules = this.process(molecules);
-    // 2. 创建 BeakerManager
-    this.beakerManager = new BeakerManager(processedMolecules);
-    // 3. 构造函数结束，不返回任何值
-  }
+**关键方法**：
 
-  // 计算每个分子的 position
-  // 输入：molecules[] (含 vertical、horizontal、verticalGap、horizontalGap)
-  // 输出：molecules[] (position 已计算)
-  private process(molecules: Molecule[]): Molecule[] {
-    // 1. 判断是否有 vertical 或 horizontal 属性
-    // 2. 如果没有：直接设置 position 为原 position 或 {x:0, y:0}
-    // 3. 如果有：
-    //    - 设置默认值：vertical:1, horizontal:1, verticalGap:10, horizontalGap:10
-    //    - cellWidth 默认 100，cellHeight 默认 100
-    //    - 计算规则：
-    //      - 如果只有 vertical：根据 vertical 计算 y，同一 vertical 的分子排在同一行
-    //      - 如果只有 horizontal：根据 horizontal 计算 x
-    //      - 如果两者都有：根据 horizontal 计算 x，根据 vertical 计算 y
-    //    - 返回带 position 的 molecules
+#### constructor(molecules: Molecule[])
+```typescript
+constructor(molecules: Molecule[]) {
+  // 1. 初始化属性
+  this.bakers = new Map();
+  this.bakerStates = new Map();
+  this.bakerIdCounter = 0;
+
+  // 2. 批量创建 Beaker 实例
+  molecules.forEach((molecule) => {
+    const bakerIndex = this.bakerIdCounter;
+    const bakerId = `baker-${this.bakerIdCounter++}`;
+
+    // 创建 Beaker 实例（Beaker 内部创建自己的 DOM 元素）
+    const baker = new Beaker(bakerId, molecule, bakerIndex, this.handleBakerStateChange.bind(this));
+    this.bakers.set(bakerId, baker);
+
+    // 保存状态快照
+    this.bakerStates.set(bakerId, baker.getState());
+
+    // 将 Beaker 的 DOM 元素添加到 document.body
+    document.body.appendChild(baker.element);
+  });
+}
+
+private handleBakerStateChange(bakerId: string, state: Partial<BakerState>): void {
+  const currentState = this.bakerStates.get(bakerId);
+  if (currentState) {
+    this.bakerStates.set(bakerId, { ...currentState, ...state });
   }
 }
 ```
 
-#### BeakerManager
+#### getBaker(id: string): Beaker | undefined
 ```typescript
-// 非导出
-class BeakerManager {
-  private bakers: Map<string, Beaker> = new Map();
-  private bakerStates: Map<string, BakerState> = new Map();
-  private bakerIdCounter: number = 0;
-
-  constructor(molecules: Molecule[]) {
-    // 遍历每个 molecule，创建 Beaker
-    molecules.forEach(molecule => {
-      const bakerId = `baker-${this.bakerIdCounter++}`;
-      const baker = new Beaker(bakerId, molecule, this.handleBakerStateChange.bind(this));
-      this.bakers.set(bakerId, baker);
-      // 直接添加到 document.body
-      document.body.appendChild(baker.element);
-    });
-  }
-
-  private handleBakerStateChange(bakerId: string, state: Partial<BakerState>): void {
-    // 更新 baker 状态
-  }
+getBaker(id: string): Beaker | undefined {
+  return this.bakers.get(id);
 }
 ```
 
-#### Beaker
+#### getAllBakers(): Beaker[]
 ```typescript
-// 非导出
-class Beaker {
-  public readonly id: string;
-  public readonly molecule: Molecule;
-  public readonly element: HTMLElement;
-  private state: BakerState;
-
-  constructor(id: string, molecule: Molecule, onStateChange?: StateChangeCallback) {
-    this.id = id;
-    this.molecule = molecule;
-    this.element = document.createElement('div');
-    this.element.style.position = 'absolute';
-    this.element.style.left = `${molecule.position?.x ?? 0}px`;
-    this.element.style.top = `${molecule.position?.y ?? 0}px`;
-    this.init();
-  }
-
-  private init(): void {
-    // 分解原子
-    // 计算容器大小
-    // 渲染所有原子
-    // 设置交互处理
-  }
+getAllBakers(): Beaker[] {
+  return Array.from(this.bakers.values());
 }
 ```
 
-#### AtomRenderer
+#### getBakerState(id: string): BakerState | undefined
 ```typescript
-// 非导出
-class AtomRenderer {
-  render(atom: Atom): RenderResult {
-    // 1. 根据 atom.capability 创建对应 DOM 元素
-    // 2. 设置样式（position: absolute, left, top）
-    // 3. 把原子 DOM 元素添加到 Beaker.element（分子容器）
-    // 4. 返回 RenderResult
-  }
+getBakerState(id: string): BakerState | undefined {
+  return this.bakerStates.get(id);
 }
 ```
 
-### 渲染流程（完整）
-
-```
-Demo
-  │
-  └─ new SubstanceManager(molecules)
-       │
-       ├─ process(molecules)
-       │    └─ 计算每个分子的 position
-       │
-       ├─ new BeakerManager(processedMolecules)
-       │    │
-       │    ├─ for each molecule:
-       │    │    └─ new Beaker(baker-id, molecule, onStateChange)
-       │    │         │
-       │    │         ├─ 创建 element (position: absolute)
-       │    │         ├─ decompose() 分解原子
-       │    │         ├─ calculateContainerSize() 计算大小
-       │    │         ├─ renderDecorationAtoms() 渲染装饰
-       │    │         ├─ renderContentAtoms() 渲染内容
-       │    │         ├─ setupInputHandlers() 设置交互
-       │    │         └─ document.body.appendChild(element)
-       │    │
-       │    └─ 管理所有 Beaker 实例
-       │
-       └─ 构造函数完成，不返回任何东西
-```
-
-### 初始化 vs 运行时
-
-#### 初始化阶段（一次）
-
-```
-Demo → new SubstanceManager(molecules)
-              ↓
-       ┌────────────────────┐
-       │ 1. process() 计算位置 │
-       │ 2. 创建 BeakerManager │
-       │ 3. 创建 Beaker 实例   │
-       │ 4. 渲染到 document.body │
-       └────────────────────┘
-```
-
-#### 运行时阶段
-
-```
-用户输入 → Beaker 处理 → 修改 this.atoms → 重新渲染
-                              ↑
-                    不再访问原始 molecule 数据
-```
-
-## 核心组件职责
-
-| 组件 | 类型 | 职责 | 说明 |
-|------|------|------|------|
-| **SubstanceManager** | 实例类，导出 | 入口点，布局计算 | demo 创建实例，内部创建 BeakerManager |
-| **BeakerManager** | 实例类，非导出 | 管理多个 Beaker | 由 SubstanceManager 创建，维护 baker 集合和状态 |
-| **Beaker** | 实例类，非导出 | 单个分子渲染器 | 每个 molecule 一个实例，有唯一 ID，向 BeakerManager 报告状态 |
-| **AtomRenderer** | 独立模块，非导出 | 原子渲染器 | 由 Beaker 使用，根据原子类型渲染对应 DOM 元素 |
-
-## 导出说明
-
-本引擎**仅导出 SubstanceManager**，其他类均为内部实现。
-
-### 导入路径
-
-构建后生成的入口文件为 `dist/SubstanceManager.mjs`（注意不是 `index.mjs`）：
-
-```javascript
-import { SubstanceManager } from './dist/SubstanceManager.mjs';
-```
-
-### 使用方式
-
-```javascript
-const molecules = [...];
-
-// 创建实例，自动渲染到页面
-new SubstanceManager(molecules);
-
-// 不返回任何东西
-```
-
-## 渲染位置
-
-分子直接渲染到页面（document.body），以页面左上角 (0, 0) 为定位基准。
-
-每个 Beaker 的 DOM 元素：
-- `position: absolute`
-- 相对于 document.body 定位
-- 位置由 molecule.position 或计算后的 position 决定
-
-### 容器默认透明
-
-Beaker 容器默认保持完全透明，不添加任何可见样式：
-
-```css
-background: transparent;
-border: none;
-outline: none;
-box-shadow: none;
-cursor: default;
-overflow: visible;
-```
-
-只有通过原子（如 background、border、shadow）显式添加装饰，内容才会可见。
-
-## Molecule 分子
-
-分子是原子的容器，也是渲染的基本单元。
-
-### Molecule 结构
-
+#### getAllBakerStates(): BakerState[]
 ```typescript
-interface Molecule {
-  id: string;
-  position?: { x: number; y: number; z?: number };  // 绝对位置
-  vertical?: number;       // 网格垂直位置
-  horizontal?: number;     // 网格水平位置
-  verticalGap?: number;     // 与上下分子的间距，默认 10
-  horizontalGap?: number;  // 与左右分子的间距，默认 10
-  width?: number;          // 分子宽度
-  height?: number;         // 分子高度
-  atoms: Atom[];
+getAllBakerStates(): BakerState[] {
+  return Array.from(this.bakerStates.values());
 }
 ```
 
-## Atom 原子
-
-原子是渲染的最小单元。原子分为四类：内容原子、装饰原子、动画原子、交互原子。
-
-### 属性可选性
-
-原子的大部分属性都是**可选的**，使用 `?` 标记。未设置的属性会使用默认值或自动计算。
-
-| 属性 | 默认值 |
-|------|--------|
-| `position` | `{ x: 0, y: 0 }` |
-| `width`/`height` 等尺寸 | 父容器的 100% |
-| `radius` | `0`（无圆角） |
-| `duration` | `0`（无动画过渡） |
-| `z` | `0` |
-
+#### getBakerCount(): number
 ```typescript
-type Atom = TextAtom | ImageAtom | VideoAtom | AudioAtom | CodeAtom | IconAtom | CanvasAtom |
-  BackgroundAtom | BorderAtom | ShadowAtom |
-  ScaleAtom | OpacityAtom | RotateAtom | TranslateAtom |
-  DragAtom | ResizeAtom | ResizeHandleAtom |
-  ScrollAtom | ClickAtom |
-  HeightAtom | WidthAtom | CollapseAtom;
-```
-
-### 基类
-
-```typescript
-interface BaseAtom {
-  id?: string;                    // 原子 ID，可选
-  position?: Position;             // 位置，相对于分子容器
-  duration?: number;               // 动画时长（毫秒）
-}
-
-interface Position {
-  x: number;
-  y: number;
-  z?: number;
+getBakerCount(): number {
+  return this.bakers.size;
 }
 ```
 
-### 内容原子（渲染实际内容）
+**Baker ID 命名规则**：`baker-${counter}`，其中 counter 是 BeakerManager 内部的原子计数器，从 0 开始递增。第一个创建的 Baker ID 为 `baker-0`，第二个为 `baker-1`，以此类推。
 
-#### TextAtom - 文本
+### 3. Beaker (焙烤器)
+
+**文件位置**：`/src/Beaker.ts`
+
+**职责**：
+- 表示分子的运行时实例
+- 管理原子的创建和销毁
+- 维护分子状态
+- 应用装饰和动画
+
+**关键属性**：
 ```typescript
-interface TextAtom extends BaseAtom {
-  capability: 'text';
-  text: string;                    // 文本内容
-  size: number;                    // 字体大小
-  color: [number, number, number]; // RGB 颜色，如 [255, 0, 0]
-}
+public readonly id: string;                      // Baker 实例 ID
+public readonly molecule: Molecule;             // 分子配置对象
+public readonly element: HTMLElement;           // DOM 容器
+public readonly bakerIndex: number;             // Baker 索引
+public state: BakerState;                       // 当前状态
+private triggers: Set<string> = new Set();      // 触发器集合
+private onStateChange: StateChangeCallback | null; // 状态变更回调
+private contentAtoms: any[] = [];               // 内容原子数组
+private eventAtoms: any[] = [];                 // 事件原子数组
+private resizeHandles: any[] = [];              // 调整大小手柄数组
+private atomIndexCounter: number = 0;            // 原子索引计数器
 ```
 
-#### ImageAtom - 图片
-```typescript
-interface ImageAtom extends BaseAtom {
-  capability: 'image';
-  src: string;                     // 图片 URL
-  width: number;                   // 图片宽度
-  height: number;                  // 图片高度
-  alt?: string;                    // alt 文本
-}
-```
-
-#### VideoAtom - 视频
-```typescript
-interface VideoAtom extends BaseAtom {
-  capability: 'video';
-  src: string;                     // 视频 URL
-  width?: number;                   // 视频宽度
-  height?: number;                  // 视频高度
-}
-```
-
-#### AudioAtom - 音频
-```typescript
-interface AudioAtom extends BaseAtom {
-  capability: 'audio';
-  src: string;                     // 音频 URL
-}
-```
-
-#### CodeAtom - 代码
-```typescript
-interface CodeAtom extends BaseAtom {
-  capability: 'code';
-  code: string;                    // 代码内容
-  language?: string;               // 编程语言
-}
-```
-
-#### IconAtom - 图标
-```typescript
-interface IconAtom extends BaseAtom {
-  capability: 'icon';
-  icon: string;                    // 图标名称
-  size?: number;                   // 图标大小
-}
-```
-
-#### CanvasAtom - 画布
-```typescript
-interface CanvasAtom extends BaseAtom {
-  capability: 'canvas';
-  width: number;                   // 画布宽度
-  height: number;                  // 画布高度
-  strokeColor?: [number, number, number];     // 画笔颜色
-  strokeWidth?: number;            // 画笔宽度
-  backgroundColor?: [number, number, number]; // 背景颜色
-  blackboardStyle?: boolean;       // 黑板风格
-  defaultColors?: [number, number, number][]; // 默认颜色数组
-  defaultWidths?: number[];        // 默认线宽数组
-  showToolbar?: boolean;            // 显示工具栏
-  resizable?: boolean;             // 可调整大小
-  minWidth?: number;               // 最小宽度
-  minHeight?: number;              // 最小高度
-}
-```
-
-### 装饰原子（修改容器外观）
-
-#### BackgroundAtom - 背景
-```typescript
-interface BackgroundAtom extends BaseAtom {
-  capability: 'background';
-  color: [number, number, number]; // 背景颜色 RGB
-  width?: number;                  // 背景宽度
-  height?: number;                 // 背景高度
-  radius?: number;                 // 圆角半径
-}
-```
-
-#### BorderAtom - 边框
-```typescript
-interface BorderAtom extends BaseAtom {
-  capability: 'border';
-  width: number;                   // 边框宽度
-  color: [number, number, number]; // 边框颜色 RGB
-  radius?: number;                 // 圆角半径
-  borderWidth?: number;            // 边框宽度（与 width 相同）
-  borderHeight?: number;           // 边框高度
-}
-```
-
-#### ShadowAtom - 阴影
-```typescript
-interface ShadowAtom extends BaseAtom {
-  capability: 'shadow';
-  x: number;                       // 阴影 X 偏移
-  y: number;                       // 阴影 Y 偏移
-  blur: number;                    // 模糊半径
-  color: [number, number, number]; // 阴影颜色 RGB
-  shadowWidth?: number;            // 阴影宽度
-  shadowHeight?: number;           // 阴影高度
-  radius?: number;                 // 圆角半径
-}
-```
-
-### 动画原子（响应触发事件改变样式）
-
-Trigger 触发类型：`'hover'` | `'click'` | `'drag'`
-
-#### ScaleAtom - 缩放
-```typescript
-interface ScaleAtom extends BaseAtom {
-  capability: 'scale';
-  value: number;                   // 缩放值，如 1.2 表示放大 20%
-  trigger: Trigger;                // 触发方式
-}
-```
-
-#### OpacityAtom - 透明度
-```typescript
-interface OpacityAtom extends BaseAtom {
-  capability: 'opacity';
-  value: number;                   // 透明度 0-1
-  trigger: Trigger;                // 触发方式
-}
-```
-
-#### RotateAtom - 旋转
-```typescript
-interface RotateAtom extends BaseAtom {
-  capability: 'rotate';
-  value: number;                   // 旋转角度（度）
-  trigger: 'hover' | 'click';      // 触发方式（不支持 drag）
-}
-```
-
-#### TranslateAtom - 平移
-```typescript
-interface TranslateAtom extends BaseAtom {
-  capability: 'translate';
-  x: number;                       // X 轴平移距离
-  y: number;                       // Y 轴平移距离
-  trigger: 'drag';                 // 触发方式（仅支持 drag）
-}
-```
-
-### 交互原子（响应用户交互）
-
-#### DragAtom - 拖拽
-```typescript
-interface DragAtom extends BaseAtom {
-  capability: 'drag';
-  spring?: boolean;                // 是否使用弹性拖拽
-}
-```
-
-#### ResizeAtom - 调整大小
-```typescript
-interface ResizeAtom extends BaseAtom {
-  capability: 'resize';
-  direction?: 'horizontal' | 'vertical' | 'both';  // 调整方向
-}
-```
-
-#### ResizeHandleAtom - 缩放句柄
-```typescript
-interface ResizeHandleAtom extends BaseAtom {
-  capability: 'resize-handle';
-  edge?: 'nw' | 'ne' | 'sw' | 'se';              // 句柄位置
-  minWidth?: number;                             // 最小宽度
-  minHeight?: number;                            // 最小高度
-  handleSize?: number;                           // 句柄大小
-  handleColor?: [number, number, number];        // 句柄颜色
-  scaleMode?: 'container' | 'proportional';     // 缩放模式
-}
-```
-
-#### ScrollAtom - 滚动
-```typescript
-interface ScrollAtom extends BaseAtom {
-  capability: 'scroll';
-}
-```
-
-#### ClickAtom - 点击
-```typescript
-interface ClickAtom extends BaseAtom {
-  capability: 'click';
-}
-```
-
-### 布局原子
-
-#### HeightAtom - 高度
-```typescript
-interface HeightAtom extends BaseAtom {
-  capability: 'height';
-  value: number;                   // 高度值
-}
-```
-
-#### WidthAtom - 宽度
-```typescript
-interface WidthAtom extends BaseAtom {
-  capability: 'width';
-  value: number;                  // 宽度值
-}
-```
-
-#### CollapseAtom - 折叠
-```typescript
-interface CollapseAtom extends BaseAtom {
-  capability: 'collapse';
-  groupId: string;                // 折叠组 ID
-  collapsed: boolean;             // 是否折叠
-}
-```
-
----
-
-## SubstanceManager
-
-入口模块，负责初始化和协调。
-
-### 使用方式
-
-```typescript
-// demo 端
-import { SubstanceManager } from './dist/SubstanceManager.mjs';
-
-const molecules = [...];
-new SubstanceManager(molecules);  // 直接渲染，不返回任何东西
-```
-
-### 内部方法
-
-```typescript
-class SubstanceManager {
-  private beakerManager: BeakerManager;
-
-  constructor(molecules: Molecule[]) {
-    const processedMolecules = this.process(molecules);
-    this.beakerManager = new BeakerManager(processedMolecules);
-  }
-
-  private process(molecules: Molecule[]): Molecule[] {
-    // 计算逻辑
-  }
-}
-```
-
-### 计算逻辑
-
-#### 情况一：所有分子都没有设置 vertical 和 horizontal
-- 跳过网格计算，保持原有 position 不变
-
-#### 情况二：至少有一个分子设置了 vertical 或 horizontal
-- 所有分子会吸附到最近的分子旁边
-- **vertical 有设定，horizontal 没有**：吸附到 horizontal 最近的分子边，如果该行没有分子，按输入的 position.y 定义位置
-- **horizontal 有设定，vertical 没有**：吸附到 vertical 最近的分子边，如果该列没有分子，按输入的 position.x 定义位置
-- **两者都有**：按网格计算位置
-
-#### Gap 默认值
-- verticalGap 和 horizontalGap 没有定义时，默认 10px
-- **仅在有分子设置了 vertical/horizontal 时生效**（自动排列场景）
-
-#### 核心公式
-```
-x = (horizontal - 1) * (cellWidth + horizontalGap)
-y = (vertical - 1) * (cellHeight + verticalGap)
-```
-
----
-
-## BeakerManager
-
-分子管理器，实例类，由 SubstanceManager 创建，不对外导出。
-
-### 职责
-
-BeakerManager：
-- 创建并管理多个 Beaker 实例
-- 为每个 Beaker 分配唯一 ID
-- 维护所有 Beaker 的状态
-- 不创建自己的容器，Beaker 直接渲染到 document.body
-
-### 状态管理
-
+**BakerState 接口**：
 ```typescript
 interface BakerState {
-  id: string;              // Beaker ID
-  moleculeId: string;       // 分子 ID
-  isHovered: boolean;      // 悬停状态
-  isClicked: boolean;      // 点击状态
-  isDragging: boolean;      // 拖拽状态
-  position: { x: number; y: number };  // 当前位置
-  collapsedGroups: Set<string>;  // 折叠组状态
+  id: string;                           // 状态 ID
+  moleculeId: string;                  // 关联的分子 ID
+  isHovered: boolean;                   // 是否悬停
+  isClicked: boolean;                   // 是否点击
+  isDragging: boolean;                  // 是否拖拽中
+  isResizing: boolean;                  // 是否调整大小中
+  position: { x: number; y: number };  // 位置
+  width?: number;                       // 宽度（可选）
+  height?: number;                       // 高度（可选）
+  scrollX?: number;                     // 水平滚动位置（可选）
+  scrollY?: number;                     // 垂直滚动位置（可选）
+  collapsedGroups: Set<string>;          // 折叠组状态（用于 CollapseAtom）
 }
 ```
 
-### BakerState 字段详细说明
+**关键方法**：
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | string | Beaker 实例的唯一标识符，格式为 `baker-{序号}`，如 `baker-0`、`baker-1` |
-| moleculeId | string | 对应分子的 ID，与 molecule.id 一致 |
-| isHovered | boolean | 鼠标是否悬停在分子容器上，通过 mouseenter/mouseleave 事件更新 |
-| isClicked | boolean | 分子是否处于点击状态，通过 mousedown/mouseup 事件更新，支持切换 |
-| isDragging | boolean | 分子是否正在被拖拽，通过拖拽交互过程中的 mousedown/mousemove/mouseup 更新 |
-| position | { x: number; y: number } | 分子在页面上的绝对位置，初始值为 molecule.position，拖拽后会被更新 |
-| collapsedGroups | Set\<string\> | 记录当前折叠组的折叠状态，Set 中的元素为 group ID，存在于 Set 中表示该组已折叠 |
-
-### 公开方法
-
-BeakerManager 提供以下公开方法用于查询和管理 Beaker 实例：
-
+#### constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback)
 ```typescript
-class BeakerManager {
-  // 查询方法
-  
-  // 根据 bakerId 获取单个 Beaker 实例
-  getBaker(id: string): Beaker | undefined;
-  
-  // 获取所有 Beaker 实例
-  getAllBakers(): Beaker[];
-  
-  // 根据 bakerId 获取单个 Beaker 的状态
-  getBakerState(id: string): BakerState | undefined;
-  
-  // 获取所有 Beaker 的状态
-  getAllBakerStates(): BakerState[];
-  
-  // 获取 Beaker 总数
-  getBakerCount(): number;
-  
-  // 批量更新 baker 状态
-  handleBakerStateChange(bakerId: string, state: Partial<BakerState>): void;
-  
-  // 操作方法
-  
-  // 更新指定 Beaker 的位置
-  updateBakerPosition(bakerId: string, x: number, y: number): void;
+constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback) {
+  this.id = id;
+  this.bakerIndex = bakerIndex;
+  this.molecule = molecule;
+  this.onStateChange = onStateChange || null;
+
+  // 创建 DOM 容器
+  this.element = document.createElement('div');
+  this.element.id = `beaker-${molecule.id}`;
+  this.element.style.position = 'absolute';
+  if (molecule.position) {
+    this.element.style.left = `${molecule.position.x}px`;
+    this.element.style.top = `${molecule.position.y}px`;
+  }
+  this.element.style.overflow = 'visible';
+  this.element.style.background = 'transparent';
+  this.element.style.border = 'none';
+  this.element.style.outline = 'none';
+  this.element.style.boxShadow = 'none';
+  this.element.style.cursor = 'default';
+
+  // 初始化状态
+  this.state = {
+    id: this.id,
+    moleculeId: molecule.id,
+    isHovered: false,
+    isClicked: false,
+    isDragging: false,
+    isResizing: false,
+    position: { ...(molecule.position ?? { x: 0, y: 0 }) },
+    width: undefined,
+    height: undefined,
+    scrollX: 0,
+    scrollY: 0,
+    collapsedGroups: new Set()
+  };
+
+  // 初始化
+  this.init();
 }
 ```
 
-#### 方法详细说明
-
-| 方法 | 返回值 | 说明 |
-|------|--------|------|
-| getBaker(id) | Beaker \| undefined | 根据 bakerId（如 `baker-0`）查找并返回对应的 Beaker 实例，如果不存在返回 undefined |
-| getAllBakers() | Beaker[] | 返回包含所有 Beaker 实例的数组，顺序与创建顺序一致 |
-| getBakerState(id) | BakerState \| undefined | 根据 bakerId 获取对应 Beaker 的当前状态快照，包括位置、悬停、点击、拖拽等状态 |
-| getAllBakerStates() | BakerState[] | 返回所有 Beaker 状态的数组，每个元素对应一个 BakerState |
-| getBakerCount() | number | 返回当前管理的 Beaker 总数 |
-| handleBakerStateChange(bakerId, state) | void | 当 Beaker 状态发生变化时调用，用于同步更新内部的 bakerStates Map |
-| updateBakerPosition(bakerId, x, y) | void | 外部更新指定 Beaker 位置的快捷方法，内部调用 baker.updatePosition(x, y) |
-
----
-
-## Beaker
-
-单个分子渲染器，每个 molecule 对应一个 Beaker 实例。
-
-### 职责
-
-Beaker：
-- 创建和管理单个分子的 DOM 容器
-- 维护自己的 atoms 副本（运行时使用）
-- 渲染所有原子
-- 处理用户交互（悬停、点击、拖拽等）
-- 向 BeakerManager 报告状态变化
-
-### 状态报告
-
+#### init()
 ```typescript
-type StateChangeCallback = (bakerId: string, state: Partial<BakerState>) => void;
-```
+init(): void {
+  // 1. 获取原子配置
+  const atoms = [...(this.molecule.atoms || [])];
 
-当 Beaker 的状态发生变化时（如用户悬停、点击、拖拽），会调用回调函数通知 BeakerManager。
+  // 2. 根据 capability 分类原子
+  const contentCapabilities = ['text', 'image', 'video', 'audio', 'code', 'icon', 'canvas'];
+  const eventCapabilities = ['drag', 'resize', 'scroll', 'click', 'hover'];
+  const decorationCapabilities = ['background', 'border', 'shadow'];
+  const animationCapabilities = ['scale', 'opacity', 'rotate', 'translate', 'height', 'width', 'collapse'];
 
----
+  const contentAtoms = atoms.filter(a => contentCapabilities.includes(a.capability));
+  const decorationAtoms = atoms.filter(a => decorationCapabilities.includes(a.capability));
+  const animationAtoms = atoms.filter(a => animationCapabilities.includes(a.capability));
 
-## AtomRenderer
+  // 3. 计算容器尺寸
+  const calculatedSize = this.calculateContainerSize(contentAtoms);
+  let width = this.molecule.width ?? calculatedSize.width;
+  let height = this.molecule.height ?? calculatedSize.height;
 
-原子渲染器，根据 atom 类型渲染对应 DOM。
+  // 4. 设置容器尺寸
+  this.element.style.width = `${width}px`;
+  this.element.style.height = `${height}px`;
+  this.state.width = width;
+  this.state.height = height;
 
-### 支持的原子类型
+  // 5. 应用装饰
+  this.applyDecorations(decorationAtoms);
 
-| 类型 | 说明 |
-|------|------|
-| text | 文本渲染 |
-| image | 图片渲染 |
-| video | 视频渲染 |
-| audio | 音频渲染 |
-| code | 代码渲染 |
-| icon | 图标渲染 |
-| canvas | 画布渲染 |
-| background | 背景填充 |
-| border | 边框渲染 |
-| shadow | 阴影效果 |
-| scale | 缩放动画 |
-| opacity | 透明度动画 |
-| rotate | 旋转动画 |
-| translate | 位移动画 |
-| height | 高度动画 |
-| width | 宽度动画 |
-| collapse | 折叠动画 |
-| drag | 拖拽交互 |
-| resize | 缩放交互 |
-| scroll | 滚动交互 |
-| click | 点击交互 |
-| resize-handle | 缩放句柄 |
+  // 6. 创建内容原子
+  this.createContentAtoms(contentAtoms);
 
-### RenderResult 返回值
+  // 7. 创建事件原子
+  this.createEventAtoms(atoms.filter(a => eventCapabilities.includes(a.capability)), animationAtoms);
 
-```typescript
-interface RenderResult {
-  id: string;           // 原子 ID
-  success: boolean;     // 是否成功
-  element?: HTMLElement; // 渲染的 DOM 元素
-  error?: string;       // 错误信息（如果失败）
+  // 8. 创建调整大小手柄
+  this.createResizeHandles(atoms.filter(a => a.capability === 'resize-handle'));
 }
 ```
 
-### 原子渲染行为
-
-#### Content Atoms (text, image, video, audio, code, icon, canvas)
-- 按 atom.position 定位，相对于分子容器坐标系
-- 大小由内容决定或由 atom.size 指定
-
-#### Decoration Atoms (background, border, shadow)
-- 默认：position={x:0, y:0}，width=100%，height=100%
-- 可自定义：用户可指定 position 和 size
-- 不参与分子容器大小计算
-
-### 原子类型完整列表
-
-#### text
-| 属性 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| capability | 'text' | ✅ | 原子类型 |
-| position | {x, y, z?} | ❌ | 位置，默认 {0,0} |
-| text | string | ✅ | 文本内容 |
-| size | number | ✅ | 字体大小 |
-| color | [r,g,b] | ✅ | 颜色 RGB |
-
-#### image
-| 属性 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| capability | 'image' | ✅ | 原子类型 |
-| position | {x, y, z?} | ❌ | 位置，默认 {0,0} |
-| src | string | ✅ | 图片地址 |
-| width | number | ✅ | 宽度 |
-| height | number | ✅ | 高度 |
-| alt | string | ❌ | alt 文本 |
-
-#### canvas
-| 属性 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| capability | 'canvas' | ✅ | 原子类型 |
-| position | {x, y, z?} | ❌ | 位置，默认 {0,0} |
-| width | number | ✅ | 画布宽度 |
-| height | number | ✅ | 画布高度 |
-| strokeColor | [r,g,b] | ❌ | 画笔颜色，默认 [0, 0, 0] |
-| strokeWidth | number | ❌ | 画笔宽度，默认 2 |
-| blackboardStyle | boolean | ❌ | 黑板样式，默认 false |
-| backgroundColor | [r,g,b] | ❌ | 画布背景色，仅在 blackboardStyle=false 时生效 |
-| defaultColors | [r,g,b][] | ❌ | 工具栏默认颜色数组，默认 [[0,0,0], [255,0,0], [0,128,0], [0,0,255]] |
-| defaultWidths | number[] | ❌ | 工具栏默认线宽数组，默认 [2, 4, 8] |
-| showToolbar | boolean | ❌ | 是否显示工具栏，默认 true |
-| resizable | boolean | ❌ | 是否可调整大小，默认 true |
-| minWidth | number | ❌ | 调整大小时最小宽度，默认 100 |
-| minHeight | number | ❌ | 调整大小时最小高度，默认 60 |
-
-### Canvas 画布原子详细功能
-
-Canvas 原子是一个功能丰富的交互式画布，支持自由绘图、橡皮擦、颜色选择、线宽调整、清除和缩放等功能。
-
-#### 渲染结构
-
-Canvas 原子渲染后生成以下 DOM 结构：
-
-```
-canvas-container (div)
-  ├── canvas (HTMLCanvasElement) - 画布主体
-  └── toolbar (div, optional) - 工具栏
-       ├── color-buttons (button[]) - 颜色按钮组
-       ├── width-buttons (button[]) - 线宽按钮组
-       ├── eraser-button (button) - 橡皮擦按钮
-       └── clear-button (button) - 清除按钮
-```
-
-- **canvas-container**: 绝对定位容器，包含画布和可选工具栏
-- **canvas**: 实际的 HTML Canvas 元素，用于绑定鼠标/触摸事件和绘制图形
-- **toolbar**: 浮动工具栏，提供绘图辅助功能
-
-#### 绘图功能
-
-1. **自由绘画**
-   - 支持鼠标和触摸设备
-   - 鼠标按下开始画笔，移动过程中实时绘制，释放结束
-   - 每次绘画生成一个 stroke 对象，包含 points（点坐标数组）、color（颜色）、width（线宽）、isEraser（是否为橡皮擦）
-
-2. **橡皮擦**
-   - 切换橡皮擦模式后，绘制时使用背景色（黑板样式用 #2d5a2d，普通用 #ffffff）
-   - 橡皮擦线宽为普通画笔的 3 倍
-
-3. **颜色选择**
-   - 点击颜色按钮切换画笔颜色
-   - 支持自定义 defaultColors，默认提供黑、红、绿、蓝四种颜色
-
-4. **线宽选择**
-   - 点击线宽按钮切换画笔粗细
-   - 支持自定义 defaultWidths，默认提供 2px、4px、8px 三种线宽
-
-5. **清除全部**
-   - 点击清除按钮清空所有笔画，重新绘制空白画布
-
-#### 黑板样式 (blackboardStyle)
-
-当 `blackboardStyle: true` 时：
-
-- **背景色**: 深绿色 (#2d5a2d)，模拟黑板效果
-- **纹理效果**: 随机添加半透明黑点，模拟粉笔纹理
-- **工具栏样式**: 深绿色半透明背景 (#3a5a3a)
-- **橡皮擦颜色**: #2d5a2d（背景色）
-
-#### 缩放功能 (resizable)
-
-当 `resizable: true`（默认）时：
-
-1. **右下角缩放句柄**
-   - 显示一个三角形 SVG 缩放图标
-   - 颜色根据样式自适应（黑板样式使用浅绿色，普通使用灰色）
-
-2. **缩放行为**
-   - 拖拽缩放时显示虚线边框预览
-   - 缩放后笔画会按比例重新绘制，保持原有图形
-   - 触发 `canvas-resize` 自定义事件，事件 detail 包含新尺寸和原始 atom
-
-3. **最小尺寸限制**
-   - 由 `minWidth` 和 `minHeight` 控制，默认 100x60
-   - 防止缩放过小导致画布无法使用
-
-#### 样式计算
-
+#### updateState(newState: Partial<BakerState>): void
 ```typescript
-// 容器样式
-container.style.position = 'absolute';
-container.style.left = `${atom.position?.x ?? 0}px`;
-container.style.top = `${atom.position?.y ?? 0}px`;
-container.style.zIndex = `${atom.position?.z ?? 10}`;
-container.style.width = `${atom.width}px`;
-container.style.height = `${atom.height}px`;
-
-// 画布尺寸
-canvas.width = atom.width;
-canvas.height = atom.height;
-
-// 背景处理
-if (atom.blackboardStyle) {
-  ctx.fillStyle = '#1a3a1a';  // 深绿色底色
-  ctx.fillRect(0, 0, width, height);
-  // 添加随机纹理...
-} else if (atom.backgroundColor) {
-  ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
-  ctx.fillRect(0, 0, width, height);
+public updateState(newState: Partial<BakerState>): void {
+  this.state = { ...this.state, ...newState };
+  if (this.onStateChange) {
+    this.onStateChange(this.id, newState);
+  }
 }
 ```
 
-#### 事件系统
-
-| 事件 | 触发时机 | detail 内容 |
-|------|---------|------------|
-| canvas-resize | 缩放完成后 | `{ width, height, atom }` |
-
-#### 使用示例
-
+#### getState(): BakerState
 ```typescript
-const canvasAtom = {
-  capability: 'canvas',
-  position: { x: 100, y: 50 },
-  width: 400,
-  height: 300,
-  strokeColor: [0, 0, 255],
-  strokeWidth: 3,
-  blackboardStyle: false,
-  defaultColors: [[0, 0, 0], [255, 0, 0], [0, 255, 0]],
-  defaultWidths: [2, 4, 6, 8],
-  showToolbar: true,
-  resizable: true,
-  minWidth: 200,
-  minHeight: 150
-};
+public getState(): BakerState {
+  return { ...this.state };
+}
 ```
 
-#### scale / opacity / rotate / translate
-| 属性 | 类型 | 必需 | 说明 |
-|------|------|------|------|
-| capability | 'scale'/'opacity'/'rotate'/'translate' | ✅ | 原子类型 |
-| trigger | 'hover'/'click'/'drag' | ✅ | 触发方式 |
-| value | number | ✅ | 目标值 |
-| duration | number | ❌ | 动画时长（秒）|
+#### updatePosition(x: number, y: number): void
+```typescript
+public updatePosition(x: number, y: number): void {
+  this.state.position = { x, y };
+  this.element.style.left = `${x}px`;
+  this.element.style.top = `${y}px`;
+  if (this.onStateChange) {
+    this.onStateChange(this.id, { position: { x, y } });
+  }
+}
+```
+
+#### calculateContainerSize(atoms: any[]): { width: number; height: number }
+```typescript
+private calculateContainerSize(atoms: any[]): { width: number; height: number } {
+  let maxX = 0;
+  let maxY = 0;
+
+  atoms.forEach(atom => {
+    const x = atom.position?.x ?? 0;
+    const y = atom.position?.y ?? 0;
+
+    let atomWidth = 0;
+    let atomHeight = 0;
+
+    switch (atom.capability) {
+      case 'text':
+        atomWidth = (atom.text?.length ?? 0) * (atom.size ?? 16) * 0.6 + 20;
+        atomHeight = (atom.size ?? 16) + 10;
+        break;
+      case 'image':
+        atomWidth = atom.width || 100;
+        atomHeight = atom.height || 100;
+        break;
+      case 'video':
+        atomWidth = atom.width || 300;
+        atomHeight = atom.height || 200;
+        break;
+      case 'audio':
+        atomWidth = 200;
+        atomHeight = 40;
+        break;
+      case 'code':
+        atomWidth = 300;
+        atomHeight = 150;
+        break;
+      case 'icon':
+        atomWidth = atom.size || 24;
+        atomHeight = atom.size || 24;
+        break;
+      case 'canvas':
+        atomWidth = atom.width || 100;
+        atomHeight = atom.height || 100;
+        break;
+    }
+
+    maxX = Math.max(maxX, x + atomWidth);
+    maxY = Math.max(maxY, y + atomHeight);
+  });
+
+  const padding = 0;
+  return {
+    width: Math.max(maxX + padding, 50),
+    height: Math.max(maxY + padding, 30)
+  };
+}
+```
+
+#### applyDecorations(atoms: any[]): void
+```typescript
+private applyDecorations(atoms: any[]): void {
+  const backgroundAtom = atoms.find(a => a.capability === 'background') as any;
+  const borderAtom = atoms.find(a => a.capability === 'border') as any;
+  const shadowAtom = atoms.find(a => a.capability === 'shadow') as any;
+
+  const moleculeRadius = (this.molecule as any).radius;
+  let radius = moleculeRadius ?? backgroundAtom?.radius ?? borderAtom?.radius ?? shadowAtom?.radius ?? 0;
+
+  if (backgroundAtom) {
+    this.element.style.background = `rgb(${backgroundAtom.color[0]}, ${backgroundAtom.color[1]}, ${backgroundAtom.color[2]})`;
+    if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+  }
+
+  if (borderAtom) {
+    this.element.style.border = `${borderAtom.width}px solid rgb(${borderAtom.color[0]}, ${borderAtom.color[1]}, ${borderAtom.color[2]})`;
+    if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+  }
+
+  if (shadowAtom) {
+    const blur = shadowAtom.blur ?? 0;
+    const x = shadowAtom.x ?? 0;
+    const y = shadowAtom.y ?? 0;
+    const color = shadowAtom.color;
+    this.element.style.boxShadow = `${x}px ${y}px ${blur}px rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.5)`;
+    if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+  }
+}
+```
+
+#### createContext(): AtomContext
+```typescript
+private createContext(): { bakerId: string; bakerIndex: number; atomIndex: number } {
+  return {
+    bakerId: this.id,
+    bakerIndex: this.bakerIndex,
+    atomIndex: this.atomIndexCounter++
+  };
+}
+```
+
+#### createContentAtoms(atoms: any[]): void
+```typescript
+private createContentAtoms(atoms: any[]): void {
+  atoms.forEach(atomConfig => {
+    const context = this.createContext();
+
+    try {
+      switch (atomConfig.capability) {
+        case 'text':
+          this.contentAtoms.push(new Atoms.TextAtom(context, this.element, {
+            text: atomConfig.text,
+            size: atomConfig.size,
+            color: atomConfig.color,
+            position: atomConfig.position
+          }));
+          break;
+        case 'image':
+          this.contentAtoms.push(new Atoms.ImageAtom(context, this.element, {
+            src: atomConfig.src,
+            width: atomConfig.width,
+            height: atomConfig.height,
+            alt: atomConfig.alt,
+            position: atomConfig.position
+          }));
+          break;
+        case 'video':
+          this.contentAtoms.push(new Atoms.VideoAtom(context, this.element, {
+            src: atomConfig.src,
+            width: atomConfig.width,
+            height: atomConfig.height,
+            position: atomConfig.position
+          }));
+          break;
+        case 'audio':
+          this.contentAtoms.push(new Atoms.AudioAtom(context, this.element, {
+            src: atomConfig.src,
+            position: atomConfig.position
+          }));
+          break;
+        case 'code':
+          this.contentAtoms.push(new Atoms.CodeAtom(context, this.element, {
+            code: atomConfig.code,
+            language: atomConfig.language,
+            position: atomConfig.position
+          }));
+          break;
+        case 'icon':
+          this.contentAtoms.push(new Atoms.IconAtom(context, this.element, {
+            icon: atomConfig.icon,
+            size: atomConfig.size,
+            position: atomConfig.position
+          }));
+          break;
+        case 'canvas':
+          this.contentAtoms.push(new Atoms.CanvasAtom(context, this.element, {
+            width: atomConfig.width,
+            height: atomConfig.height,
+            position: atomConfig.position,
+            strokeColor: atomConfig.strokeColor,
+            strokeWidth: atomConfig.strokeWidth,
+            backgroundColor: atomConfig.backgroundColor,
+            blackboardStyle: atomConfig.blackboardStyle,
+            defaultColors: atomConfig.defaultColors,
+            defaultWidths: atomConfig.defaultWidths,
+            showToolbar: atomConfig.showToolbar,
+            resizable: atomConfig.resizable,
+            minWidth: atomConfig.minWidth,
+            minHeight: atomConfig.minHeight
+          }));
+          break;
+      }
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建ContentAtom失败:`, error);
+    }
+  });
+}
+```
+
+#### getState(): BakerState
+```typescript
+getState(): BakerState {
+  return this.state;
+}
+```
+
+#### updateState(newState: Partial<BakerState>): void
+```typescript
+updateState(newState: Partial<BakerState>): void {
+  this.state = { ...this.state, ...newState };
+  if (this.onStateChange) {
+    this.onStateChange(this.id, newState);
+  }
+}
+```
+
+#### destroy() [TODO]
+```typescript
+// 注意：此方法尚未实现，计划在后续版本中添加
+// 预期功能：
+// destroy(): void {
+//   // 1. 销毁所有原子
+//   this.atoms.clear();
+//
+//   // 2. 移除事件监听
+//
+//   // 3. 从 DOM 中移除容器
+//   this.element.remove();
+// }
+```
+
+### 4. Molecule (分子)
+
+**文件位置**：`/src/molecules.ts`
+
+**接口定义**：
+```typescript
+export interface Molecule {
+  id: string;                                      // 唯一标识符（必需）
+  position?: { x: number; y: number; z?: number }; // 位置
+  vertical?: number;                               // 垂直网格行数
+  horizontal?: number;                              // 水平网格列数
+  verticalGap?: number;                            // 垂直间距
+  horizontalGap?: number;                           // 水平间距
+  atoms: any[];                                   // 原子数组
+  width?: number | string;                         // 宽度
+  height?: number | string;                         // 高度
+  radius?: number;                                  // 圆角
+}
+```
+
+### 5. Atom (原子)
+
+**文件位置**：`/src/atoms.ts`
+
+**接口定义**：
+```typescript
+// 装饰原子接口
+export interface BackgroundAtom {
+  capability: 'background';
+  context: AtomContext;
+  color: [number, number, number];
+  width?: number;
+  height?: number;
+  radius?: number;
+}
+
+export interface BorderAtom {
+  capability: 'border';
+  context: AtomContext;
+  width: number;
+  color: [number, number, number];
+  radius?: number;
+}
+
+export interface ShadowAtom {
+  capability: 'shadow';
+  context: AtomContext;
+  x: number;
+  y: number;
+  blur: number;
+  color: [number, number, number];
+}
+
+// 动画原子接口
+export interface ScaleAtom {
+  capability: 'scale';
+  context: AtomContext;
+  value: number;
+  trigger: 'hover' | 'click';
+  duration?: number;
+}
+
+export interface OpacityAtom {
+  capability: 'opacity';
+  context: AtomContext;
+  value: number;
+  trigger: 'hover' | 'click';
+  duration?: number;
+}
+
+export interface RotateAtom {
+  capability: 'rotate';
+  context: AtomContext;
+  value: number;
+  trigger: 'hover' | 'click';
+  duration?: number;
+}
+
+export interface TranslateAtom {
+  capability: 'translate';
+  context: AtomContext;
+  x: number;
+  y: number;
+  trigger: 'drag';
+  duration?: number;
+}
+
+export interface HeightAtom {
+  capability: 'height';
+  context: AtomContext;
+  value: number;
+  trigger: 'click' | 'hover';
+  collapsedValue?: number;
+  duration?: number;
+}
+
+export interface WidthAtom {
+  capability: 'width';
+  context: AtomContext;
+  value: number;
+  trigger: 'click' | 'hover';
+  collapsedValue?: number;
+  duration?: number;
+}
+
+export interface CollapseAtom {
+  capability: 'collapse';
+  context: AtomContext;
+  group: string;
+  expandedValue?: number;
+  collapsedValue?: number;
+  duration?: number;
+}
+```
+
+## 数据流
+
+### 初始化数据流
+
+```
+用户配置 (Molecule[])
+    │
+    ▼
+SubstanceManager.process()
+    │
+    ▼
+BeakerManager.createBaker()
+    │
+    ├── 创建 DOM 容器
+    ├── 设置位置和尺寸
+    └── 创建 Beaker 实例
+    │
+    ▼
+Beaker.init()
+    │
+    ├── updateContainerSize()
+    ├── createAtoms()
+    ├── applyDecorators()
+    ├── applyAnimations()
+    └── setupEventListeners()
+    │
+    ▼
+DOM 渲染完成
+```
+
+### 状态更新数据流
+
+```
+用户交互 (点击、拖拽等)
+    │
+    ▼
+事件监听器触发
+    │
+    ▼
+Baker.updateState({ ... })
+    │
+    ├── 更新 state 对象
+    ├── 更新 DOM 样式
+    └── 触发重新渲染
+    │
+    ▼
+界面更新完成
+```
+
+### 布局计算数据流
+
+```
+SubstanceManager.process()
+    │
+    ▼
+calculateLayout()
+    │
+    ├── 遍历所有分子
+    ├── 计算网格位置
+    └── 应用间距
+    │
+    ▼
+BeakerManager 重新创建
+    │
+    ▼
+所有 Baker 重新初始化
+```
+
+## 原子系统
+
+### 原子分类
+
+#### 1. 内容原子 (Content Atom)
+
+负责显示内容，包括：
+
+| 原子类型 | 文件位置 | 功能描述 |
+|---------|---------|---------|
+| TextAtom | `/src/atoms/TextAtom.ts` | 显示文本内容 |
+| ImageAtom | `/src/atoms/ImageAtom.ts` | 显示图片 |
+| VideoAtom | `/src/atoms/VideoAtom.ts` | 播放视频 |
+| AudioAtom | `/src/atoms/AudioAtom.ts` | 播放音频 |
+| CodeAtom | `/src/atoms/CodeAtom.ts` | 显示代码 |
+| IconAtom | `/src/atoms/IconAtom.ts` | 显示图标 |
+| CanvasAtom | `/src/atoms/CanvasAtom.ts` | 绘图画布 |
+
+#### 2. 输入原子 (Input Atom)
+
+负责处理用户交互，包括：
+
+| 原子类型 | 文件位置 | 功能描述 |
+|---------|---------|---------|
+| ClickAtom | `/src/atoms/ClickAtom.ts` | 点击事件 |
+| DragAtom | `/src/atoms/DragAtom.ts` | 拖拽功能 |
+| HoverAtom | `/src/atoms/HoverAtom.ts` | 悬停事件 |
+| ResizeAtom | `/src/atoms/ResizeAtom.ts` | 调整大小 |
+| ResizeHandleAtom | `/src/atoms/ResizeHandleAtom.ts` | 调整把手 |
+| ScrollAtom | `/src/atoms/ScrollAtom.ts` | 滚动事件 |
+
+#### 3. 装饰原子 (Decoration Atom)
+
+负责视觉样式，包括：
+
+| 原子类型 | capability | 功能描述 |
+|---------|---------|---------|
+| BackgroundAtom | `background` | 背景样式（实现于 `/src/Beaker.ts` 的 `applyDecorations` 方法） |
+| BorderAtom | `border` | 边框样式（实现于 `/src/Beaker.ts` 的 `applyDecorations` 方法） |
+| ShadowAtom | `shadow` | 阴影样式（实现于 `/src/Beaker.ts` 的 `applyDecorations` 方法） |
+
+注意：装饰原子没有单独的文件，直接在`Beaker.ts`的`applyDecorations`方法中实现。
+
+#### 4. 动画原子 (Animation Atom)
+
+负责动画效果，包括：
+
+| 原子类型 | capability | 功能描述 |
+|---------|---------|---------|
+| ScaleAtom | `scale` | 缩放动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
+| OpacityAtom | `opacity` | 透明度动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
+| RotateAtom | `rotate` | 旋转动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
+| TranslateAtom | `translate` | 平移动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
+| HeightAtom | `height` | 高度动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
+| WidthAtom | `width` | 宽度动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
+| CollapseAtom | `collapse` | 折叠动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
+
+注意：动画原子没有单独的文件，直接在`Beaker.ts`的`applyAnimations`方法中实现。
+
+### 原子创建流程
+
+```
+Beaker.createAtoms()
+    │
+    ▼
+遍历 atoms 数组
+    │
+    ▼
+根据 atom.capability 匹配
+    │
+    ├── 'text'    → new Atoms.TextAtom()
+    ├── 'image'    → new Atoms.ImageAtom()
+    ├── 'video'    → new Atoms.VideoAtom()
+    └── ... 其他类型
+    │
+    ▼
+调用对应的 create* 方法
+    │
+    ├── 创建 DOM 元素
+    ├── 应用配置
+    ├── 设置位置
+    └── 添加到容器
+```
+
+### 原子更新流程
+
+```
+Baker.updateState()
+    │
+    ▼
+状态变化触发
+    │
+    ▼
+遍历所有原子
+    │
+    ▼
+检查需要更新的原子
+    │
+    ├── TextAtom 配置变化 → 重新设置 textContent
+    ├── 位置变化 → 重新设置 style.left/top
+    └── 尺寸变化 → 重新设置 style.width/height
+    │
+    ▼
+DOM 更新完成
+```
+
+## 关键算法
+
+### 1. 布局计算算法
+
+**目的**：计算分子的位置
+
+**输入**：分子配置数组
+
+**输出**：计算后的位置信息
+
+**算法**：
+```
+for each molecule in molecules:
+    if molecule.position is not set:
+        // 使用网格计算
+        x = (molecule.horizontal || 1) * (cellWidth + horizontalGap)
+        y = (molecule.vertical || 1) * (cellHeight + verticalGap)
+        molecule.position = { x, y }
+
+    // 应用间距
+    molecule.position.x += (molecule.horizontalGap || defaultGap) * index
+    molecule.position.y += (molecule.verticalGap || defaultGap) * index
+```
+
+**复杂度**：O(n)，n 为分子数量
+
+### 2. 原子渲染算法
+
+**目的**：创建和管理 DOM 元素
+
+**输入**：原子配置
+
+**输出**：渲染的 DOM 元素
+
+**算法**：
+```
+createAtom(atom, context, container):
+    switch (atom.capability):
+        case 'text':
+            element = document.createElement('div')
+            element.textContent = atom.text
+            element.style.fontSize = atom.size + 'px'
+            element.style.color = `rgb(${atom.color.join(',')})`
+        case 'image':
+            element = document.createElement('img')
+            element.src = atom.src
+            element.width = atom.width
+            element.height = atom.height
+        // ... 其他原子类型
+
+    // 应用基础样式
+    if (atom.position):
+        element.style.position = 'absolute'
+        element.style.left = atom.position.x + 'px'
+        element.style.top = atom.position.y + 'px'
+
+    // 添加到父容器
+    container.appendChild(element)
+```
+
+**复杂度**：O(1)，每个原子创建为常量时间
+
+### 3. 状态管理算法
+
+**目的**：管理和更新 Baker 状态
+
+**输入**：状态更新对象
+
+**输出**：更新后的状态
+
+**算法**：
+```
+updateState(newState):
+    // 1. 合并状态
+    for each key in partial:
+        state[key] = partial[key]
+
+    // 2. 应用到 DOM
+    if partial.position:
+        container.style.left = state.position.x
+        container.style.top = state.position.y
+
+    if partial.width:
+        container.style.width = state.width
+
+    if partial.height:
+        container.style.height = state.height
+
+    // 3. 触发重新渲染
+    triggerRerender()
+```
+
+**复杂度**：O(1)，状态更新为常量时间
+
+## 扩展机制
+
+### 自定义原子
+
+引擎支持添加自定义原子类型：
+
+```typescript
+// 1. 定义原子配置接口
+interface CustomAtomConfig {
+  customProperty: string;
+  onCustomEvent: () => void;
+}
+
+// 2. 实现原子创建逻辑
+class CustomAtom {
+  static create(id: string, config: CustomAtomConfig, container: HTMLElement) {
+    const element = document.createElement('div');
+    element.id = id;
+    element.textContent = config.customProperty;
+
+    // 应用配置
+    element.style.backgroundColor = 'blue';
+    element.style.color = 'white';
+    element.style.padding = '10px';
+
+    // 绑定事件
+    element.addEventListener('click', config.onCustomEvent);
+
+    // 添加到容器
+    container.appendChild(element);
+
+    return {
+      element,
+      update(newConfig: CustomAtomConfig) {
+        element.textContent = newConfig.customProperty;
+      },
+      destroy() {
+        element.remove();
+      }
+    };
+  }
+}
+
+// 3. 在 Beaker 中添加支持
+private createCustomAtom(id: string, config: CustomAtomConfig): void {
+  const atom = CustomAtom.create(id, config, this.element);
+  this.atoms.set(id, atom);
+}
+```
+
+### 自定义装饰器
+
+```typescript
+interface CustomDecoratorConfig {
+  customStyle: string;
+}
+
+// 实现自定义装饰器
+function applyCustomDecorator(element: HTMLElement, config: CustomDecoratorConfig) {
+  element.style.filter = config.customStyle;
+}
+
+// 在 Beaker.applyDecorators 中添加
+if (decorator.type === 'CustomDecorator') {
+  this.applyCustomDecorator(this.element, decorator.config);
+}
+```
+
+### 自定义动画
+
+```typescript
+interface CustomAnimationConfig {
+  customProperty: number;
+  duration: number;
+}
+
+// 实现自定义动画
+function applyCustomAnimation(element: HTMLElement, config: CustomAnimationConfig) {
+  element.style.transition = `customProperty ${config.duration}ms`;
+
+  requestAnimationFrame(() => {
+    element.style.customProperty = config.customProperty;
+  });
+}
+
+// 在 Beaker.applyAnimations 中添加
+if (animation.type === 'CustomAnimation') {
+  this.applyCustomAnimation(this.element, animation.config);
+}
+```
+
+## 文件结构
+
+```
+/Users/liuyulin/atom-engine/
+├── src/
+│   ├── SubstanceManager.ts      # 物质管理器（入口类）
+│   ├── BeakerManager.ts         # 焙烤管理器
+│   ├── Beaker.ts                # 焙烤器（包含装饰原子和动画原子的实现）
+│   ├── molecules.ts             # 分子类型定义
+│   ├── atoms.ts                 # 原子类型定义
+│   └── atoms/
+│       ├── index.ts             # 原子导出
+│       ├── TextAtom.ts          # 文本原子
+│       ├── ImageAtom.ts         # 图片原子
+│       ├── VideoAtom.ts         # 视频原子
+│       ├── AudioAtom.ts         # 音频原子
+│       ├── CodeAtom.ts          # 代码原子
+│       ├── IconAtom.ts          # 图标原子
+│       ├── CanvasAtom.ts        # 画布原子
+│       ├── ClickAtom.ts         # 点击原子
+│       ├── DragAtom.ts          # 拖拽原子
+│       ├── HoverAtom.ts         # 悬停原子
+│       ├── ResizeAtom.ts        # 调整大小原子
+│       ├── ResizeHandleAtom.ts  # 调整把手原子
+│       └── ScrollAtom.ts        # 滚动原子
+├── demo/
+│   └── index.html               # 示例页面
+├── package.json                 # 项目配置
+├── tsconfig.json                # TypeScript 配置
+├── README.md                    # 使用文档
+└── ARCHITECTURE.md              # 架构文档
+```
+
+## 构建配置
+
+### package.json
+
+```json
+{
+  "name": "@component-chemistry/atom-engine",
+  "version": "3.0.0",
+  "main": "dist/SubstanceManager.js",       # CommonJS 入口
+  "module": "dist/SubstanceManager.mjs",     # ES Module 入口
+  "types": "dist/SubstanceManager.d.ts",     # 类型声明入口
+  "scripts": {
+    "build": "tsup src/SubstanceManager.ts --format cjs,esm --dts",
+    "dev": "tsup src/SubstanceManager.ts --format cjs,esm --dts --watch",
+    "typecheck": "tsc --noEmit"
+  }
+}
+```
+
+**构建说明**：
+- `main`：Node.js 环境使用的 CommonJS 格式，入口文件为 `dist/SubstanceManager.js`
+- `module`：浏览器环境使用的 ES Module 格式，入口文件为 `dist/SubstanceManager.mjs`
+- `types`：TypeScript 类型声明文件，类型文件为 `dist/SubstanceManager.d.ts`
+- 构建输出文件名基于源文件名 `SubstanceManager.ts`，因此所有输出文件都以 `SubstanceManager` 开头
+
+### tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",           // 编译目标
+    "module": "ESNext",            // 模块系统
+    "lib": ["ES2020", "DOM"],      // 类型库
+    "strict": true,                // 严格模式
+    "noImplicitAny": true,         // 禁止隐式 any
+    "strictNullChecks": true       // 严格空检查
+  }
+}
+```
+
+## 性能优化
+
+### 1. DOM 操作优化
+
+**批量创建**：
+```typescript
+// 使用 DocumentFragment 批量添加
+const fragment = document.createDocumentFragment();
+atoms.forEach(atom => {
+  fragment.appendChild(atom.element);
+});
+container.appendChild(fragment);
+```
+
+**按需更新**：
+```typescript
+// 只更新变化的属性
+if (newConfig.text !== oldConfig.text) {
+  element.textContent = newConfig.text;
+}
+```
+
+### 2. 事件处理优化
+
+**事件委托**：
+```typescript
+// 在容器上监听，而不是每个原子
+container.addEventListener('click', (event) => {
+  const target = event.target as HTMLElement;
+  if (target.dataset.atomType === 'ButtonAtom') {
+    handleButtonClick(target);
+  }
+});
+```
+
+**节流/防抖**：
+```typescript
+// 拖拽事件节流
+let lastDragTime = 0;
+container.addEventListener('mousemove', (event) => {
+  const now = Date.now();
+  if (now - lastDragTime < 16) return; // 约 60fps
+  lastDragTime = now;
+  handleDrag(event);
+});
+```
+
+### 3. 渲染优化
+
+**CSS 变换**：
+```typescript
+// 使用 transform 而非 top/left
+element.style.transform = `translate(${x}px, ${y}px)`;
+```
+
+**will-change 提示**：
+```typescript
+element.style.willChange = 'transform';
+```
+
+## 错误处理
+
+### 1. 原子类型验证
+
+```typescript
+private createAtom(atom: Atom): void {
+  const validCapabilities = [
+    'text', 'image', 'video', 'audio', 'code', 'icon',
+    'canvas', 'background', 'border', 'shadow',
+    'click', 'drag', 'hover', 'resize', 'resize-handle', 'scroll',
+    'scale', 'opacity', 'rotate', 'translate', 'width', 'height', 'collapse'
+  ];
+
+  if (!validCapabilities.includes(atom.capability)) {
+    console.warn(`Unknown atom capability: ${atom.capability}`);
+    return;
+  }
+}
+```
+
+### 2. 配置验证
+
+```typescript
+private validateMolecule(molecule: Molecule): boolean {
+  if (!molecule.id) {
+    console.error('Molecule must have an id');
+    return false;
+  }
+
+  if (!molecule.atoms || !Array.isArray(molecule.atoms)) {
+    console.error('Molecule must have an atoms array');
+    return false;
+  }
+
+  return true;
+}
+```
+
+### 3. 状态恢复
+
+```typescript
+try {
+  this.createAtoms(molecule.atoms);
+} catch (error) {
+  console.error('Failed to create atoms:', error);
+  // 恢复到初始状态
+  this.state = this.createInitialState();
+}
+```
+
+## 安全性考虑
+
+### 1. XSS 防护
+
+```typescript
+// 使用 textContent 而非 innerHTML
+element.textContent = sanitize(userInput);
+```
+
+### 2. 输入验证
+
+```typescript
+// 验证位置值
+const x = Math.max(0, Math.min(parseInt(config.x), maxWidth));
+const y = Math.max(0, Math.min(parseInt(config.y), maxHeight));
+```
+
+### 3. 边界检查
+
+```typescript
+// 拖拽边界限制
+let newX = event.clientX - offsetX;
+newX = Math.max(bounds.minX, Math.min(newX, bounds.maxX));
+```
+
+## 测试策略
+
+### 单元测试
+
+```typescript
+describe('Beaker', () => {
+  it('should create container with correct position', () => {
+    const container = document.createElement('div');
+    const baker = new Beaker('test-id', 'test-molecule', container);
+
+    baker.updateState({ position: { x: 100, y: 200 } });
+
+    expect(container.style.left).toBe('100px');
+    expect(container.style.top).toBe('200px');
+  });
+});
+```
+
+### 集成测试
+
+```typescript
+describe('SubstanceManager', () => {
+  it('should create all bakers', () => {
+    const molecules = [
+      { id: 'm1', atoms: [] },
+      { id: 'm2', atoms: [] }
+    ];
+
+    const manager = new SubstanceManager(molecules);
+    const bakerManager = manager.getBakerManager();
+
+    expect(bakerManager.getBakerCount()).toBe(2);
+  });
+});
+```
+
+## 浏览器兼容
+
+### 支持的浏览器
+
+- Chrome 80+
+- Firefox 75+
+- Safari 13+
+- Edge 80+
+
+### 使用的 API
+
+- DOM API (createElement, appendChild, etc.)
+- CSS Object Model
+- Pointer Events
+- Custom Events
+- ES2020 Features (Optional Chaining, Nullish Coalescing)
+
+## 未来架构演进
+
+### 1. 虚拟化列表
+
+对于大量分子的场景，可以引入虚拟化技术，只渲染可视区域内的分子。
+
+### 2. 状态管理增强
+
+考虑集成状态管理库（如 Redux 或 MobX），提供更强大的状态管理能力。
+
+### 3. 服务端渲染
+
+增加 SSR 支持，提高首屏加载性能。
+
+### 4. 懒加载原子
+
+支持原子按需加载，减少初始包体积。
+
+## 附录
+
+### A. 核心类型定义
+
+```typescript
+// atoms.ts 中的完整类型定义
+export interface AtomContext {
+  bakerId: string;
+  bakerIndex: number;
+  atomIndex: number;
+}
+
+export type Atom =
+  | ContentAtom
+  | InputAtom
+  | DecorationAtom
+  | AnimationAtom;
+
+export interface Molecule {
+  id: string;
+  position?: { x: number; y: number; z?: number };
+  vertical?: number;
+  horizontal?: number;
+  verticalGap?: number;
+  horizontalGap?: number;
+  atoms: any[];
+  width?: number;
+  height?: number;
+  radius?: number;
+}
+
+export interface BakerState {
+  id: string;
+  moleculeId: string;
+  isHovered: boolean;
+  isClicked: boolean;
+  isDragging: boolean;
+  isResizing: boolean;
+  position: { x: number; y: number };
+  width?: number;
+  height?: number;
+  scrollX?: number;
+  scrollY?: number;
+  collapsedGroups: Set<string>;
+}
+```
+
+### B. 常量定义
+
+```typescript
+const DEFAULT_CELL_WIDTH = 100;
+const DEFAULT_CELL_HEIGHT = 100;
+const DEFAULT_VERTICAL_GAP = 10;
+const DEFAULT_HORIZONTAL_GAP = 10;
+const DEFAULT_FONT_SIZE = 16;
+const DEFAULT_BORDER_WIDTH = 1;
+const DEFAULT_BORDER_RADIUS = 4;
+const DEFAULT_SHADOW_BLUR = 4;
+```
+
+### C. 命名约定
+
+- **类名**：PascalCase（如 `SubstanceManager`、`BeakerManager`）
+- **方法名**：camelCase（如 `createBaker`、`applyDecorators`）
+- **私有方法**：以下划线开头（如 `_createInitialState`、`_createAtoms`）
+- **常量**：UPPER_SNAKE_CASE（如 `DEFAULT_CELL_WIDTH`）
+- **接口名**：PascalCase（如 `Molecule`、`BakerState`）
+- **类型别名**：PascalCase（如 `ContentAtom`、`InputAtom`）
+
+### D. 注释规范
+
+```typescript
+/**
+ * 物质管理器类
+ * 负责管理所有分子和布局计算
+ *
+ * @class SubstanceManager
+ * @example
+ * const manager = new SubstanceManager(molecules);
+ * document.body.appendChild(manager.getBakerManager().getBakerManagerContainer());
+ */
+class SubstanceManager {
+  /**
+   * 处理分子配置
+   * @param molecules - 分子配置数组
+   * @returns void
+   */
+  process(molecules: Molecule[]): void {
+    // ...
+  }
+}
+```
