@@ -44,8 +44,8 @@ export class CanvasAtom {
 
   constructor(context: AtomContext, container: HTMLElement, config: CanvasAtomConfig) {
     this.context = context;
-    this.canvasWidth = config.width;
-    this.canvasHeight = config.height;
+    this.canvasWidth = config.width ?? 400;
+    this.canvasHeight = config.height ?? 300;
     this.blackboardStyle = config.blackboardStyle ?? false;
     this.currentColor = config.strokeColor ?? [0, 0, 0];
     this.currentWidth = config.strokeWidth ?? 2;
@@ -254,8 +254,8 @@ export class CanvasAtom {
 
   private setupResize(canvasWrapper: HTMLElement, canvas: HTMLCanvasElement, config: CanvasAtomConfig): void {
     const handle = document.createElement('div');
-    const minW = config.minWidth ?? 100;
-    const minH = config.minHeight ?? 60;
+    const minW = config.minWidth ?? 350;
+    const minH = config.minHeight ?? 150;
 
     handle.style.cssText = `
       position: absolute;
