@@ -99,8 +99,8 @@ export class Beaker {
     this.state.width = width;
     this.state.height = height;
 
-    this.createContentAtoms(contentAtoms);
     this.createDecorationAtoms(decorationAtoms, this.molecule.width, this.molecule.height);
+    this.createContentAtoms(contentAtoms);
     this.createEventAtoms(eventAtomConfigs, animationAtoms);
     this.createResizeHandles(resizeHandleConfigs);
   }
