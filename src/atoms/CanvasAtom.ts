@@ -138,6 +138,7 @@ export class CanvasAtom {
       border-radius: 999px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
       border: 1px solid rgba(255,255,255,0.5);
+      pointer-events: auto;
     `;
 
     const previewSize = () => Math.max(10, Math.min(this.currentWidth + 6, 30));
@@ -156,6 +157,7 @@ export class CanvasAtom {
       box-shadow: 0 1px 4px rgba(0,0,0,0.2);
       cursor: pointer;
       flex-shrink: 0;
+      pointer-events: auto;
     `;
     preview.onclick = () => {
       const input = document.createElement('input');
@@ -169,8 +171,10 @@ export class CanvasAtom {
         updatePreview();
       };
       document.body.appendChild(input);
-      input.click();
-      input.remove();
+      requestAnimationFrame(() => {
+        input.click();
+        requestAnimationFrame(() => input.remove());
+      });
     };
     toolbar.appendChild(preview);
 
