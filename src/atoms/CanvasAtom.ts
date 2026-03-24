@@ -63,101 +63,12 @@ export class CanvasAtom {
         display: inline-block;
       `;
 
-      if (config.showToolbar) {
-        const toolbar = document.createElement('div');
-        const colors = config.defaultColors ?? [[0, 0, 0], [255, 0, 0], [0, 128, 0], [0, 0, 255], [255, 165, 0], [128, 0, 128]];
-        const widths = config.defaultWidths ?? [2, 4, 6, 8];
-
-        toolbar.style.cssText = `
-          display: flex;
-          gap: 6px;
-          padding: 6px 8px;
-          background: #f0f0f0;
-          border-radius: 8px 8px 0 0;
-          border: 1px solid #ddd;
-          border-bottom: none;
-          flex-wrap: wrap;
-          align-items: center;
-        `;
-
-        colors.forEach(color => {
-          const btn = document.createElement('button');
-          btn.style.cssText = `
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid transparent;
-            background: rgb(${color[0]},${color[1]},${color[2]});
-            cursor: pointer;
-          `;
-          btn.onclick = () => {
-            this.currentColor = color;
-            this.isEraser = false;
-            this.updateToolbarState(toolbar);
-          };
-          toolbar.appendChild(btn);
-        });
-
-        widths.forEach(w => {
-          const btn = document.createElement('button');
-          btn.style.cssText = `
-            width: 28px;
-            height: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: #fff;
-            cursor: pointer;
-            font-size: 10px;
-          `;
-          btn.textContent = `${w}`;
-          btn.onclick = () => {
-            this.currentWidth = w;
-            this.updateToolbarState(toolbar);
-          };
-          toolbar.appendChild(btn);
-        });
-
-        const eraserBtn = document.createElement('button');
-        eraserBtn.textContent = '⌫';
-        eraserBtn.style.cssText = `
-          padding: 2px 8px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          background: #fff;
-          cursor: pointer;
-          font-size: 12px;
-        `;
-        eraserBtn.onclick = () => {
-          this.isEraser = !this.isEraser;
-          this.updateToolbarState(toolbar);
-        };
-        toolbar.appendChild(eraserBtn);
-
-        const clearBtn = document.createElement('button');
-        clearBtn.textContent = '✕';
-        clearBtn.style.cssText = `
-          padding: 2px 8px;
-          border: 1px solid #ccc;
-          border-radius: 4px;
-          background: #fff;
-          cursor: pointer;
-          font-size: 12px;
-        `;
-        clearBtn.onclick = () => {
-          this.strokes = [];
-          this.redraw();
-        };
-        toolbar.appendChild(clearBtn);
-
-        wrapper.appendChild(toolbar);
-      }
-
       const canvasWrapper = document.createElement('div');
       canvasWrapper.style.cssText = `
         position: relative;
         width: ${this.canvasWidth}px;
         height: ${this.canvasHeight}px;
-        border-radius: ${config.showToolbar ? '0 0 8px 8px' : '8px'};
+        border-radius: 8px;
         overflow: hidden;
       `;
 
@@ -190,6 +101,11 @@ export class CanvasAtom {
         this.setupResize(canvasWrapper, canvas, config);
       }
 
+      if (config.showToolbar) {
+        const toolbar = this.createToolbar(canvas, config);
+        canvasWrapper.appendChild(toolbar);
+      }
+
       wrapper.appendChild(canvasWrapper);
       container.appendChild(wrapper);
       console.log(`[Atom] ${this.context.bakerId} - CanvasAtom渲染成功`);
@@ -198,43 +114,180 @@ export class CanvasAtom {
     }
   }
 
-  private updateToolbarState(_toolbar: HTMLElement): void {
+  private createToolbar(_canvas: HTMLCanvasElement, config: CanvasAtomConfig): HTMLElement {
+    const colors = config.defaultColors ?? [[0, 0, 0], [255, 0, 0], [0, 0, 255]];
+    const widths = config.defaultWidths ?? [2, 4, 6, 8, 12];
+
+    const toolbar = document.createElement('div');
+    toolbar.style.cssText = `
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      border: 1px solid rgba(255,255,255,0.5);
+    `;
+
+    colors.forEach((color) => {
+      const btn = document.createElement('button');
+      btn.style.cssText = `
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid rgba(0,0,0,0.2);
+        background: rgb(${color[0]},${color[1]},${color[2]});
+        cursor: pointer;
+        transition: transform 0.15s;
+      `;
+      btn.onmouseenter = () => { btn.style.transform = 'scale(1.15)'; };
+      btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; };
+      btn.onclick = () => {
+        this.currentColor = color;
+        this.isEraser = false;
+        this.updateColorButtons(toolbar, colors);
+      };
+      toolbar.appendChild(btn);
+    });
+
+    const divider = document.createElement('div');
+    divider.style.cssText = `width:1px;height:20px;background:rgba(0,0,0,0.15);margin:0 4px;`;
+    toolbar.appendChild(divider);
+
+    widths.forEach(w => {
+      const btn = document.createElement('button');
+      btn.style.cssText = `
+        width: 36px;
+        height: 28px;
+        border: 1px solid rgba(0,0,0,0.15);
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+      `;
+      const dot = document.createElement('div');
+      dot.style.cssText = `
+        border-radius: 50%;
+        background: #333;
+        width: ${Math.min(w, 18)}px;
+        height: ${Math.min(w, 18)}px;
+      `;
+      btn.appendChild(dot);
+      btn.onmouseenter = () => { btn.style.background = '#f0f0f0'; };
+      btn.onmouseleave = () => { btn.style.background = '#fff'; };
+      btn.onclick = () => {
+        this.currentWidth = w;
+        this.isEraser = false;
+      };
+      toolbar.appendChild(btn);
+    });
+
+    const customColorBtn = document.createElement('button');
+    customColorBtn.style.cssText = `
+      width: 28px;
+      height: 28px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 6px;
+      background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 25%, #6bcb77 50%, #4d96ff 75%, #9b59b6 100%);
+      cursor: pointer;
+    `;
+    customColorBtn.onclick = () => {
+      const input = document.createElement('input');
+      input.type = 'color';
+      input.value = `#${this.currentColor[0].toString(16).padStart(2,'0')}${this.currentColor[1].toString(16).padStart(2,'0')}${this.currentColor[2].toString(16).padStart(2,'0')}`;
+      input.style.cssText = 'position:absolute;opacity:0;width:0;height:0;';
+      input.onchange = () => {
+        const hex = input.value.replace('#', '');
+        this.currentColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
+        this.isEraser = false;
+        this.updateColorButtons(toolbar, colors);
+      };
+      document.body.appendChild(input);
+      input.click();
+      input.remove();
+    };
+    toolbar.appendChild(customColorBtn);
+
+    const eraserBtn = document.createElement('button');
+    eraserBtn.style.cssText = `
+      padding: 4px 10px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+    `;
+    eraserBtn.textContent = '橡皮';
+    eraserBtn.onclick = () => {
+      this.isEraser = !this.isEraser;
+      eraserBtn.style.background = this.isEraser ? '#e8f0ff' : '#fff';
+      eraserBtn.style.borderColor = this.isEraser ? '#007aff' : 'rgba(0,0,0,0.15)';
+    };
+    toolbar.appendChild(eraserBtn);
+
+    const clearBtn = document.createElement('button');
+    clearBtn.style.cssText = `
+      padding: 4px 10px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+    `;
+    clearBtn.textContent = '清空';
+    clearBtn.onclick = () => {
+      this.strokes = [];
+      this.redraw();
+    };
+    toolbar.appendChild(clearBtn);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.style.cssText = `
+      padding: 4px 10px;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+    `;
+    saveBtn.textContent = '保存';
+    saveBtn.onclick = () => {
+      const link = document.createElement('a');
+      link.download = 'canvas.png';
+      link.href = this.canvas!.toDataURL('image/png');
+      link.click();
+    };
+    toolbar.appendChild(saveBtn);
+
+    this.updateColorButtons(toolbar, colors);
+    return toolbar;
   }
 
-  private setupDrawing(canvas: HTMLCanvasElement, _config: CanvasAtomConfig): void {
-    canvas.addEventListener('mousedown', (e) => {
-      this.isDrawing = true;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      this.currentStroke = {
-        points: [{ x, y }],
-        color: this.currentColor,
-        width: this.currentWidth,
-        isEraser: this.isEraser
-      };
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-      if (!this.isDrawing || !this.currentStroke) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      this.currentStroke.points.push({ x, y });
-      this.redraw();
-      this.drawStroke(this.currentStroke);
-    });
-
-    const stopDrawing = () => {
-      if (this.isDrawing && this.currentStroke) {
-        this.strokes.push(this.currentStroke);
-        this.currentStroke = null;
+  private updateColorButtons(toolbar: HTMLElement, colors: [number, number, number][]): void {
+    const buttons = toolbar.querySelectorAll('button');
+    let colorIdx = 0;
+    buttons.forEach(btn => {
+      const style = (btn as HTMLElement).style;
+      if (style.width === '24px' && style.height === '24px' && style.borderRadius === '50%') {
+        const c = colors[colorIdx];
+        const isActive = this.currentColor[0] === c[0] && this.currentColor[1] === c[1] && this.currentColor[2] === c[2];
+        style.border = `2px solid ${isActive ? '#007aff' : 'rgba(0,0,0,0.2)'}`;
+        colorIdx++;
       }
-      this.isDrawing = false;
-    };
-
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
+    });
   }
 
   private setupResize(canvasWrapper: HTMLElement, _canvas: HTMLCanvasElement, config: CanvasAtomConfig): void {
@@ -281,6 +334,42 @@ export class CanvasAtom {
     });
 
     canvasWrapper.appendChild(handle);
+  }
+
+  private setupDrawing(canvas: HTMLCanvasElement, _config: CanvasAtomConfig): void {
+    canvas.addEventListener('mousedown', (e) => {
+      this.isDrawing = true;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      this.currentStroke = {
+        points: [{ x, y }],
+        color: this.currentColor,
+        width: this.currentWidth,
+        isEraser: this.isEraser
+      };
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!this.isDrawing || !this.currentStroke) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      this.currentStroke.points.push({ x, y });
+      this.redraw();
+      this.drawStroke(this.currentStroke);
+    });
+
+    const stopDrawing = () => {
+      if (this.isDrawing && this.currentStroke) {
+        this.strokes.push(this.currentStroke);
+        this.currentStroke = null;
+      }
+      this.isDrawing = false;
+    };
+
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
   }
 
   private redraw(): void {
