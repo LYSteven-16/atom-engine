@@ -211,10 +211,10 @@ export class CodeAtom {
       pre.appendChild(code);
       pre.style.cssText = `
         position: absolute;
-        left: ${config.position?.x ?? 0}px;
-        top: ${config.position?.y ?? 0}px;
-        width: ${config.width ?? 400}px;
-        height: ${config.height ?? 200}px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         background: ${bgColor};
         padding: 10px;
         padding-top: 32px;
@@ -222,6 +222,7 @@ export class CodeAtom {
         overflow: auto;
         white-space: pre;
         word-break: normal;
+        box-sizing: border-box;
       `;
       code.style.cssText = `
         font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -229,6 +230,17 @@ export class CodeAtom {
         line-height: 1.5;
         color: ${textColor};
       `;
+
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        position: absolute;
+        left: ${config.position?.x ?? 0}px;
+        top: ${config.position?.y ?? 0}px;
+        width: ${config.width ?? 400}px;
+        height: ${config.height ?? 200}px;
+      `;
+      wrapper.appendChild(pre);
+      container.appendChild(wrapper);
 
       const lang = config.language ?? this.detectLanguage(config.code);
       if (lang) {
@@ -249,7 +261,6 @@ export class CodeAtom {
         pre.appendChild(badge);
       }
 
-      container.appendChild(pre);
       console.log(`[Atom] ${this.context.bakerId} - CodeAtom渲染成功`);
     } catch (error) {
       console.error(`[Atom Error] ${this.context.bakerId} - CodeAtom渲染失败:`, error);
