@@ -175,13 +175,36 @@ export class Beaker {
     let radius = moleculeRadius ?? backgroundAtom?.radius ?? borderAtom?.radius ?? shadowAtom?.radius ?? 0;
 
     if (backgroundAtom) {
-      this.element.style.background = `rgb(${backgroundAtom.color[0]}, ${backgroundAtom.color[1]}, ${backgroundAtom.color[2]})`;
-      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+      const bg = document.createElement('div');
+      bg.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgb(${backgroundAtom.color[0]}, ${backgroundAtom.color[1]}, ${backgroundAtom.color[2]});
+        border-radius: ${radius}px;
+        pointer-events: none;
+        z-index: 0;
+      `;
+      this.element.appendChild(bg);
     }
 
     if (borderAtom) {
-      this.element.style.border = `${borderAtom.width}px solid rgb(${borderAtom.color[0]}, ${borderAtom.color[1]}, ${borderAtom.color[2]})`;
-      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+      const bd = document.createElement('div');
+      bd.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        border: ${borderAtom.width}px solid rgb(${borderAtom.color[0]}, ${borderAtom.color[1]}, ${borderAtom.color[2]});
+        border-radius: ${radius}px;
+        pointer-events: none;
+        z-index: 1;
+      `;
+      this.element.appendChild(bd);
     }
 
     if (shadowAtom) {
@@ -189,8 +212,20 @@ export class Beaker {
       const x = shadowAtom.x ?? 0;
       const y = shadowAtom.y ?? 0;
       const color = shadowAtom.color;
-      this.element.style.boxShadow = `${x}px ${y}px ${blur}px rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.5)`;
-      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+      const spread = shadowAtom.spread ?? 0;
+      const sd = document.createElement('div');
+      sd.style.cssText = `
+        position: absolute;
+        top: ${y}px;
+        left: ${x}px;
+        width: calc(100% - ${Math.abs(x)}px);
+        height: calc(100% - ${Math.abs(y)}px);
+        box-shadow: ${x}px ${y}px ${blur}px ${spread}px rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.5);
+        border-radius: ${radius}px;
+        pointer-events: none;
+        z-index: -1;
+      `;
+      this.element.appendChild(sd);
     }
   }
 
