@@ -36,7 +36,7 @@ export class BackgroundAtom {
       width: ${this.width ?? 100}px;
       height: ${this.height ?? 100}px;
       background: rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]});
-      border: 0px solid transparent;
+      border: transparent;
       box-shadow: none;
       border-radius: ${this.radius ?? 0}px;
       pointer-events: none;
