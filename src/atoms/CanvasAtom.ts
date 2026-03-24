@@ -65,11 +65,13 @@ export class CanvasAtom {
   readonly context: AtomContext;
   readonly width: number;
   readonly height: number;
+  private blackboardStyle = false;
 
   constructor(context: AtomContext, container: HTMLElement, config: CanvasAtomConfig) {
     this.context = context;
     this.width = config.width;
     this.height = config.height;
+    this.blackboardStyle = config.blackboardStyle ?? false;
     this.render(container, config);
   }
 
@@ -182,7 +184,7 @@ export class CanvasAtom {
   private drawStroke(ctx: CanvasRenderingContext2D, stroke: Stroke): void {
     if (stroke.points.length < 2) return;
     ctx.beginPath();
-    ctx.strokeStyle = stroke.isEraser ? (this as any).config?.blackboardStyle ? '#2d5a2d' : '#ffffff' : `rgb(${stroke.color[0]}, ${stroke.color[1]}, ${stroke.color[2]})`;
+    ctx.strokeStyle = stroke.isEraser ? (this.blackboardStyle ? '#2d5a2d' : '#ffffff') : `rgb(${stroke.color[0]}, ${stroke.color[1]}, ${stroke.color[2]})`;
     ctx.lineWidth = stroke.isEraser ? stroke.width * 3 : stroke.width;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
