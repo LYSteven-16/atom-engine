@@ -161,7 +161,7 @@ export class CanvasAtom {
       const input = document.createElement('input');
       input.type = 'color';
       input.value = `#${this.currentColor[0].toString(16).padStart(2,'0')}${this.currentColor[1].toString(16).padStart(2,'0')}${this.currentColor[2].toString(16).padStart(2,'0')}`;
-      input.style.cssText = 'position:absolute;opacity:0;width:0;height:0;pointer-events:none;';
+      input.style.cssText = 'position:fixed;opacity:0;width:1px;height:1px;left:-9999px;top:-9999px;';
       input.onchange = () => {
         const hex = input.value.replace('#', '');
         this.currentColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
