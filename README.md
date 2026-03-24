@@ -265,7 +265,12 @@ const audioAtom = {
   src: 'https://example.com/audio.mp3',
 
   // 位置
-  position: { x: 0, y: 0 }
+  position: { x: 0, y: 0 },
+
+  // 可选属性
+  autoplay: false,                 // 自动播放
+  loop: false,                     // 循环播放
+  muted: false                     // 静音播放
 };
 
 // 示例：背景音乐

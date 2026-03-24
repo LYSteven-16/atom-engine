@@ -569,7 +569,10 @@ private createContentAtoms(atoms: any[]): void {
         case 'audio':
           this.contentAtoms.push(new Atoms.AudioAtom(context, this.element, {
             src: atomConfig.src,
-            position: atomConfig.position
+            position: atomConfig.position,
+            autoplay: atomConfig.autoplay,
+            loop: atomConfig.loop,
+            muted: atomConfig.muted
           }));
           break;
         case 'code':
