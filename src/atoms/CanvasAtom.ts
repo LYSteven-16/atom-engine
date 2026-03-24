@@ -68,7 +68,7 @@ export class CanvasAtom {
         width: ${this.canvasWidth}px;
         height: ${this.canvasHeight}px;
         border-radius: 8px;
-        overflow: hidden;
+        overflow: visible;
       `;
 
       const canvas = document.createElement('canvas');
@@ -80,6 +80,7 @@ export class CanvasAtom {
         top: 0;
         left: 0;
         cursor: crosshair;
+        overflow: visible;
       `;
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d')!;
@@ -196,15 +197,8 @@ export class CanvasAtom {
     };
     toolbar.appendChild(slider);
 
-    const iconBtn = (onClick: () => void, drawIcon: (ctx: CanvasRenderingContext2D, s: number) => void) => {
+    const cssBtn = (onClick: () => void, cssDraw: string) => {
       const btn = document.createElement('button');
-      const s = 18;
-      const iconCanvas = document.createElement('canvas');
-      iconCanvas.width = s;
-      iconCanvas.height = s;
-      iconCanvas.style.cssText = 'display:block;';
-      drawIcon(iconCanvas.getContext('2d')!, s);
-      btn.appendChild(iconCanvas);
       btn.style.cssText = `
         width: 30px;
         height: 30px;
@@ -217,70 +211,43 @@ export class CanvasAtom {
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        position: relative;
+        overflow: hidden;
       `;
+      btn.innerHTML = cssDraw;
       btn.onclick = onClick;
       return btn;
     };
 
-    const eraserBtn = iconBtn(
+    const eraserBtn = cssBtn(
       () => {
         this.isEraser = !this.isEraser;
         eraserBtn.style.background = this.isEraser ? '#e8f0ff' : '#fff';
         eraserBtn.style.borderColor = this.isEraser ? '#007aff' : 'rgba(0,0,0,0.15)';
       },
-      (ctx, s) => {
-        ctx.fillStyle = '#555';
-        ctx.fillRect(s * 0.15, s * 0.55, s * 0.7, s * 0.25);
-        ctx.fillStyle = '#e74c3c';
-        ctx.fillRect(s * 0.2, s * 0.25, s * 0.35, s * 0.35);
-        ctx.fillStyle = '#c0392b';
-        ctx.fillRect(s * 0.2, s * 0.55, s * 0.35, s * 0.05);
-      }
+      '<div style="width:14px;height:14px;background:#e74c3c;border-radius:2px 2px 0 0;position:absolute;top:3px;left:50%;transform:translateX(-50%);"></div>' +
+      '<div style="width:8px;height:6px;background:#f5a623;position:absolute;bottom:3px;left:50%;transform:translateX(-50%);border-radius:0 0 1px 1px;"></div>'
     );
     toolbar.appendChild(eraserBtn);
 
-    const clearBtn = iconBtn(
+    const clearBtn = cssBtn(
       () => {
         this.strokes = [];
         this.redraw();
       },
-      (ctx, s) => {
-        ctx.strokeStyle = '#555';
-        ctx.lineWidth = s * 0.12;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(s * 0.25, s * 0.25);
-        ctx.lineTo(s * 0.75, s * 0.75);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(s * 0.75, s * 0.25);
-        ctx.lineTo(s * 0.25, s * 0.75);
-        ctx.stroke();
-      }
+      '<div style="width:12px;height:12px;position:relative;"><div style="width:14px;height:2px;background:#555;position:absolute;top:5px;left:-1px;transform:rotate(45deg);border-radius:1px;"></div><div style="width:14px;height:2px;background:#555;position:absolute;top:5px;left:-1px;transform:rotate(-45deg);border-radius:1px;"></div></div>'
     );
     toolbar.appendChild(clearBtn);
 
-    const saveBtn = iconBtn(
+    const saveBtn = cssBtn(
       () => {
         const link = document.createElement('a');
         link.download = 'canvas.png';
         link.href = this.canvas!.toDataURL('image/png');
         link.click();
       },
-      (ctx, s) => {
-        ctx.fillStyle = '#555';
-        ctx.beginPath();
-        ctx.moveTo(s * 0.5, s * 0.2);
-        ctx.lineTo(s * 0.2, s * 0.5);
-        ctx.lineTo(s * 0.35, s * 0.5);
-        ctx.lineTo(s * 0.35, s * 0.8);
-        ctx.lineTo(s * 0.65, s * 0.8);
-        ctx.lineTo(s * 0.65, s * 0.5);
-        ctx.lineTo(s * 0.8, s * 0.5);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillRect(s * 0.4, s * 0.78, s * 0.2, s * 0.04);
-      }
+      '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid #555;position:absolute;top:4px;left:50%;transform:translateX(-50%);"></div>' +
+      '<div style="width:10px;height:7px;border:2px solid #555;border-top:none;border-radius:0 0 2px 2px;position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:#fff;"></div>'
     );
     toolbar.appendChild(saveBtn);
 
