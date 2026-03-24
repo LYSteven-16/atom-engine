@@ -235,7 +235,11 @@ export class Beaker {
             this.contentAtoms.push(new Atoms.CodeAtom(context, this.element, {
               code: atomConfig.code,
               language: atomConfig.language,
-              position: atomConfig.position
+              position: atomConfig.position,
+              width: atomConfig.width,
+              height: atomConfig.height,
+              backgroundColor: atomConfig.backgroundColor,
+              autoFormat: atomConfig.autoFormat
             }));
             break;
           case 'icon':
