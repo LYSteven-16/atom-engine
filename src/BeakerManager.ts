@@ -1,5 +1,5 @@
-import type { Molecule } from './types';
 import { Beaker, type BakerState } from './Beaker';
+import type { Molecule } from './molecules';
 
 export class BeakerManager {
   private bakers: Map<string, Beaker> = new Map();
@@ -7,9 +7,10 @@ export class BeakerManager {
   private bakerIdCounter: number = 0;
 
   constructor(molecules: Molecule[]) {
-    molecules.forEach(molecule => {
+    molecules.forEach((molecule) => {
+      const bakerIndex = this.bakerIdCounter;
       const bakerId = `baker-${this.bakerIdCounter++}`;
-      const baker = new Beaker(bakerId, molecule, this.handleBakerStateChange.bind(this));
+      const baker = new Beaker(bakerId, molecule, bakerIndex, this.handleBakerStateChange.bind(this));
       this.bakers.set(bakerId, baker);
       this.bakerStates.set(bakerId, baker.getState());
       document.body.appendChild(baker.element);
@@ -41,12 +42,5 @@ export class BeakerManager {
 
   public getBakerCount(): number {
     return this.bakers.size;
-  }
-
-  public updateBakerPosition(bakerId: string, x: number, y: number): void {
-    const baker = this.bakers.get(bakerId);
-    if (baker) {
-      baker.updatePosition(x, y);
-    }
   }
 }

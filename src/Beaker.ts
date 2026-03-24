@@ -1,8 +1,5 @@
-import type {
-  Molecule, ContentAtom, DecorationAtom, AnimationAtom, InputAtom,
-  Atom
-} from './types';
-import { AtomRenderer } from './AtomRenderer';
+import type { Molecule } from './molecules';
+import * as Atoms from './atoms/index';
 
 interface BakerState {
   id: string;
@@ -10,7 +7,12 @@ interface BakerState {
   isHovered: boolean;
   isClicked: boolean;
   isDragging: boolean;
+  isResizing: boolean;
   position: { x: number; y: number };
+  width?: number;
+  height?: number;
+  scrollX?: number;
+  scrollY?: number;
   collapsedGroups: Set<string>;
 }
 
@@ -22,20 +24,21 @@ export class Beaker {
   public readonly id: string;
   public readonly molecule: Molecule;
   public readonly element: HTMLElement;
-  private state: BakerState;
-  private atoms: any[];
+  public state: BakerState;
   private triggers: Set<string> = new Set();
-  private atomRenderer: AtomRenderer;
-  private canvasStrokesMap: Map<HTMLCanvasElement, { strokes: any[]; atom: any }> = new Map();
   private onStateChange: StateChangeCallback | null = null;
-  private inputAtoms: InputAtom[] = [];
+  private contentAtoms: any[] = [];
+  private eventAtoms: any[] = [];
+  private resizeHandles: any[] = [];
+  public readonly bakerIndex: number;
+  private atomIndexCounter: number = 0;
 
-  constructor(id: string, molecule: Molecule, onStateChange?: StateChangeCallback) {
+  constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback) {
     this.id = id;
+    this.bakerIndex = bakerIndex;
     this.molecule = molecule;
-    this.atomRenderer = new AtomRenderer();
     this.onStateChange = onStateChange || null;
-    
+
     this.element = document.createElement('div');
     this.element.id = `beaker-${molecule.id}`;
     this.element.style.position = 'absolute';
@@ -56,81 +59,61 @@ export class Beaker {
       isHovered: false,
       isClicked: false,
       isDragging: false,
+      isResizing: false,
       position: { ...(molecule.position ?? { x: 0, y: 0 }) },
+      width: undefined,
+      height: undefined,
+      scrollX: 0,
+      scrollY: 0,
       collapsedGroups: new Set()
     };
 
-    this.atoms = [...(molecule.atoms || [])];
     this.init();
-    this.attachEventListeners(this.inputAtoms);
   }
 
   private init(): void {
-    const { renderable, others } = this.decompose(this.atoms);
+    const atoms = [...(this.molecule.atoms || [])];
 
-    const decorationAtoms = others.filter(a =>
-      (a.capability === 'background' || a.capability === 'border') ||
-      a.capability === 'shadow'
-    ) as DecorationAtom[];
+    const contentCapabilities = ['text', 'image', 'video', 'audio', 'code', 'icon', 'canvas'];
+    const eventCapabilities = ['drag', 'resize', 'scroll', 'click', 'hover'];
+    const resizeHandleCapabilities = ['resize-handle'];
+    const decorationCapabilities = ['background', 'border', 'shadow'];
+    const animationCapabilities = ['scale', 'opacity', 'rotate', 'translate', 'height', 'width', 'collapse'];
 
-    const animationAtoms = others.filter(a =>
-      a.capability === 'scale' || a.capability === 'opacity' || a.capability === 'rotate' ||
-      a.capability === 'translate' || a.capability === 'height' || a.capability === 'width' ||
-      a.capability === 'collapse'
-    ) as AnimationAtom[];
-
-    const inputAtoms = others.filter(a =>
-      a.capability === 'drag' || a.capability === 'resize' ||
-      a.capability === 'scroll' || a.capability === 'click' || a.capability === 'hover'
-    ) as InputAtom[];
-
-    this.inputAtoms = inputAtoms;
-
-    const resizeHandleAtoms = others.filter(a => a.capability === 'resize-handle');
+    const contentAtoms = atoms.filter(a => contentCapabilities.includes(a.capability));
+    const eventAtomConfigs = atoms.filter(a => eventCapabilities.includes(a.capability));
+    const resizeHandleConfigs = atoms.filter(a => resizeHandleCapabilities.includes(a.capability));
+    const decorationAtoms = atoms.filter(a => decorationCapabilities.includes(a.capability)) as any[];
+    const animationAtoms = atoms.filter(a => animationCapabilities.includes(a.capability)) as any[];
 
     const userDuration = animationAtoms.find(a => a.duration !== undefined)?.duration;
     const duration = userDuration !== undefined ? userDuration : 0;
     this.element.style.transition = `width ${duration}s ease, height ${duration}s ease, transform ${duration}s ease, opacity ${duration}s ease`;
 
-    let width: number;
-    let height: number;
-
-    if (this.molecule.width !== undefined || this.molecule.height !== undefined) {
-      width = this.molecule.width ?? this.calculateContainerSize(renderable).width;
-      height = this.molecule.height ?? this.calculateContainerSize(renderable).height;
-    } else {
-      const calculated = this.calculateContainerSize(renderable);
-      width = calculated.width;
-      height = calculated.height;
-    }
+    const calculatedSize = this.calculateContainerSize(contentAtoms);
+    let width = this.molecule.width ?? calculatedSize.width;
+    let height = this.molecule.height ?? calculatedSize.height;
 
     this.element.style.width = `${width}px`;
     this.element.style.height = `${height}px`;
+    this.state.width = width;
+    this.state.height = height;
 
-    this.renderDecorationAtoms(decorationAtoms);
-    this.renderContentAtoms(renderable);
-    this.renderResizeHandles(resizeHandleAtoms);
-    this.applyAnimationStyles();
-    this.setupInputHandlers(inputAtoms, animationAtoms);
+    this.applyDecorations(decorationAtoms);
+    this.createContentAtoms(contentAtoms);
+    this.createEventAtoms(eventAtomConfigs, animationAtoms);
+    this.createResizeHandles(resizeHandleConfigs);
   }
 
-  private decompose(atoms: Atom[]): { renderable: ContentAtom[]; others: Atom[] } {
-    const CONTENT_CAPABILITIES = ['text', 'image', 'video', 'audio', 'code', 'icon', 'canvas'];
-    const renderable: ContentAtom[] = [];
-    const others: Atom[] = [];
-
-    atoms.forEach(atom => {
-      if (CONTENT_CAPABILITIES.includes(atom.capability)) {
-        renderable.push(atom as ContentAtom);
-      } else {
-        others.push(atom);
-      }
-    });
-
-    return { renderable, others };
+  private createContext(): { bakerId: string; bakerIndex: number; atomIndex: number } {
+    return {
+      bakerId: this.id,
+      bakerIndex: this.bakerIndex,
+      atomIndex: this.atomIndexCounter++
+    };
   }
 
-  private calculateContainerSize(atoms: ContentAtom[]): { width: number; height: number } {
+  private calculateContainerSize(atoms: any[]): { width: number; height: number } {
     let maxX = 0;
     let maxY = 0;
 
@@ -142,17 +125,10 @@ export class Beaker {
       let atomHeight = 0;
 
       switch (atom.capability) {
-        case 'text': {
-          const fontSize = atom.size || 16;
-          const text = atom.text || '';
-          let charWidth = 0;
-          for (const char of text) {
-            charWidth += /[a-zA-Z0-9]/.test(char) ? fontSize * 0.6 : fontSize;
-          }
-          atomWidth = charWidth + 20;
-          atomHeight = fontSize + 10;
+        case 'text':
+          atomWidth = (atom.text?.length ?? 0) * (atom.size ?? 16) * 0.6 + 20;
+          atomHeight = (atom.size ?? 16) + 10;
           break;
-        }
         case 'image':
           atomWidth = atom.width || 100;
           atomHeight = atom.height || 100;
@@ -174,8 +150,8 @@ export class Beaker {
           atomHeight = atom.size || 24;
           break;
         case 'canvas':
-          atomWidth = (atom as any).width || 100;
-          atomHeight = (atom as any).height || 100;
+          atomWidth = atom.width || 100;
+          atomHeight = atom.height || 100;
           break;
       }
 
@@ -190,227 +166,247 @@ export class Beaker {
     };
   }
 
-  private renderDecorationAtoms(atoms: DecorationAtom[]): void {
+  private applyDecorations(atoms: any[]): void {
     const backgroundAtom = atoms.find(a => a.capability === 'background') as any;
     const borderAtom = atoms.find(a => a.capability === 'border') as any;
-    const shadowAtom = atoms.find(a => a.capability === 'shadow' && !(a as any).trigger) as any;
+    const shadowAtom = atoms.find(a => a.capability === 'shadow') as any;
 
     const moleculeRadius = (this.molecule as any).radius;
     let radius = moleculeRadius ?? backgroundAtom?.radius ?? borderAtom?.radius ?? shadowAtom?.radius ?? 0;
 
-    if (backgroundAtom) backgroundAtom.radius = radius;
-    if (borderAtom) borderAtom.radius = radius;
-    if (shadowAtom) shadowAtom.radius = radius;
+    if (backgroundAtom) {
+      this.element.style.background = `rgb(${backgroundAtom.color[0]}, ${backgroundAtom.color[1]}, ${backgroundAtom.color[2]})`;
+      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+    }
 
-    atoms.forEach(atom => {
-      const result = this.atomRenderer.render(atom);
-      if (!result.success) {
-        console.error(`Failed to render atom ${result.id}: ${result.error}`);
-      }
-      if (result.element) {
-        this.element.appendChild(result.element);
-      }
-    });
+    if (borderAtom) {
+      this.element.style.border = `${borderAtom.width}px solid rgb(${borderAtom.color[0]}, ${borderAtom.color[1]}, ${borderAtom.color[2]})`;
+      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+    }
+
+    if (shadowAtom) {
+      const blur = shadowAtom.blur ?? 0;
+      const x = shadowAtom.x ?? 0;
+      const y = shadowAtom.y ?? 0;
+      const color = shadowAtom.color;
+      this.element.style.boxShadow = `${x}px ${y}px ${blur}px rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.5)`;
+      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
+    }
   }
 
-  private renderContentAtoms(atoms: ContentAtom[]): void {
-    atoms.forEach(atom => {
-      const result = this.atomRenderer.render(atom);
-      if (!result.success) {
-        console.error(`Failed to render atom ${result.id}: ${result.error}`);
-      }
-      if (result.element) {
-        if (atom.capability === 'canvas') {
-          this.setupCanvasDrawing(result.element, atom as any);
+  private createContentAtoms(atoms: any[]): void {
+    atoms.forEach(atomConfig => {
+      const context = this.createContext();
+
+      try {
+        switch (atomConfig.capability) {
+          case 'text':
+            this.contentAtoms.push(new Atoms.TextAtom(context, this.element, {
+              text: atomConfig.text,
+              size: atomConfig.size,
+              color: atomConfig.color,
+              position: atomConfig.position
+            }));
+            break;
+          case 'image':
+            this.contentAtoms.push(new Atoms.ImageAtom(context, this.element, {
+              src: atomConfig.src,
+              width: atomConfig.width,
+              height: atomConfig.height,
+              alt: atomConfig.alt,
+              position: atomConfig.position
+            }));
+            break;
+          case 'video':
+            this.contentAtoms.push(new Atoms.VideoAtom(context, this.element, {
+              src: atomConfig.src,
+              width: atomConfig.width,
+              height: atomConfig.height,
+              position: atomConfig.position
+            }));
+            break;
+          case 'audio':
+            this.contentAtoms.push(new Atoms.AudioAtom(context, this.element, {
+              src: atomConfig.src,
+              position: atomConfig.position
+            }));
+            break;
+          case 'code':
+            this.contentAtoms.push(new Atoms.CodeAtom(context, this.element, {
+              code: atomConfig.code,
+              language: atomConfig.language,
+              position: atomConfig.position
+            }));
+            break;
+          case 'icon':
+            this.contentAtoms.push(new Atoms.IconAtom(context, this.element, {
+              icon: atomConfig.icon,
+              size: atomConfig.size,
+              position: atomConfig.position
+            }));
+            break;
+          case 'canvas':
+            this.contentAtoms.push(new Atoms.CanvasAtom(context, this.element, {
+              width: atomConfig.width,
+              height: atomConfig.height,
+              position: atomConfig.position,
+              strokeColor: atomConfig.strokeColor,
+              strokeWidth: atomConfig.strokeWidth,
+              backgroundColor: atomConfig.backgroundColor,
+              blackboardStyle: atomConfig.blackboardStyle,
+              defaultColors: atomConfig.defaultColors,
+              defaultWidths: atomConfig.defaultWidths,
+              showToolbar: atomConfig.showToolbar,
+              resizable: atomConfig.resizable,
+              minWidth: atomConfig.minWidth,
+              minHeight: atomConfig.minHeight
+            }));
+            break;
         }
-        this.element.appendChild(result.element);
+      } catch (error) {
+        console.error(`[Beaker Error] ${this.id} - 创建ContentAtom失败:`, error);
       }
     });
   }
 
-  private renderResizeHandles(atoms: any[]): void {
-    atoms.forEach(atom => {
-      const result = this.atomRenderer.render(atom);
-      if (!result.success) {
-        console.error(`Failed to render atom ${result.id}: ${result.error}`);
+  private createEventAtoms(eventConfigs: any[], animationAtoms: any[]): void {
+    const clickConfig = eventConfigs.find(a => a.capability === 'click');
+    if (clickConfig) {
+      const context = this.createContext();
+      try {
+        const atom = new Atoms.ClickAtom(context, this, {
+          onClick: () => {
+            this.state.isClicked = !this.state.isClicked;
+            this.applyAnimations(animationAtoms);
+          },
+          onDoubleClick: clickConfig.onDoubleClick
+        });
+        this.eventAtoms.push(atom);
+      } catch (error) {
+        console.error(`[Beaker Error] ${this.id} - 创建ClickAtom失败:`, error);
       }
-      if (result.element) {
-        this.element.appendChild(result.element);
+    }
+
+    const dragConfig = eventConfigs.find(a => a.capability === 'drag');
+    if (dragConfig) {
+      const context = this.createContext();
+      try {
+        const atom = new Atoms.DragAtom(context, this, {
+          handle: dragConfig.handle,
+          bounds: dragConfig.bounds,
+          onDragStart: dragConfig.onDragStart,
+          onDragMove: (pos) => {
+            this.element.style.left = `${pos.x}px`;
+            this.element.style.top = `${pos.y}px`;
+            dragConfig.onDragMove?.(pos);
+          },
+          onDragEnd: dragConfig.onDragEnd
+        });
+        this.eventAtoms.push(atom);
+      } catch (error) {
+        console.error(`[Beaker Error] ${this.id} - 创建DragAtom失败:`, error);
       }
-    });
-  }
+    }
 
-  private setupCanvasDrawing(container: HTMLElement, atom: any): void {
-    const canvas = container.querySelector('canvas') as HTMLCanvasElement;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const strokes: any[] = [];
-    let currentStroke: any = null;
-    let currentColor = atom.blackboardStyle ? [200, 220, 200] : (atom.strokeColor || [0, 0, 0]);
-    let currentWidth = atom.strokeWidth || 2;
-    let isEraser = false;
-
-    (canvas as any).strokes = strokes;
-    this.canvasStrokesMap.set(canvas, { strokes, atom });
-
-    const updateCtxStyle = () => {
-      if (isEraser) {
-        ctx.strokeStyle = atom.blackboardStyle ? '#2d5a2d' : '#ffffff';
-        ctx.lineWidth = currentWidth * 3;
-      } else {
-        ctx.strokeStyle = `rgb(${currentColor[0]}, ${currentColor[1]}, ${currentColor[2]})`;
-        ctx.lineWidth = currentWidth;
+    const resizeConfig = eventConfigs.find(a => a.capability === 'resize');
+    if (resizeConfig) {
+      const context = this.createContext();
+      try {
+        const atom = new Atoms.ResizeAtom(context, this, {
+          minWidth: resizeConfig.minWidth,
+          minHeight: resizeConfig.minHeight,
+          maxWidth: resizeConfig.maxWidth,
+          maxHeight: resizeConfig.maxHeight,
+          onResizeStart: resizeConfig.onResizeStart,
+          onResize: (size) => {
+            this.element.style.width = `${size.width}px`;
+            this.element.style.height = `${size.height}px`;
+            resizeConfig.onResize?.(size);
+          },
+          onResizeEnd: resizeConfig.onResizeEnd
+        });
+        this.eventAtoms.push(atom);
+      } catch (error) {
+        console.error(`[Beaker Error] ${this.id} - 创建ResizeAtom失败:`, error);
       }
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-    };
-    updateCtxStyle();
+    }
 
-    let isDrawing = false;
-    let lastX = 0;
-    let lastY = 0;
-
-    const getCanvasPosition = (e: MouseEvent | TouchEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-      return { x: clientX - rect.left, y: clientY - rect.top };
-    };
-
-    const drawStroke = (stroke: any) => {
-      if (stroke.points.length < 2) return;
-
-      if (stroke.isEraser) {
-        ctx.strokeStyle = atom.blackboardStyle ? '#2d5a2d' : '#ffffff';
-        ctx.lineWidth = stroke.width * 3;
-      } else {
-        ctx.strokeStyle = `rgb(${stroke.color[0]}, ${stroke.color[1]}, ${stroke.color[2]})`;
-        ctx.lineWidth = stroke.width;
+    const scrollConfig = eventConfigs.find(a => a.capability === 'scroll');
+    if (scrollConfig) {
+      const context = this.createContext();
+      try {
+        const atom = new Atoms.ScrollAtom(context, this, {
+          direction: scrollConfig.direction,
+          scrollX: scrollConfig.scrollX,
+          scrollY: scrollConfig.scrollY,
+          maxScrollX: scrollConfig.maxScrollX,
+          maxScrollY: scrollConfig.maxScrollY,
+          onScroll: scrollConfig.onScroll
+        });
+        this.eventAtoms.push(atom);
+      } catch (error) {
+        console.error(`[Beaker Error] ${this.id} - 创建ScrollAtom失败:`, error);
       }
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
+    }
 
-      ctx.beginPath();
-      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-      for (let i = 1; i < stroke.points.length; i++) {
-        ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
-      }
-      ctx.stroke();
-    };
-
-    const redrawAllStrokes = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (atom.blackboardStyle) {
-        ctx.fillStyle = '#2d5a2d';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < canvas.width; i += 4) {
-          for (let j = 0; j < canvas.height; j += 4) {
-            if (Math.random() > 0.5) {
-              ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.1})`;
-              ctx.fillRect(i, j, 2, 2);
-            }
+    const hoverConfig = eventConfigs.find(a => a.capability === 'hover');
+    if (hoverConfig) {
+      const context = this.createContext();
+      try {
+        const atom = new Atoms.HoverAtom(context, this, {
+          onMouseEnter: () => {
+            this.triggers.add(`${this.molecule.id}-hover`);
+            this.state.isHovered = true;
+            this.applyAnimations(animationAtoms);
+          },
+          onMouseLeave: () => {
+            this.triggers.delete(`${this.molecule.id}-hover`);
+            this.state.isHovered = false;
+            this.applyAnimations(animationAtoms);
           }
+        });
+        this.eventAtoms.push(atom);
+      } catch (error) {
+        console.error(`[Beaker Error] ${this.id} - 创建HoverAtom失败:`, error);
+      }
+    }
+
+    const collapseAtoms = animationAtoms.filter(a => a.capability === 'collapse');
+    collapseAtoms.forEach((atom: any) => {
+      this.element.addEventListener('click', () => {
+        if (this.state.collapsedGroups.has(atom.group)) {
+          this.state.collapsedGroups.delete(atom.group);
+        } else {
+          this.state.collapsedGroups.add(atom.group);
         }
-      }
-      strokes.forEach(drawStroke);
-    };
-
-    const startDrawing = (e: MouseEvent | TouchEvent) => {
-      isDrawing = true;
-      const pos = getCanvasPosition(e);
-      lastX = pos.x;
-      lastY = pos.y;
-
-      currentStroke = {
-        points: [{ x: lastX, y: lastY }],
-        color: [...currentColor],
-        width: currentWidth,
-        isEraser
-      };
-    };
-
-    const draw = (e: MouseEvent | TouchEvent) => {
-      if (!isDrawing) return;
-      e.preventDefault();
-      const pos = getCanvasPosition(e);
-
-      ctx.beginPath();
-      ctx.moveTo(lastX, lastY);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-
-      currentStroke.points.push({ x: pos.x, y: pos.y });
-      lastX = pos.x;
-      lastY = pos.y;
-    };
-
-    const stopDrawing = () => {
-      if (currentStroke && currentStroke.points.length > 0) {
-        strokes.push(currentStroke);
-        currentStroke = null;
-      }
-      isDrawing = false;
-    };
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseleave', stopDrawing);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
-    canvas.addEventListener('touchend', stopDrawing);
-
-    const toolbar = container.querySelector('div:last-child');
-    if (!toolbar) return;
-
-    const colorBtns = toolbar.querySelectorAll('button[data-color]');
-    colorBtns.forEach((btn, idx) => {
-      btn.addEventListener('click', () => {
-        currentColor = JSON.parse((btn as HTMLElement).dataset.color || '[0,0,0]');
-        isEraser = false;
-        updateCtxStyle();
-        colorBtns.forEach((b, i) => (b as HTMLElement).style.border = i === idx ? '2px solid #333' : '1px solid #ccc');
-        (toolbar.querySelector('button[title="橡皮擦"]') as HTMLElement).style.background = '#fff';
+        this.applyAnimations(animationAtoms);
       });
     });
-
-    const widthBtns = toolbar.querySelectorAll('button[data-width]');
-    widthBtns.forEach((btn, idx) => {
-      btn.addEventListener('click', () => {
-        currentWidth = parseInt((btn as HTMLElement).dataset.width || '2', 10);
-        updateCtxStyle();
-        widthBtns.forEach((b, i) => (b as HTMLElement).style.border = i === idx ? '2px solid #333' : '1px solid #ccc');
-      });
-    });
-
-    const eraserBtn = toolbar.querySelector('button[title="橡皮擦"]') as HTMLElement;
-    if (eraserBtn) {
-      eraserBtn.addEventListener('click', () => {
-        isEraser = !isEraser;
-        updateCtxStyle();
-        eraserBtn.style.background = isEraser
-          ? (atom.blackboardStyle ? 'rgba(80, 120, 80, 0.9)' : '#e0e0e0')
-          : (atom.blackboardStyle ? 'rgba(30, 60, 30, 0.8)' : 'rgba(255,255,255,0.9)');
-      });
-    }
-
-    const clearBtn = toolbar.querySelector('button[title="清除全部"]') as HTMLElement;
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        strokes.length = 0;
-        redrawAllStrokes();
-      });
-    }
   }
 
-  private applyAnimationStyles(): void {
-    const { id } = this.molecule;
-    const isHovered = this.triggers.has(`${id}-hover`);
+  private createResizeHandles(configs: any[]): void {
+    configs.forEach(config => {
+      const context = this.createContext();
+      try {
+        const handle = new Atoms.ResizeHandleAtom(context, this, {
+          edge: config.edge,
+          minWidth: config.minWidth,
+          minHeight: config.minHeight,
+          handleSize: config.handleSize,
+          handleColor: config.handleColor,
+          scaleMode: config.scaleMode
+        });
+        this.resizeHandles.push(handle);
+      } catch (error) {
+        console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
+      }
+    });
+  }
+
+  private applyAnimations(animationAtoms: any[]): void {
+    const isHovered = this.triggers.has(`${this.molecule.id}-hover`);
     const isClicked = this.state.isClicked;
-    const isCurrentlyDragging = this.state.isDragging;
+    const isDragging = this.state.isDragging;
 
     let scale = 1;
     let opacity = 1;
@@ -426,71 +422,44 @@ export class Beaker {
     let hasHeight = false;
     let hasWidth = false;
 
-    this.atoms.forEach((atom: any) => {
+    animationAtoms.forEach((atom: any) => {
       switch (atom.capability) {
         case 'scale':
-          if (atom.trigger === 'hover' && isHovered) {
+          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
             scale = atom.value;
             hasScale = true;
-          } else if (atom.trigger === 'hover' && !isHovered) {
+          } else if (atom.trigger === 'hover' || atom.trigger === 'click') {
             scale = 1;
-            hasScale = true;
-          } else if (atom.trigger === 'click' && isClicked) {
-            scale = atom.value;
-            hasScale = true;
-          } else if (atom.trigger === 'click' && !isClicked) {
-            scale = 1;
-            hasScale = true;
-          } else if (atom.trigger === 'drag' && isCurrentlyDragging) {
-            scale = atom.value;
             hasScale = true;
           }
           break;
         case 'opacity':
-          if (atom.trigger === 'hover' && isHovered) {
+          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
             opacity = atom.value;
             hasOpacity = true;
-          } else if (atom.trigger === 'hover' && !isHovered) {
+          } else if (atom.trigger === 'hover' || atom.trigger === 'click') {
             opacity = 1;
-            hasOpacity = true;
-          } else if (atom.trigger === 'click' && isClicked) {
-            opacity = atom.value;
-            hasOpacity = true;
-          } else if (atom.trigger === 'click' && !isClicked) {
-            opacity = 1;
-            hasOpacity = true;
-          } else if (atom.trigger === 'drag' && isCurrentlyDragging) {
-            opacity = atom.value;
             hasOpacity = true;
           }
           break;
         case 'rotate':
-          if (atom.trigger === 'hover' && isHovered) {
+          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
             rotate = atom.value;
             hasRotate = true;
-          } else if (atom.trigger === 'hover' && !isHovered) {
-            rotate = 0;
-            hasRotate = true;
-          } else if (atom.trigger === 'click' && isClicked) {
-            rotate = atom.value;
-            hasRotate = true;
-          } else if (atom.trigger === 'click' && !isClicked) {
+          } else if (atom.trigger === 'hover' || atom.trigger === 'click') {
             rotate = 0;
             hasRotate = true;
           }
           break;
         case 'translate':
-          if (isCurrentlyDragging) {
+          if (atom.trigger === 'drag' && isDragging) {
             translateX = this.state.position.x - (this.molecule.position?.x ?? 0);
             translateY = this.state.position.y - (this.molecule.position?.y ?? 0);
             hasTranslate = true;
           }
           break;
         case 'height':
-          if (atom.trigger === 'hover' && isHovered) {
-            height = `${atom.value}px`;
-            hasHeight = true;
-          } else if (atom.trigger === 'click' && isClicked) {
+          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
             height = `${atom.value}px`;
             hasHeight = true;
           } else if (atom.trigger === 'click' && !isClicked && atom.collapsedValue !== undefined) {
@@ -499,10 +468,7 @@ export class Beaker {
           }
           break;
         case 'width':
-          if (atom.trigger === 'hover' && isHovered) {
-            width = `${atom.value}px`;
-            hasWidth = true;
-          } else if (atom.trigger === 'click' && isClicked) {
+          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
             width = `${atom.value}px`;
             hasWidth = true;
           } else if (atom.trigger === 'click' && !isClicked && atom.collapsedValue !== undefined) {
@@ -520,7 +486,6 @@ export class Beaker {
             hasHeight = true;
           }
           break;
-
       }
     });
 
@@ -546,145 +511,10 @@ export class Beaker {
     }
   }
 
-  private setupInputHandlers(inputAtoms: InputAtom[], animationAtoms: AnimationAtom[]): void {
-    const dragAtom = inputAtoms.find(a => a.capability === 'drag');
-    const clickAtom = inputAtoms.find(a => a.capability === 'click');
-    const dragKeepOnRelease = dragAtom?.keepOnRelease ?? true;
-    const clickKeepOnRelease = clickAtom?.keepOnRelease ?? false;
-
-    if (dragAtom) {
-      let isDragging = false;
-      let dragOffsetX = 0;
-      let dragOffsetY = 0;
-      let totalDragOffsetX = 0;
-      let totalDragOffsetY = 0;
-
-      const onMouseDown = (e: MouseEvent) => {
-        if (e.button !== 0) return;
-        e.preventDefault();
-        isDragging = true;
-        dragOffsetX = e.clientX;
-        dragOffsetY = e.clientY;
-        totalDragOffsetX = 0;
-        totalDragOffsetY = 0;
-      };
-
-      const onMouseMove = (e: MouseEvent) => {
-        if (!isDragging) return;
-
-        const dx = e.clientX - dragOffsetX;
-        const dy = e.clientY - dragOffsetY;
-        dragOffsetX = e.clientX;
-        dragOffsetY = e.clientY;
-        totalDragOffsetX += dx;
-        totalDragOffsetY += dy;
-
-        const newX = (this.molecule.position?.x ?? 0) + totalDragOffsetX;
-        const newY = (this.molecule.position?.y ?? 0) + totalDragOffsetY;
-
-        this.state.position = { x: newX, y: newY };
-        this.element.style.left = `${newX}px`;
-        this.element.style.top = `${newY}px`;
-        this.element.style.transform = `translate(${totalDragOffsetX}px, ${totalDragOffsetY}px)`;
-
-        this.updateState({ isDragging: true });
-        this.applyAnimationStyles();
-      };
-
-      const onMouseUp = () => {
-        if (isDragging) {
-          if (dragKeepOnRelease) {
-            const finalX = (this.molecule.position?.x ?? 0) + totalDragOffsetX;
-            const finalY = (this.molecule.position?.y ?? 0) + totalDragOffsetY;
-            this.molecule.position = { x: finalX, y: finalY };
-            this.state.position = { x: finalX, y: finalY };
-            this.element.style.transform = '';
-          } else {
-            totalDragOffsetX = 0;
-            totalDragOffsetY = 0;
-            this.element.style.transform = '';
-          }
-        }
-
-        isDragging = false;
-        this.updateState({ isDragging: false });
-      };
-
-      this.element.addEventListener('mousedown', onMouseDown);
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    }
-
-    if (clickAtom) {
-      this.element.addEventListener('click', () => {
-        if (clickKeepOnRelease) {
-          this.state.isClicked = !this.state.isClicked;
-          this.applyAnimationStyles();
-        } else {
-          this.state.isClicked = true;
-          this.applyAnimationStyles();
-          this.state.isClicked = false;
-          this.applyAnimationStyles();
-        }
-      });
-    }
-
-    const collapseAtoms = animationAtoms.filter(a => a.capability === 'collapse');
-    collapseAtoms.forEach((atom: any) => {
-      this.element.addEventListener('click', () => {
-        const group = atom.group;
-        if (this.state.collapsedGroups.has(group)) {
-          this.state.collapsedGroups.delete(group);
-        } else {
-          this.state.collapsedGroups.add(group);
-        }
-        this.applyAnimationStyles();
-      });
-    });
-  }
-
-  private attachEventListeners(inputAtoms: InputAtom[]): void {
-    const hoverAtom = inputAtoms.find(a => a.capability === 'hover');
-    const hoverKeepOnRelease = hoverAtom?.keepOnRelease ?? false;
-
-    if (hoverAtom) {
-      this.element.addEventListener('mouseenter', () => {
-        this.triggers.add(`${this.molecule.id}-hover`);
-        this.updateState({ isHovered: true });
-        this.applyAnimationStyles();
-      });
-
-      this.element.addEventListener('mouseleave', () => {
-        this.triggers.delete(`${this.molecule.id}-hover`);
-        if (!hoverKeepOnRelease) {
-          this.updateState({ isHovered: false });
-          this.applyAnimationStyles();
-        }
-      });
-    }
-  }
-
-  private updateState(partial: Partial<BakerState>): void {
-    let changed = false;
-    if (partial.isHovered !== undefined && partial.isHovered !== this.state.isHovered) {
-      this.state.isHovered = partial.isHovered;
-      changed = true;
-    }
-    if (partial.isClicked !== undefined && partial.isClicked !== this.state.isClicked) {
-      this.state.isClicked = partial.isClicked;
-      changed = true;
-    }
-    if (partial.isDragging !== undefined && partial.isDragging !== this.state.isDragging) {
-      this.state.isDragging = partial.isDragging;
-      changed = true;
-    }
-    if (partial.position !== undefined) {
-      this.state.position = { ...partial.position };
-      changed = true;
-    }
-
-    if (changed && this.onStateChange) {
-      this.onStateChange(this.id, this.state);
+  public updateState(newState: Partial<BakerState>): void {
+    this.state = { ...this.state, ...newState };
+    if (this.onStateChange) {
+      this.onStateChange(this.id, newState);
     }
   }
 
