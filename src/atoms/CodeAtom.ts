@@ -164,6 +164,17 @@ export class CodeAtom {
     return lines.join('\n').replace(/\n{3,}/g, '\n\n');
   }
 
+  private detectLanguage(code: string): string | undefined {
+    const src = code.trim();
+    if (/^(def |import |from |class |if __name__ |print\(|elif |except |yield |lambda |async def )/.test(src)) return 'python';
+    if (/^(fn |let mut |impl |pub fn |struct |enum |use std|mod \w+;|-> |#\[)/.test(src)) return 'rust';
+    if (/^(func |package |import \"|type \w+ struct|func \(|go |defer )/.test(src)) return 'go';
+    if (/^(public class|private |protected |void |System\.out|import java|\.jar|@Override)/.test(src)) return 'java';
+    if (/^(import |export |const |let |var |function |class |interface |=>|async )/.test(src)) return 'javascript';
+    if (/:\s*(string|number|boolean|interface|type)\b/.test(src) || /interface\s+\w+\s*{/.test(src)) return 'typescript';
+    return 'javascript';
+  }
+
   private highlight(code: string, language?: string): string {
     let escaped = code
       .replace(/&/g, '&amp;')
@@ -215,9 +226,10 @@ export class CodeAtom {
         color: ${textColor};
       `;
 
-      if (config.language) {
+      const lang = config.language ?? this.detectLanguage(config.code);
+      if (lang) {
         const badge = document.createElement('div');
-        badge.textContent = config.language;
+        badge.textContent = lang;
         badge.style.cssText = `
           position: absolute;
           top: 6px;
@@ -225,7 +237,7 @@ export class CodeAtom {
           background: ${badgeBg};
           color: ${textColor};
           padding: 2px 8px;
-          border-radius: 3px;
+          border-radius: 16px;
           font-size: 11px;
           font-family: 'Consolas', monospace;
           opacity: 0.8;
