@@ -117,7 +117,7 @@ export class CanvasAtom {
     const widths = config.defaultWidths ?? [1, 2, 4, 6, 8, 12, 16, 20];
     const minW = widths[0];
     const maxW = widths[widths.length - 1];
-    const toolbarScale = Math.min(1, Math.max(0.5, this.canvasWidth / 400));
+    const toolbarScale = Math.min(1, Math.max(0.4, this.canvasWidth / 550));
 
     const toolbar = document.createElement('div');
     const toolbarWidth = Math.min(this.canvasWidth - 24, 400);
@@ -129,8 +129,8 @@ export class CanvasAtom {
       transform-origin: center bottom;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 8px 16px;
+      gap: 6px;
+      padding: 6px 12px;
       width: ${toolbarWidth}px;
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px);
