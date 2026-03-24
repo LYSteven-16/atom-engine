@@ -5,6 +5,8 @@ export interface AudioAtomConfig {
   position?: { x: number; y: number; z?: number };
   /** 宽度（默认300） */
   width?: number;
+  /** 高度（默认42） */
+  height?: number;
   /** 自动播放 */
   autoplay?: boolean;
   /** 循环播放 */
@@ -34,6 +36,7 @@ export class AudioAtom {
         left: ${config.position?.x ?? 0}px;
         top: ${config.position?.y ?? 0}px;
         width: ${config.width ?? 300}px;
+        height: ${config.height ?? 42}px;
       `;
       container.appendChild(element);
       console.log(`[Atom] ${this.context.bakerId} - AudioAtom渲染成功`);
