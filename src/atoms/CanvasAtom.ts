@@ -196,62 +196,92 @@ export class CanvasAtom {
     };
     toolbar.appendChild(slider);
 
-    const eraserBtn = document.createElement('button');
-    eraserBtn.style.cssText = `
-      padding: 4px 12px;
-      border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 999px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 13px;
-      color: #333;
-      flex-shrink: 0;
-    `;
-    eraserBtn.textContent = '橡皮';
-    eraserBtn.onclick = () => {
-      this.isEraser = !this.isEraser;
-      eraserBtn.style.background = this.isEraser ? '#e8f0ff' : '#fff';
-      eraserBtn.style.borderColor = this.isEraser ? '#007aff' : 'rgba(0,0,0,0.15)';
-      eraserBtn.style.color = this.isEraser ? '#007aff' : '#333';
+    const iconBtn = (onClick: () => void, drawIcon: (ctx: CanvasRenderingContext2D, s: number) => void) => {
+      const btn = document.createElement('button');
+      const s = 18;
+      const iconCanvas = document.createElement('canvas');
+      iconCanvas.width = s;
+      iconCanvas.height = s;
+      iconCanvas.style.cssText = 'display:block;';
+      drawIcon(iconCanvas.getContext('2d')!, s);
+      btn.appendChild(iconCanvas);
+      btn.style.cssText = `
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid rgba(0,0,0,0.15);
+        border-radius: 50%;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      `;
+      btn.onclick = onClick;
+      return btn;
     };
+
+    const eraserBtn = iconBtn(
+      () => {
+        this.isEraser = !this.isEraser;
+        eraserBtn.style.background = this.isEraser ? '#e8f0ff' : '#fff';
+        eraserBtn.style.borderColor = this.isEraser ? '#007aff' : 'rgba(0,0,0,0.15)';
+      },
+      (ctx, s) => {
+        ctx.fillStyle = '#555';
+        ctx.fillRect(s * 0.15, s * 0.55, s * 0.7, s * 0.25);
+        ctx.fillStyle = '#e74c3c';
+        ctx.fillRect(s * 0.2, s * 0.25, s * 0.35, s * 0.35);
+        ctx.fillStyle = '#c0392b';
+        ctx.fillRect(s * 0.2, s * 0.55, s * 0.35, s * 0.05);
+      }
+    );
     toolbar.appendChild(eraserBtn);
 
-    const clearBtn = document.createElement('button');
-    clearBtn.style.cssText = `
-      padding: 4px 12px;
-      border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 999px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 13px;
-      color: #333;
-      flex-shrink: 0;
-    `;
-    clearBtn.textContent = '清空';
-    clearBtn.onclick = () => {
-      this.strokes = [];
-      this.redraw();
-    };
+    const clearBtn = iconBtn(
+      () => {
+        this.strokes = [];
+        this.redraw();
+      },
+      (ctx, s) => {
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = s * 0.12;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(s * 0.25, s * 0.25);
+        ctx.lineTo(s * 0.75, s * 0.75);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(s * 0.75, s * 0.25);
+        ctx.lineTo(s * 0.25, s * 0.75);
+        ctx.stroke();
+      }
+    );
     toolbar.appendChild(clearBtn);
 
-    const saveBtn = document.createElement('button');
-    saveBtn.style.cssText = `
-      padding: 4px 12px;
-      border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 999px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 13px;
-      color: #333;
-      flex-shrink: 0;
-    `;
-    saveBtn.textContent = '保存';
-    saveBtn.onclick = () => {
-      const link = document.createElement('a');
-      link.download = 'canvas.png';
-      link.href = this.canvas!.toDataURL('image/png');
-      link.click();
-    };
+    const saveBtn = iconBtn(
+      () => {
+        const link = document.createElement('a');
+        link.download = 'canvas.png';
+        link.href = this.canvas!.toDataURL('image/png');
+        link.click();
+      },
+      (ctx, s) => {
+        ctx.fillStyle = '#555';
+        ctx.beginPath();
+        ctx.moveTo(s * 0.5, s * 0.2);
+        ctx.lineTo(s * 0.2, s * 0.5);
+        ctx.lineTo(s * 0.35, s * 0.5);
+        ctx.lineTo(s * 0.35, s * 0.8);
+        ctx.lineTo(s * 0.65, s * 0.8);
+        ctx.lineTo(s * 0.65, s * 0.5);
+        ctx.lineTo(s * 0.8, s * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(s * 0.4, s * 0.78, s * 0.2, s * 0.04);
+      }
+    );
     toolbar.appendChild(saveBtn);
 
     return toolbar;
