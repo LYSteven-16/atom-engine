@@ -99,9 +99,8 @@ export class Beaker {
     this.state.width = width;
     this.state.height = height;
 
-    this.applyDecorations(decorationAtoms);
-    this.createDecorationAtoms(decorationAtoms, this.molecule.width, this.molecule.height);
     this.createContentAtoms(contentAtoms);
+    this.createDecorationAtoms(decorationAtoms, this.molecule.width, this.molecule.height);
     this.createEventAtoms(eventAtomConfigs, animationAtoms);
     this.createResizeHandles(resizeHandleConfigs);
   }
@@ -165,9 +164,6 @@ export class Beaker {
       width: Math.max(maxX + padding, 50),
       height: Math.max(maxY + padding, 30)
     };
-  }
-
-  private applyDecorations(_atoms: any[]): void {
   }
 
   private createDecorationAtoms(atoms: any[], moleculeWidth?: number, moleculeHeight?: number): void {
