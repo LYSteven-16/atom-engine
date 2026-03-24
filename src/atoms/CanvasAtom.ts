@@ -68,7 +68,7 @@ export class CanvasAtom {
         width: ${this.canvasWidth}px;
         height: ${this.canvasHeight}px;
         border-radius: 8px;
-        overflow: visible;
+        overflow: hidden;
       `;
 
       const canvas = document.createElement('canvas');
@@ -80,7 +80,6 @@ export class CanvasAtom {
         top: 0;
         left: 0;
         cursor: crosshair;
-        overflow: visible;
       `;
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d')!;
