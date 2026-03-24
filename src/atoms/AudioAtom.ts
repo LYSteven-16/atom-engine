@@ -31,10 +31,7 @@ export class AudioAtom {
         position: absolute;
         left: ${config.position?.x ?? 0}px;
         top: ${config.position?.y ?? 0}px;
-        width: 0;
-        height: 0;
-        opacity: 0;
-        pointer-events: none;
+        visibility: hidden;
       `;
       container.appendChild(element);
       console.log(`[Atom] ${this.context.bakerId} - AudioAtom渲染成功`);
