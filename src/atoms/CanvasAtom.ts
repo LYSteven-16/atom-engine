@@ -8,7 +8,6 @@ export interface CanvasAtomConfig {
   strokeWidth?: number;
   backgroundColor?: [number, number, number];
   blackboardStyle?: boolean;
-  defaultColors?: [number, number, number][];
   defaultWidths?: number[];
   showToolbar?: boolean;
   resizable?: boolean;
@@ -115,10 +114,9 @@ export class CanvasAtom {
   }
 
   private createToolbar(_canvas: HTMLCanvasElement, config: CanvasAtomConfig): HTMLElement {
-    const colors = config.defaultColors ?? [[0, 0, 0], [255, 0, 0], [0, 0, 255]];
-    const widths = config.defaultWidths ?? [2, 4, 6, 8, 12];
-
+    const widths = config.defaultWidths ?? [1, 2, 4, 6, 8, 12, 16, 20];
     const toolbar = document.createElement('div');
+    const toolbarWidth = Math.min(this.canvasWidth - 24, 360);
     toolbar.style.cssText = `
       position: absolute;
       bottom: 12px;
@@ -126,125 +124,106 @@ export class CanvasAtom {
       transform: translateX(-50%);
       display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
+      gap: 10px;
+      padding: 8px 14px;
+      width: ${toolbarWidth}px;
       background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 12px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 999px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.15);
       border: 1px solid rgba(255,255,255,0.5);
     `;
 
-    colors.forEach((color) => {
-      const btn = document.createElement('button');
-      btn.style.cssText = `
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border: 2px solid rgba(0,0,0,0.2);
-        background: rgb(${color[0]},${color[1]},${color[2]});
-        cursor: pointer;
-        transition: transform 0.15s;
-      `;
-      btn.onmouseenter = () => { btn.style.transform = 'scale(1.15)'; };
-      btn.onmouseleave = () => { btn.style.transform = 'scale(1)'; };
-      btn.onclick = () => {
-        this.currentColor = color;
-        this.isEraser = false;
-        this.updateColorButtons(toolbar, colors);
-      };
-      toolbar.appendChild(btn);
-    });
-
-    const divider = document.createElement('div');
-    divider.style.cssText = `width:1px;height:20px;background:rgba(0,0,0,0.15);margin:0 4px;`;
-    toolbar.appendChild(divider);
-
-    widths.forEach(w => {
-      const btn = document.createElement('button');
-      btn.style.cssText = `
-        width: 36px;
-        height: 28px;
-        border: 1px solid rgba(0,0,0,0.15);
-        border-radius: 6px;
-        background: #fff;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.15s;
-      `;
-      const dot = document.createElement('div');
-      dot.style.cssText = `
-        border-radius: 50%;
-        background: #333;
-        width: ${Math.min(w, 18)}px;
-        height: ${Math.min(w, 18)}px;
-      `;
-      btn.appendChild(dot);
-      btn.onmouseenter = () => { btn.style.background = '#f0f0f0'; };
-      btn.onmouseleave = () => { btn.style.background = '#fff'; };
-      btn.onclick = () => {
-        this.currentWidth = w;
-        this.isEraser = false;
-      };
-      toolbar.appendChild(btn);
-    });
-
-    const customColorBtn = document.createElement('button');
-    customColorBtn.style.cssText = `
-      width: 28px;
-      height: 28px;
-      border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 6px;
-      background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 25%, #6bcb77 50%, #4d96ff 75%, #9b59b6 100%);
+    const preview = document.createElement('div');
+    preview.style.cssText = `
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgb(${this.currentColor[0]},${this.currentColor[1]},${this.currentColor[2]});
+      border: 2px solid rgba(255,255,255,0.8);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
       cursor: pointer;
+      flex-shrink: 0;
     `;
-    customColorBtn.onclick = () => {
+    preview.onclick = () => {
       const input = document.createElement('input');
       input.type = 'color';
       input.value = `#${this.currentColor[0].toString(16).padStart(2,'0')}${this.currentColor[1].toString(16).padStart(2,'0')}${this.currentColor[2].toString(16).padStart(2,'0')}`;
-      input.style.cssText = 'position:absolute;opacity:0;width:0;height:0;';
+      input.style.cssText = 'position:absolute;opacity:0;width:0;height:0;pointer-events:none;';
       input.onchange = () => {
         const hex = input.value.replace('#', '');
         this.currentColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
         this.isEraser = false;
-        this.updateColorButtons(toolbar, colors);
+        preview.style.background = `rgb(${this.currentColor[0]},${this.currentColor[1]},${this.currentColor[2]})`;
       };
       document.body.appendChild(input);
       input.click();
       input.remove();
     };
-    toolbar.appendChild(customColorBtn);
+    toolbar.appendChild(preview);
+
+    const sliderWrap = document.createElement('div');
+    sliderWrap.style.cssText = `
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    `;
+
+    widths.forEach(w => {
+      const dot = document.createElement('div');
+      dot.style.cssText = `
+        flex: 1;
+        height: ${Math.min(w, 20)}px;
+        max-height: 20px;
+        border-radius: 10px;
+        background: #333;
+        cursor: pointer;
+      `;
+      dot.onclick = () => {
+        this.currentWidth = w;
+        this.isEraser = false;
+        const size = Math.max(8, Math.min(w + 4, 24));
+        preview.style.width = `${size}px`;
+        preview.style.height = `${size}px`;
+      };
+      dot.onmouseenter = () => { dot.style.background = '#007aff'; };
+      dot.onmouseleave = () => { dot.style.background = '#333'; };
+      sliderWrap.appendChild(dot);
+    });
+    toolbar.appendChild(sliderWrap);
 
     const eraserBtn = document.createElement('button');
     eraserBtn.style.cssText = `
-      padding: 4px 10px;
+      padding: 4px 12px;
       border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 6px;
+      border-radius: 999px;
       background: #fff;
       cursor: pointer;
       font-size: 13px;
       color: #333;
+      flex-shrink: 0;
     `;
     eraserBtn.textContent = '橡皮';
     eraserBtn.onclick = () => {
       this.isEraser = !this.isEraser;
       eraserBtn.style.background = this.isEraser ? '#e8f0ff' : '#fff';
       eraserBtn.style.borderColor = this.isEraser ? '#007aff' : 'rgba(0,0,0,0.15)';
+      eraserBtn.style.color = this.isEraser ? '#007aff' : '#333';
     };
     toolbar.appendChild(eraserBtn);
 
     const clearBtn = document.createElement('button');
     clearBtn.style.cssText = `
-      padding: 4px 10px;
+      padding: 4px 12px;
       border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 6px;
+      border-radius: 999px;
       background: #fff;
       cursor: pointer;
       font-size: 13px;
       color: #333;
+      flex-shrink: 0;
     `;
     clearBtn.textContent = '清空';
     clearBtn.onclick = () => {
@@ -255,13 +234,14 @@ export class CanvasAtom {
 
     const saveBtn = document.createElement('button');
     saveBtn.style.cssText = `
-      padding: 4px 10px;
+      padding: 4px 12px;
       border: 1px solid rgba(0,0,0,0.15);
-      border-radius: 6px;
+      border-radius: 999px;
       background: #fff;
       cursor: pointer;
       font-size: 13px;
       color: #333;
+      flex-shrink: 0;
     `;
     saveBtn.textContent = '保存';
     saveBtn.onclick = () => {
@@ -272,22 +252,7 @@ export class CanvasAtom {
     };
     toolbar.appendChild(saveBtn);
 
-    this.updateColorButtons(toolbar, colors);
     return toolbar;
-  }
-
-  private updateColorButtons(toolbar: HTMLElement, colors: [number, number, number][]): void {
-    const buttons = toolbar.querySelectorAll('button');
-    let colorIdx = 0;
-    buttons.forEach(btn => {
-      const style = (btn as HTMLElement).style;
-      if (style.width === '24px' && style.height === '24px' && style.borderRadius === '50%') {
-        const c = colors[colorIdx];
-        const isActive = this.currentColor[0] === c[0] && this.currentColor[1] === c[1] && this.currentColor[2] === c[2];
-        style.border = `2px solid ${isActive ? '#007aff' : 'rgba(0,0,0,0.2)'}`;
-        colorIdx++;
-      }
-    });
   }
 
   private setupResize(canvasWrapper: HTMLElement, _canvas: HTMLCanvasElement, config: CanvasAtomConfig): void {

@@ -258,7 +258,6 @@ export class Beaker {
               strokeWidth: atomConfig.strokeWidth,
               backgroundColor: atomConfig.backgroundColor,
               blackboardStyle: atomConfig.blackboardStyle,
-              defaultColors: atomConfig.defaultColors,
               defaultWidths: atomConfig.defaultWidths,
               showToolbar: atomConfig.showToolbar,
               resizable: atomConfig.resizable,
