@@ -216,8 +216,8 @@ export class CodeAtom {
         padding-top: 32px;
         border-radius: 16px;
         overflow: auto;
-        white-space: pre-wrap;
-        word-break: break-all;
+        white-space: pre;
+        word-break: normal;
       `;
       code.style.cssText = `
         font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
