@@ -459,12 +459,12 @@ private calculateContainerSize(atoms: any[]): { width: number; height: number } 
         atomHeight = atom.height || 200;
         break;
       case 'audio':
-        atomWidth = 200;
-        atomHeight = 40;
+        atomWidth = atom.width || 300;
+        atomHeight = atom.height || 42;
         break;
       case 'code':
-        atomWidth = 300;
-        atomHeight = 150;
+        atomWidth = atom.width || 400;
+        atomHeight = atom.height || 200;
         break;
       case 'icon':
         atomWidth = atom.size || 24;
@@ -581,7 +581,11 @@ private createContentAtoms(atoms: any[]): void {
           this.contentAtoms.push(new Atoms.CodeAtom(context, this.element, {
             code: atomConfig.code,
             language: atomConfig.language,
-            position: atomConfig.position
+            position: atomConfig.position,
+            width: atomConfig.width,
+            height: atomConfig.height,
+            backgroundColor: atomConfig.backgroundColor,
+            autoFormat: atomConfig.autoFormat
           }));
           break;
         case 'icon':
@@ -605,7 +609,9 @@ private createContentAtoms(atoms: any[]): void {
             showToolbar: atomConfig.showToolbar,
             resizable: atomConfig.resizable,
             minWidth: atomConfig.minWidth,
-            minHeight: atomConfig.minHeight
+            minHeight: atomConfig.minHeight,
+            offsetX: atomConfig.offsetX,
+            offsetY: atomConfig.offsetY
           }));
           break;
       }
@@ -844,10 +850,10 @@ BeakerManager 重新创建
 | TextAtom | `/src/atoms/TextAtom.ts` | 显示文本内容 |
 | ImageAtom | `/src/atoms/ImageAtom.ts` | 显示图片（支持滚动/裁切/拉伸模式） |
 | VideoAtom | `/src/atoms/VideoAtom.ts` | 播放视频 |
-| AudioAtom | `/src/atoms/AudioAtom.ts` | 播放音频 |
-| CodeAtom | `/src/atoms/CodeAtom.ts` | 显示代码 |
+| AudioAtom | `/src/atoms/AudioAtom.ts` | 播放音频/视频音频流 |
+| CodeAtom | `/src/atoms/CodeAtom.ts` | 显示代码（内联语法高亮/自动格式化/语言识别） |
 | IconAtom | `/src/atoms/IconAtom.ts` | 显示图标 |
-| CanvasAtom | `/src/atoms/CanvasAtom.ts` | 绘图画布 |
+| CanvasAtom | `/src/atoms/CanvasAtom.ts` | 绘图画布（支持工具栏/黑板模式/可调整大小） |
 
 #### 2. 输入原子 (Input Atom)
 

@@ -287,7 +287,7 @@ const audioAtom = {
 
 #### CodeAtom - 代码显示
 
-显示代码片段：
+显示代码片段，支持内联语法高亮（零外部依赖）、自动语言识别、自动格式化：
 
 ```javascript
 const codeAtom = {
@@ -296,11 +296,24 @@ const codeAtom = {
   // 代码内容
   code: 'const hello = "world";',
 
-  // 语言（用于语法高亮可选）
+  // 语言（用于语法高亮，可选，不填则自动识别）
   language: 'javascript',
 
   // 位置
-  position: { x: 0, y: 0 }
+  position: { x: 0, y: 0 },
+
+  // 尺寸（可选）
+  width: 400,                      // 宽度（默认400）
+  height: 200,                     // 高度（默认200）
+
+  // 背景颜色（可选，默认 [30, 30, 30]）
+  backgroundColor: [30, 30, 30],
+
+  // 自动格式化（可选，默认 true）
+  // 自动整理乱序输入的代码为正确格式
+  autoFormat: true,
+
+  // 支持的语言：JavaScript/TypeScript/Python/Java/Go/Rust/HTML/CSS
 };
 
 // 示例：显示 TypeScript 代码
@@ -315,6 +328,16 @@ function greet(user: User): string {
   return \`Hello, \${user.name}!\`;
 }`,
   language: 'typescript',
+  position: { x: 0, y: 0 }
+}
+
+// 示例：深色背景自定义颜色 + 自动格式化
+{
+  capability: 'code',
+  code: 'def hello():    print("world")',
+  language: 'python',
+  backgroundColor: [20, 20, 30],
+  autoFormat: true,
   position: { x: 0, y: 0 }
 }
 ```
@@ -348,7 +371,7 @@ const iconAtom = {
 
 #### CanvasAtom - 画布绘图
 
-创建可绘图的画布：
+创建可绘图的画布，支持工具栏（画笔颜色/大小选择、橡皮擦、清空、保存为图片）：
 
 ```javascript
 const canvasAtom = {
@@ -366,25 +389,25 @@ const canvasAtom = {
   strokeWidth: 2,                   // 描边宽度
   backgroundColor: [255, 255, 255], // 背景颜色（RGB数组）
 
-  // 可选：黑板模式
+  // 黑板模式（绿色底白色笔）
   blackboardStyle?: boolean,
 
-  // 可选：预设颜色
+  // 预设颜色（工具栏颜色选择器）
   defaultColors?: [number, number, number][],
 
-  // 可选：预设线宽
+  // 预设线宽
   defaultWidths?: number[],
 
-  // 可选：显示工具栏
+  // 显示工具栏
   showToolbar?: boolean,
 
-  // 可选：是否可调整大小
+  // 是否可调整大小
   resizable?: boolean,
 
-  // 可选：最小宽度
+  // 最小宽度
   minWidth?: number,
 
-  // 可选：最小高度
+  // 最小高度
   minHeight?: number
 };
 
@@ -406,11 +429,25 @@ const canvasAtom = {
   height: 300,
   strokeColor: [0, 0, 0],
   strokeWidth: 2,
-  backgroundColor: [250, 250, 250],
+  backgroundColor: [255, 255, 255],
   showToolbar: true,
   resizable: true,
   minWidth: 200,
   minHeight: 100,
+  position: { x: 0, y: 0 }
+}
+
+// 示例：带预设颜色和线宽的工具栏
+{
+  capability: 'canvas',
+  width: 400,
+  height: 300,
+  strokeColor: [50, 50, 50],
+  strokeWidth: 3,
+  showToolbar: true,
+  resizable: true,
+  defaultColors: [[0, 0, 0], [255, 0, 0], [0, 0, 255]],
+  defaultWidths: [2, 4, 8],
   position: { x: 0, y: 0 }
 }
 ```
