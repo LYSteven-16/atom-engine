@@ -48,7 +48,8 @@ export class ShadowAtom {
       width: ${this.width ?? 100}px;
       height: ${this.height ?? 100}px;
       box-shadow: ${this.x}px ${this.y}px ${this.blur}px ${this.spread}px rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, 0.5);
-      border-radius: ${this.radius ?? 0}px;
+      background: transparent;
+      border: none;
       pointer-events: none;
       z-index: ${this.position?.z ?? -1};
     `;
