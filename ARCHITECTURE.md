@@ -336,9 +336,9 @@ constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: 
   }
   this.element.style.overflow = 'visible';
   this.element.style.background = 'transparent';
-  this.element.style.border = 'none';
-  this.element.style.outline = 'none';
-  this.element.style.boxShadow = 'none';
+  this.element.style.border = 'transparent';
+  this.element.style.outline = 'transparent';
+  this.element.style.boxShadow = 'transparent';
   this.element.style.cursor = 'default';
 
   // 初始化状态
@@ -389,10 +389,10 @@ init(): void {
   this.state.width = width;
   this.state.height = height;
 
-  // 5. 应用装饰
-  this.applyDecorations(decorationAtoms);
+  // 5. 创建装饰原子（底层）
+  this.createDecorationAtoms(decorationAtoms, this.molecule.width, this.molecule.height);
 
-  // 6. 创建内容原子
+  // 6. 创建内容原子（上层）
   this.createContentAtoms(contentAtoms);
 
   // 7. 创建事件原子
@@ -488,34 +488,51 @@ private calculateContainerSize(atoms: any[]): { width: number; height: number } 
 }
 ```
 
-#### applyDecorations(atoms: any[]): void
+#### createDecorationAtoms(atoms: any[], moleculeWidth?, moleculeHeight?): void
 ```typescript
-private applyDecorations(atoms: any[]): void {
-  const backgroundAtom = atoms.find(a => a.capability === 'background') as any;
-  const borderAtom = atoms.find(a => a.capability === 'border') as any;
-  const shadowAtom = atoms.find(a => a.capability === 'shadow') as any;
-
-  const moleculeRadius = (this.molecule as any).radius;
-  let radius = moleculeRadius ?? backgroundAtom?.radius ?? borderAtom?.radius ?? shadowAtom?.radius ?? 0;
-
-  if (backgroundAtom) {
-    this.element.style.background = `rgb(${backgroundAtom.color[0]}, ${backgroundAtom.color[1]}, ${backgroundAtom.color[2]})`;
-    if (radius > 0) this.element.style.borderRadius = `${radius}px`;
-  }
-
-  if (borderAtom) {
-    this.element.style.border = `${borderAtom.width}px solid rgb(${borderAtom.color[0]}, ${borderAtom.color[1]}, ${borderAtom.color[2]})`;
-    if (radius > 0) this.element.style.borderRadius = `${radius}px`;
-  }
-
-  if (shadowAtom) {
-    const blur = shadowAtom.blur ?? 0;
-    const x = shadowAtom.x ?? 0;
-    const y = shadowAtom.y ?? 0;
-    const color = shadowAtom.color;
-    this.element.style.boxShadow = `${x}px ${y}px ${blur}px rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.5)`;
-    if (radius > 0) this.element.style.borderRadius = `${radius}px`;
-  }
+private createDecorationAtoms(atoms: any[], moleculeWidth?: number, moleculeHeight?: number): void {
+  const moleculeRadius = (this.molecule as any).radius ?? 12;
+  atoms.forEach(config => {
+    const context = this.createContext();
+    try {
+      switch (config.capability) {
+        case 'background':
+          new Atoms.BackgroundAtom(context, this.element, {
+            color: config.color,
+            position: config.position,
+            width: config.width ?? moleculeWidth,
+            height: config.height ?? moleculeHeight,
+            radius: config.radius ?? moleculeRadius
+          });
+          break;
+        case 'border':
+          new Atoms.BorderAtom(context, this.element, {
+            borderWidth: config.borderWidth,
+            color: config.color,
+            position: config.position,
+            width: config.width ?? moleculeWidth,
+            height: config.height ?? moleculeHeight,
+            radius: config.radius ?? moleculeRadius
+          });
+          break;
+        case 'shadow':
+          new Atoms.ShadowAtom(context, this.element, {
+            x: config.x,
+            y: config.y,
+            blur: config.blur,
+            color: config.color,
+            spread: config.spread,
+            position: config.position,
+            width: config.width ?? moleculeWidth,
+            height: config.height ?? moleculeHeight,
+            radius: config.radius ?? moleculeRadius
+          });
+          break;
+      }
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建装饰原子失败:`, error);
+    }
+  });
 }
 ```
 
@@ -874,11 +891,11 @@ BeakerManager 重新创建
 
 | 原子类型 | capability | 功能描述 |
 |---------|---------|---------|
-| BackgroundAtom | `background` | 背景样式（实现于 `/src/Beaker.ts` 的 `applyDecorations` 方法） |
-| BorderAtom | `border` | 边框样式（实现于 `/src/Beaker.ts` 的 `applyDecorations` 方法） |
-| ShadowAtom | `shadow` | 阴影样式（实现于 `/src/Beaker.ts` 的 `applyDecorations` 方法） |
+| BackgroundAtom | `background` | 背景装饰（独立DOM，position/width/height/radius） |
+| BorderAtom | `border` | 边框装饰（独立DOM，borderWidth/width/height/radius） |
+| ShadowAtom | `shadow` | 阴影装饰（独立DOM，x/y/blur/spread/width/height/radius） |
 
-注意：装饰原子没有单独的文件，直接在`Beaker.ts`的`applyDecorations`方法中实现。
+注意：装饰原子各自创建独立DOM元素，绝对定位；最先渲染（底层），内容原子后渲染（上层）；分子容器完全透明，不承载样式。
 
 #### 4. 动画原子 (Animation Atom)
 
@@ -1135,7 +1152,7 @@ if (animation.type === 'CustomAnimation') {
 ├── src/
 │   ├── SubstanceManager.ts      # 物质管理器（入口类）
 │   ├── BeakerManager.ts         # 焙烤管理器
-│   ├── Beaker.ts                # 焙烤器（包含装饰原子和动画原子的实现）
+│   ├── Beaker.ts                # 焙烤器（包含动画原子的实现）
 │   ├── molecules.ts             # 分子类型定义
 │   ├── atoms.ts                 # 原子类型定义
 │   └── atoms/
@@ -1147,6 +1164,9 @@ if (animation.type === 'CustomAnimation') {
 │       ├── CodeAtom.ts          # 代码原子
 │       ├── IconAtom.ts          # 图标原子
 │       ├── CanvasAtom.ts        # 画布原子
+│       ├── BackgroundAtom.ts    # 背景装饰原子
+│       ├── BorderAtom.ts        # 边框装饰原子
+│       ├── ShadowAtom.ts        # 阴影装饰原子
 │       ├── ClickAtom.ts         # 点击原子
 │       ├── DragAtom.ts          # 拖拽原子
 │       ├── HoverAtom.ts         # 悬停原子

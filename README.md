@@ -687,89 +687,142 @@ const scrollAtom = {
 
 ### 装饰原子
 
+装饰原子各创建独立 DOM 元素，绝对定位，支持 position/width/height/radius。装饰最先渲染（底层），内容原子后渲染（上层）。
+
 #### BackgroundAtom - 背景装饰
 
-设置元素的背景样式：
+设置元素的背景样式，仅 background 可见，border/shadow 均透明：
 
 ```javascript
 const backgroundAtom = {
   capability: 'background',
 
   // 背景颜色（RGB数组）
-  color: [255, 255, 255]
+  color: [255, 255, 255],
+
+  // 位置（可选）
+  position: { x: 0, y: 0, z: 0 },
+
+  // 元素尺寸（可选，默认继承分子宽高）
+  width: 200,
+  height: 100,
+
+  // 圆角（可选，默认 molecule.radius ?? 12）
+  radius: 12
 };
 
-// 示例：纯色背景
+// 示例：纯色背景卡片
 {
   capability: 'background',
-  color: [245, 245, 245]
+  color: [245, 248, 255],
+  position: { x: 30, y: 90 },
+  width: 150,
+  height: 80,
+  radius: 12
 }
 ```
 
 #### BorderAtom - 边框装饰
 
-设置元素的边框样式：
+设置元素的边框样式，仅 border 可见，background/shadow 均透明：
 
 ```javascript
 const borderAtom = {
   capability: 'border',
 
-  // 边框宽度
-  width: 1,
+  // 边框粗细（与元素尺寸独立）
+  borderWidth: 1,
 
   // 边框颜色（RGB数组）
   color: [217, 217, 217],
 
-  // 边框圆角
-  radius: 4
+  // 位置（可选）
+  position: { x: 0, y: 0, z: 0 },
+
+  // 元素尺寸（可选，默认继承分子宽高）
+  width: 200,
+  height: 100,
+
+  // 圆角（可选，默认 molecule.radius ?? 12）
+  radius: 12
 };
 
-// 示例：卡片边框
+// 示例：3px红色边框卡片
 {
   capability: 'border',
-  width: 1,
-  color: [232, 232, 232],
-  radius: 8
+  borderWidth: 3,
+  color: [255, 100, 100],
+  position: { x: 30, y: 90 },
+  width: 150,
+  height: 80,
+  radius: 12
 }
 
-// 示例：圆形边框
+// 示例：5px蓝色边框
 {
   capability: 'border',
-  width: 3,
-  color: [24, 144, 255],
-  radius: 50
+  borderWidth: 5,
+  color: [100, 180, 255],
+  position: { x: 220, y: 90 },
+  width: 150,
+  height: 80,
+  radius: 20
+}
+
+// 示例：胶囊边框
+{
+  capability: 'border',
+  borderWidth: 1,
+  color: [255, 180, 100],
+  position: { x: 220, y: 190 },
+  width: 150,
+  height: 80,
+  radius: 30
 }
 ```
 
 #### ShadowAtom - 阴影装饰
 
-设置元素的阴影效果：
+设置元素的阴影效果，仅 box-shadow 可见，background/border 均透明：
 
 ```javascript
 const shadowAtom = {
   capability: 'shadow',
-
-  // 阴影颜色（RGB数组）
-  color: [0, 0, 0],
 
   // 阴影偏移
   x: 0,
   y: 2,
 
   // 阴影模糊
-  blur: 4
+  blur: 4,
+
+  // 阴影扩散
+  spread: 0,
+
+  // 阴影颜色（RGB数组）
+  color: [0, 0, 0],
+
+  // 位置（可选）
+  position: { x: 0, y: 0, z: -1 },
+
+  // 元素尺寸（可选，默认继承分子宽高）
+  width: 200,
+  height: 100,
+
+  // 圆角（可选，默认 molecule.radius ?? 12）
+  radius: 12
 };
 
 // 示例：卡片阴影
 {
   capability: 'shadow',
   color: [0, 0, 0],
-  x: 0,
-  y: 2,
-  blur: 8
+  x: 3,
+  y: 3,
+  blur: 10
 }
 
-// 示例：悬浮阴影
+// 示例：蓝色悬浮阴影
 {
   capability: 'shadow',
   color: [24, 144, 255],
@@ -778,6 +831,10 @@ const shadowAtom = {
   blur: 12
 }
 ```
+
+**圆角同步**：四个装饰原子（background/border/shadow）的 radius 默认取 `molecule.radius ?? 12`，可单独覆盖。
+**分子容器**：完全透明，不承载任何样式，所有装饰由独立原子 DOM 实现。
+
 
 ### 动画原子
 
