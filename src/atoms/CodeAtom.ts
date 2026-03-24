@@ -5,6 +5,7 @@ export interface CodeAtomConfig {
   language?: string;
   position?: { x: number; y: number; z?: number };
   backgroundColor?: [number, number, number];
+  autoFormat?: boolean;
 }
 
 const KEYWORDS = [
@@ -185,7 +186,7 @@ export class CodeAtom {
 
   private render(container: HTMLElement, config: CodeAtomConfig): void {
     try {
-      const formatted = this.format(config.code, config.language);
+      const formatted = config.autoFormat !== false ? this.format(config.code, config.language) : config.code;
       const bg = config.backgroundColor ?? [30, 30, 30];
       const bgColor = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
       const textColor = (bg[0] * 0.299 + bg[1] * 0.587 + bg[2] * 0.114) > 150 ? '#1e1e1e' : '#d4d4d4';
