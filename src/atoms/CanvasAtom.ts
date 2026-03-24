@@ -234,7 +234,8 @@ export class CanvasAtom {
         this.strokes = [];
         this.redraw();
       },
-      '<div style="width:12px;height:12px;position:relative;"><div style="width:14px;height:2px;background:#555;position:absolute;top:5px;left:-1px;transform:rotate(45deg);border-radius:1px;"></div><div style="width:14px;height:2px;background:#555;position:absolute;top:5px;left:-1px;transform:rotate(-45deg);border-radius:1px;"></div></div>'
+      '<div style="width:10px;height:11px;background:#555;border-radius:1px;position:absolute;top:5px;left:50%;transform:translateX(-50%);"></div>' +
+      '<div style="width:14px;height:2px;background:#555;position:absolute;top:3px;left:50%;transform:translateX(-50%);border-radius:1px;"></div>'
     );
     toolbar.appendChild(clearBtn);
 
@@ -245,8 +246,8 @@ export class CanvasAtom {
         link.href = this.canvas!.toDataURL('image/png');
         link.click();
       },
-      '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:7px solid #555;position:absolute;top:4px;left:50%;transform:translateX(-50%);"></div>' +
-      '<div style="width:10px;height:7px;border:2px solid #555;border-top:none;border-radius:0 0 2px 2px;position:absolute;bottom:4px;left:50%;transform:translateX(-50%);background:#fff;"></div>'
+      '<div style="width:11px;height:10px;border:2px solid #555;background:#fff;border-radius:1px;position:absolute;top:6px;left:50%;transform:translateX(-50%);"></div>' +
+      '<div style="width:5px;height:3px;background:#555;position:absolute;top:9px;left:50%;transform:translateX(-50%);border-radius:0 0 1px 1px;"></div>'
     );
     toolbar.appendChild(saveBtn);
 
