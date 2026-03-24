@@ -167,32 +167,7 @@ export class Beaker {
     };
   }
 
-  private applyDecorations(atoms: any[]): void {
-    const backgroundAtom = atoms.find(a => a.capability === 'background') as any;
-    const borderAtom = atoms.find(a => a.capability === 'border') as any;
-    const shadowAtom = atoms.find(a => a.capability === 'shadow') as any;
-
-    const moleculeRadius = (this.molecule as any).radius;
-    let radius = moleculeRadius ?? backgroundAtom?.radius ?? borderAtom?.radius ?? shadowAtom?.radius ?? 0;
-
-    if (backgroundAtom) {
-      this.element.style.background = `rgb(${backgroundAtom.color[0]}, ${backgroundAtom.color[1]}, ${backgroundAtom.color[2]})`;
-      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
-    }
-
-    if (borderAtom) {
-      this.element.style.border = `${borderAtom.width}px solid rgb(${borderAtom.color[0]}, ${borderAtom.color[1]}, ${borderAtom.color[2]})`;
-      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
-    }
-
-    if (shadowAtom) {
-      const blur = shadowAtom.blur ?? 0;
-      const x = shadowAtom.x ?? 0;
-      const y = shadowAtom.y ?? 0;
-      const color = shadowAtom.color;
-      this.element.style.boxShadow = `${x}px ${y}px ${blur}px rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.5)`;
-      if (radius > 0) this.element.style.borderRadius = `${radius}px`;
-    }
+  private applyDecorations(_atoms: any[]): void {
   }
 
   private createDecorationAtoms(atoms: any[]): void {
