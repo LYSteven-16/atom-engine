@@ -267,6 +267,10 @@ const audioAtom = {
   // 位置
   position: { x: 0, y: 0 },
 
+  // 尺寸
+  width: 300,                      // 宽度（默认300）
+  height: 42,                      // 高度（默认42）
+
   // 可选属性
   autoplay: false,                 // 自动播放
   loop: false,                     // 循环播放

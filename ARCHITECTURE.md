@@ -570,6 +570,8 @@ private createContentAtoms(atoms: any[]): void {
           this.contentAtoms.push(new Atoms.AudioAtom(context, this.element, {
             src: atomConfig.src,
             position: atomConfig.position,
+            width: atomConfig.width,
+            height: atomConfig.height,
             autoplay: atomConfig.autoplay,
             loop: atomConfig.loop,
             muted: atomConfig.muted
