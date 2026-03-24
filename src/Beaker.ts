@@ -183,11 +183,11 @@ export class Beaker {
             break;
           case 'border':
             new Atoms.BorderAtom(context, this.element, {
-              borderWidth: config.width ?? 1,
+              borderWidth: config.borderWidth,
               color: config.color,
               position: config.position,
-              boxWidth: config.width ?? moleculeWidth,
-              boxHeight: config.height ?? moleculeHeight,
+              width: config.width ?? moleculeWidth,
+              height: config.height ?? moleculeHeight,
               radius: config.radius ?? moleculeRadius
             });
             break;
