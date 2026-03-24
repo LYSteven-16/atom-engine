@@ -31,6 +31,137 @@ export class CodeAtom {
     this.render(container, config);
   }
 
+  private format(code: string, language?: string): string {
+    const lang = language ?? 'javascript';
+    if (lang === 'python') {
+      return this.formatPython(code);
+    }
+    return this.formatCStyle(code);
+  }
+
+  private formatPython(code: string): string {
+    const lines = code.split('\n');
+    const result: string[] = [];
+    let indent = 0;
+    const indentStr = '    ';
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      if (line.startsWith('#') || line.startsWith('"""') || line.startsWith("'''")) {
+        result.push(rawLine);
+        continue;
+      }
+
+      const trimmed = line.replace(/:$/, '');
+      if (trimmed) {
+        const dedent = line.match(/^(elif|else|except)\b/);
+        if (dedent) indent = Math.max(0, indent - 1);
+        result.push(indentStr.repeat(indent) + trimmed + ':');
+        if (dedent) indent++;
+        if (['if', 'elif', 'else', 'for', 'while', 'try', 'except', 'finally', 'def', 'class', 'with', 'async'].some(k => line.startsWith(k))) {
+          indent++;
+        }
+      } else {
+        result.push('');
+      }
+    }
+
+    return result.join('\n');
+  }
+
+  private formatCStyle(code: string): string {
+    const tokens: string[] = [];
+    let i = 0;
+    const src = code;
+
+    while (i < src.length) {
+      const ch = src[i];
+      if (ch === '"' || ch === "'") {
+        let str = ch;
+        i++;
+        while (i < src.length && src[i] !== ch) {
+          if (src[i] === '\\' && i + 1 < src.length) { str += src[i] + src[i + 1]; i += 2; }
+          else { str += src[i]; i++; }
+        }
+        if (i < src.length) { str += src[i]; i++; }
+        tokens.push(str);
+      } else if (ch === '/' && src[i + 1] === '/') {
+        let cmt = '';
+        while (i < src.length && src[i] !== '\n') { cmt += src[i]; i++; }
+        tokens.push(cmt);
+      } else if (ch === '/' && src[i + 1] === '*') {
+        let cmt = '';
+        while (i < src.length - 1 && !(src[i] === '*' && src[i + 1] === '/')) { cmt += src[i]; i++; }
+        if (i < src.length - 1) { cmt += '*/'; i += 2; }
+        tokens.push(cmt);
+      } else if (' \t\n\r'.includes(ch)) {
+        let ws = '';
+        while (i < src.length && ' \t\n\r'.includes(src[i])) { ws += src[i]; i++; }
+        tokens.push(ws);
+      } else if ('{};,+-*/%=<>!&|?:'.includes(ch)) {
+        tokens.push(ch);
+        i++;
+      } else {
+        let word = '';
+        while (i < src.length && !' \t\n\r{};,+-*/%=<>!&|?:'.includes(src[i])) { word += src[i]; i++; }
+        tokens.push(word);
+      }
+    }
+
+    const lines: string[] = [];
+    let line = '';
+    let indent = 0;
+    let prevTok = '';
+    const indentStr = '  ';
+
+    for (const tok of tokens) {
+      if (tok === '\n') {
+        line = line.trimEnd();
+        if (line) lines.push(indentStr.repeat(indent) + line);
+        lines.push('');
+        line = '';
+        prevTok = '\n';
+      } else if (tok.trim() === '') {
+        if (prevTok !== ' ' && prevTok !== '\n') line += ' ';
+        prevTok = tok;
+      } else if (tok === '{') {
+        line = line.trimEnd();
+        if (line) lines.push(indentStr.repeat(indent) + line);
+        lines.push(indentStr.repeat(indent) + '{');
+        indent++;
+        line = '';
+        prevTok = '{';
+      } else if (tok === '}') {
+        indent = Math.max(0, indent - 1);
+        line = line.trimEnd();
+        if (line) lines.push(indentStr.repeat(indent) + line);
+        lines.push(indentStr.repeat(indent) + '}');
+        line = '';
+        prevTok = '}';
+      } else if (tok === ';') {
+        line = line.trimEnd();
+        if (line) lines.push(indentStr.repeat(indent) + line + ';');
+        line = '';
+        prevTok = ';';
+      } else if (tok === ',') {
+        line = line.trimEnd();
+        lines.push(indentStr.repeat(indent) + line + ',');
+        line = '';
+        prevTok = ',';
+      } else {
+        line += tok;
+        prevTok = tok;
+      }
+    }
+
+    line = line.trimEnd();
+    if (line) lines.push(indentStr.repeat(indent) + line);
+
+    return lines.join('\n').replace(/\n{3,}/g, '\n\n');
+  }
+
   private highlight(code: string, language?: string): string {
     let escaped = code
       .replace(/&/g, '&amp;')
@@ -53,9 +184,10 @@ export class CodeAtom {
 
   private render(container: HTMLElement, config: CodeAtomConfig): void {
     try {
+      const formatted = this.format(config.code, config.language);
       const pre = document.createElement('pre');
       const code = document.createElement('code');
-      code.innerHTML = this.highlight(config.code, config.language);
+      code.innerHTML = this.highlight(formatted, config.language);
       pre.appendChild(code);
       pre.style.cssText = `
         position: absolute;
