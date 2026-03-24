@@ -172,12 +172,15 @@ export class CanvasAtom {
         input.remove();
       };
       document.body.appendChild(input);
-      if (typeof (input as any).showPicker === 'function') {
-        (input as any).showPicker();
-      } else {
+      try {
+        if (typeof (input as any).showPicker === 'function') {
+          (input as any).showPicker();
+        } else {
+          input.click();
+        }
+      } catch (e) {
         input.click();
       }
-      input.remove();
     };
     toolbar.appendChild(preview);
 
