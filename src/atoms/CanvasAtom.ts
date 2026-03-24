@@ -141,7 +141,7 @@ export class CanvasAtom {
       pointer-events: auto;
     `;
 
-    const previewSize = Math.max(10, Math.min(this.currentWidth + 6, 30));
+    const previewSize = Math.max(8, Math.min(Math.round(this.currentWidth * 1.5), 30));
 
     const colorInput = document.createElement('input');
     colorInput.type = 'color';
@@ -192,7 +192,7 @@ export class CanvasAtom {
     slider.oninput = () => {
       this.currentWidth = Number(slider.value);
       this.isEraser = false;
-      const s = Math.max(10, Math.min(this.currentWidth + 6, 30));
+      const s = Math.max(8, Math.min(Math.round(this.currentWidth * 1.5), 30));
       colorInput.style.width = `${s}px`;
       colorInput.style.height = `${s}px`;
       colorInput.style.minWidth = `${s}px`;
