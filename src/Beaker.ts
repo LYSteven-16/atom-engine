@@ -100,7 +100,7 @@ export class Beaker {
     this.state.height = height;
 
     this.applyDecorations(decorationAtoms);
-    this.createDecorationAtoms(decorationAtoms);
+    this.createDecorationAtoms(decorationAtoms, this.molecule.width, this.molecule.height);
     this.createContentAtoms(contentAtoms);
     this.createEventAtoms(eventAtomConfigs, animationAtoms);
     this.createResizeHandles(resizeHandleConfigs);
@@ -170,19 +170,43 @@ export class Beaker {
   private applyDecorations(_atoms: any[]): void {
   }
 
-  private createDecorationAtoms(atoms: any[]): void {
+  private createDecorationAtoms(atoms: any[], moleculeWidth?: number, moleculeHeight?: number): void {
+    const moleculeRadius = (this.molecule as any).radius;
     atoms.forEach(config => {
       const context = this.createContext();
       try {
         switch (config.capability) {
           case 'background':
-            new Atoms.BackgroundAtom(context, this.element, config);
+            new Atoms.BackgroundAtom(context, this.element, {
+              color: config.color,
+              position: config.position,
+              width: config.width ?? moleculeWidth,
+              height: config.height ?? moleculeHeight,
+              radius: config.radius ?? moleculeRadius
+            });
             break;
           case 'border':
-            new Atoms.BorderAtom(context, this.element, config);
+            new Atoms.BorderAtom(context, this.element, {
+              borderWidth: config.width ?? 1,
+              color: config.color,
+              position: config.position,
+              boxWidth: config.width ?? moleculeWidth,
+              boxHeight: config.height ?? moleculeHeight,
+              radius: config.radius ?? moleculeRadius
+            });
             break;
           case 'shadow':
-            new Atoms.ShadowAtom(context, this.element, config);
+            new Atoms.ShadowAtom(context, this.element, {
+              x: config.x,
+              y: config.y,
+              blur: config.blur,
+              color: config.color,
+              spread: config.spread,
+              position: config.position,
+              width: config.width ?? moleculeWidth,
+              height: config.height ?? moleculeHeight,
+              radius: config.radius ?? moleculeRadius
+            });
             break;
         }
       } catch (error) {
