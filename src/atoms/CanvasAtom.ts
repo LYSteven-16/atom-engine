@@ -163,18 +163,21 @@ export class CanvasAtom {
       const input = document.createElement('input');
       input.type = 'color';
       input.value = `#${this.currentColor[0].toString(16).padStart(2,'0')}${this.currentColor[1].toString(16).padStart(2,'0')}${this.currentColor[2].toString(16).padStart(2,'0')}`;
-      input.style.cssText = 'position:fixed;opacity:0;width:1px;height:1px;left:-9999px;top:-9999px;';
+      input.style.cssText = 'position:fixed;opacity:0;width:1px;height:1px;left:-9999px;top:-9999px;z-index:2147483647;';
       input.onchange = () => {
         const hex = input.value.replace('#', '');
         this.currentColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
         this.isEraser = false;
         updatePreview();
+        input.remove();
       };
       document.body.appendChild(input);
-      requestAnimationFrame(() => {
+      if (typeof (input as any).showPicker === 'function') {
+        (input as any).showPicker();
+      } else {
         input.click();
-        requestAnimationFrame(() => input.remove());
-      });
+      }
+      input.remove();
     };
     toolbar.appendChild(preview);
 
