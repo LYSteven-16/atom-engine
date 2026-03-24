@@ -39,6 +39,7 @@ export class VideoAtom {
     try {
       const element = document.createElement('video');
       element.src = config.src;
+      element.controls = true;
       if (config.width) element.width = config.width;
       if (config.height) element.height = config.height;
       element.style.cssText = `
