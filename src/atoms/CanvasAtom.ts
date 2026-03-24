@@ -196,7 +196,7 @@ export class CanvasAtom {
     };
     toolbar.appendChild(slider);
 
-    const cssBtn = (onClick: () => void, cssDraw: string) => {
+    const svgBtn = (onClick: () => void, pathD: string, viewBox = '0 0 24 24') => {
       const btn = document.createElement('button');
       btn.style.cssText = `
         width: 30px;
@@ -210,44 +210,42 @@ export class CanvasAtom {
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        position: relative;
-        overflow: hidden;
       `;
-      btn.innerHTML = cssDraw;
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="${viewBox}" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${pathD}"/></svg>`;
       btn.onclick = onClick;
       return btn;
     };
 
-    const eraserBtn = cssBtn(
+    // eraser — Lucide MIT
+    const eraserBtn = svgBtn(
       () => {
         this.isEraser = !this.isEraser;
         eraserBtn.style.background = this.isEraser ? '#e8f0ff' : '#fff';
         eraserBtn.style.borderColor = this.isEraser ? '#007aff' : 'rgba(0,0,0,0.15)';
       },
-      '<div style="width:14px;height:14px;background:#e74c3c;border-radius:2px 2px 0 0;position:absolute;top:3px;left:50%;transform:translateX(-50%);"></div>' +
-      '<div style="width:8px;height:6px;background:#f5a623;position:absolute;bottom:3px;left:50%;transform:translateX(-50%);border-radius:0 0 1px 1px;"></div>'
+      'M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z'
     );
     toolbar.appendChild(eraserBtn);
 
-    const clearBtn = cssBtn(
+    // trash — Heroicons MIT
+    const clearBtn = svgBtn(
       () => {
         this.strokes = [];
         this.redraw();
       },
-      '<div style="width:10px;height:11px;background:#555;border-radius:1px;position:absolute;top:5px;left:50%;transform:translateX(-50%);"></div>' +
-      '<div style="width:14px;height:2px;background:#555;position:absolute;top:3px;left:50%;transform:translateX(-50%);border-radius:1px;"></div>'
+      'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
     );
     toolbar.appendChild(clearBtn);
 
-    const saveBtn = cssBtn(
+    // save (floppy) — Heroicons MIT
+    const saveBtn = svgBtn(
       () => {
         const link = document.createElement('a');
         link.download = 'canvas.png';
         link.href = this.canvas!.toDataURL('image/png');
         link.click();
       },
-      '<div style="width:11px;height:10px;border:2px solid #555;background:#fff;border-radius:1px;position:absolute;top:6px;left:50%;transform:translateX(-50%);"></div>' +
-      '<div style="width:5px;height:3px;background:#555;position:absolute;top:9px;left:50%;transform:translateX(-50%);border-radius:0 0 1px 1px;"></div>'
+      'M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4'
     );
     toolbar.appendChild(saveBtn);
 
