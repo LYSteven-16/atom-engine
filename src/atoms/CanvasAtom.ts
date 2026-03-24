@@ -141,48 +141,38 @@ export class CanvasAtom {
       pointer-events: auto;
     `;
 
-    const previewSize = () => Math.max(10, Math.min(this.currentWidth + 6, 30));
+    const previewSize = Math.max(10, Math.min(this.currentWidth + 6, 30));
 
-    const preview = document.createElement('div');
-    const updatePreview = () => {
-      const s = previewSize();
-      preview.style.width = `${s}px`;
-      preview.style.height = `${s}px`;
-      preview.style.background = `rgb(${this.currentColor[0]},${this.currentColor[1]},${this.currentColor[2]})`;
-    };
-    updatePreview();
-    preview.style.cssText = `
-      border-radius: 50%;
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = `#${this.currentColor[0].toString(16).padStart(2,'0')}${this.currentColor[1].toString(16).padStart(2,'0')}${this.currentColor[2].toString(16).padStart(2,'0')}`;
+    colorInput.style.cssText = `
+      width: ${previewSize}px;
+      height: ${previewSize}px;
+      min-width: ${previewSize}px;
+      min-height: ${previewSize}px;
+      padding: 0;
       border: 2px solid rgba(255,255,255,0.8);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      border-radius: 50%;
+      background: rgb(${this.currentColor[0]},${this.currentColor[1]},${this.currentColor[2]});
       cursor: pointer;
       flex-shrink: 0;
-      pointer-events: auto;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
     `;
-    preview.onclick = () => {
-      const input = document.createElement('input');
-      input.type = 'color';
-      input.value = `#${this.currentColor[0].toString(16).padStart(2,'0')}${this.currentColor[1].toString(16).padStart(2,'0')}${this.currentColor[2].toString(16).padStart(2,'0')}`;
-      input.style.cssText = 'position:fixed;opacity:0;width:1px;height:1px;left:-9999px;top:-9999px;z-index:2147483647;';
-      input.onchange = () => {
-        const hex = input.value.replace('#', '');
-        this.currentColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
-        this.isEraser = false;
-        updatePreview();
-        input.remove();
-      };
-      document.body.appendChild(input);
-      try {
-        if (typeof (input as any).showPicker === 'function') {
-          (input as any).showPicker();
-        } else {
-          input.click();
-        }
-      } catch (e) {
-        input.click();
-      }
+    colorInput.oninput = () => {
+      const hex = colorInput.value.replace('#', '');
+      this.currentColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
+      this.isEraser = false;
+      colorInput.style.background = `rgb(${this.currentColor[0]},${this.currentColor[1]},${this.currentColor[2]})`;
     };
-    toolbar.appendChild(preview);
+    colorInput.onchange = () => {
+      const hex = colorInput.value.replace('#', '');
+      this.currentColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
+      this.isEraser = false;
+      colorInput.style.background = `rgb(${this.currentColor[0]},${this.currentColor[1]},${this.currentColor[2]})`;
+    };
+    toolbar.appendChild(colorInput);
 
     const slider = document.createElement('input');
     slider.type = 'range';
@@ -202,7 +192,11 @@ export class CanvasAtom {
     slider.oninput = () => {
       this.currentWidth = Number(slider.value);
       this.isEraser = false;
-      updatePreview();
+      const s = Math.max(10, Math.min(this.currentWidth + 6, 30));
+      colorInput.style.width = `${s}px`;
+      colorInput.style.height = `${s}px`;
+      colorInput.style.minWidth = `${s}px`;
+      colorInput.style.minHeight = `${s}px`;
     };
     toolbar.appendChild(slider);
 
