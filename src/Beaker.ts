@@ -48,9 +48,9 @@ export class Beaker {
     }
     this.element.style.overflow = 'visible';
     this.element.style.background = 'transparent';
-    this.element.style.border = 'none';
-    this.element.style.outline = 'none';
-    this.element.style.boxShadow = 'none';
+    this.element.style.border = 'transparent';
+    this.element.style.outline = 'transparent';
+    this.element.style.boxShadow = 'transparent';
     this.element.style.cursor = 'default';
 
     this.state = {
