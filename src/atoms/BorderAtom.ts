@@ -41,7 +41,7 @@ export class BorderAtom {
       box-sizing: border-box;
       border: ${this.borderWidth}px solid rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]});
       border-radius: ${this.radius ?? 0}px;
-      background: rgb(255, 255, 255);
+      background: transparent;
       pointer-events: none;
       z-index: ${this.position?.z ?? 0};
     `;
