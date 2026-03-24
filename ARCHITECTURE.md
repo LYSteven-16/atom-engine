@@ -552,7 +552,10 @@ private createContentAtoms(atoms: any[]): void {
             width: atomConfig.width,
             height: atomConfig.height,
             alt: atomConfig.alt,
-            position: atomConfig.position
+            position: atomConfig.position,
+            fitMode: atomConfig.fitMode,
+            offsetX: atomConfig.offsetX,
+            offsetY: atomConfig.offsetY
           }));
           break;
         case 'video':
@@ -834,7 +837,7 @@ BeakerManager 重新创建
 | 原子类型 | 文件位置 | 功能描述 |
 |---------|---------|---------|
 | TextAtom | `/src/atoms/TextAtom.ts` | 显示文本内容 |
-| ImageAtom | `/src/atoms/ImageAtom.ts` | 显示图片 |
+| ImageAtom | `/src/atoms/ImageAtom.ts` | 显示图片（支持滚动/裁切/拉伸模式） |
 | VideoAtom | `/src/atoms/VideoAtom.ts` | 播放视频 |
 | AudioAtom | `/src/atoms/AudioAtom.ts` | 播放音频 |
 | CodeAtom | `/src/atoms/CodeAtom.ts` | 显示代码 |

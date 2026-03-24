@@ -158,7 +158,7 @@ const textAtom = {
 
 #### ImageAtom - 图片显示
 
-显示图片资源：
+显示图片资源，支持三种显示模式：
 
 ```javascript
 const imageAtom = {
@@ -173,8 +173,38 @@ const imageAtom = {
 
   // 可选属性
   alt: '图片描述',                  // alt 文本
-  position: { x: 0, y: 0 }         // 位置偏移
+  position: { x: 0, y: 0 },       // 位置偏移
+
+  // 显示模式（可选，默认 scroll）
+  fitMode: 'scroll'               // 'scroll' | 'crop' | 'stretch'
 };
+
+// 示例：滚动模式（默认）- 可拖拽平移查看图片
+{
+  capability: 'image',
+  src: 'https://example.com/big-image.png',
+  width: 200,
+  height: 150,
+  fitMode: 'scroll'               // 默认模式，支持四方向拖拽
+}
+
+// 示例：裁切模式 - 图片填满容器，超出部分隐藏
+{
+  capability: 'image',
+  src: 'https://example.com/image.png',
+  width: 200,
+  height: 150,
+  fitMode: 'crop'                 // object-fit: cover
+}
+
+// 示例：拉伸模式 - 图片拉伸填充容器
+{
+  capability: 'image',
+  src: 'https://example.com/image.png',
+  width: 200,
+  height: 150,
+  fitMode: 'stretch'              // object-fit: fill
+}
 
 // 示例：带边框的头像
 {
