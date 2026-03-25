@@ -42,9 +42,9 @@ export class WidthAtom {
 
   onClickChange(isClicked: boolean, clickCount: number): void {
     if (this.config.trigger !== 'click') return;
-    if (!isClicked) return;
 
     if (this.config.toggleOnClick) {
+      if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       if (isOddClick) {
         this.currentWidth = `${this.config.value}px`;
@@ -60,9 +60,19 @@ export class WidthAtom {
         this.isActive = false;
       }
     } else {
-      this.currentWidth = `${this.config.value}px`;
-      this.isExpanded = true;
-      this.isActive = true;
+      if (isClicked) {
+        this.currentWidth = `${this.config.value}px`;
+        this.isExpanded = true;
+        this.isActive = true;
+      } else if (!this.config.keepOnRelease) {
+        if (this.config.collapsedValue !== undefined) {
+          this.currentWidth = `${this.config.collapsedValue}px`;
+        } else {
+          this.currentWidth = 'auto';
+        }
+        this.isExpanded = false;
+        this.isActive = false;
+      }
     }
     this.apply();
   }

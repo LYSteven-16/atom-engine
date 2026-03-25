@@ -390,6 +390,9 @@ export class Beaker {
           onClick: (_e, clickCount) => {
             this.updateClickState(true, clickCount);
           },
+          onMouseUp: () => {
+            this.updateClickRelease();
+          },
           onDoubleClick: clickConfig.onDoubleClick
         });
       } catch (error) {
@@ -550,6 +553,12 @@ export class Beaker {
     this.state.isClicked = isClicked;
     this.notifyClickChange(isClicked, clickCount);
     this.emitStateChange({ isClicked });
+  }
+
+  public updateClickRelease(): void {
+    this.state.isClicked = false;
+    this.notifyClickChange(false, 0);
+    this.emitStateChange({ isClicked: false });
   }
 
   public updateDragStart(mouse: { clientX: number; clientY: number }): void {

@@ -47,9 +47,9 @@ export class OpacityAtom {
 
   onClickChange(isClicked: boolean, clickCount: number): void {
     if (this.config.trigger !== 'click') return;
-    if (!isClicked) return;
 
     if (this.config.toggleOnClick) {
+      if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       if (isOddClick) {
         this.isActive = true;
@@ -59,8 +59,13 @@ export class OpacityAtom {
         this.animateToOpacity(this.config.defaultValue ?? 1);
       }
     } else {
-      this.isActive = true;
-      this.animateToOpacity(this.config.value);
+      if (isClicked) {
+        this.isActive = true;
+        this.animateToOpacity(this.config.value);
+      } else if (!this.config.keepOnRelease) {
+        this.isActive = false;
+        this.animateToOpacity(this.config.defaultValue ?? 1);
+      }
     }
   }
 

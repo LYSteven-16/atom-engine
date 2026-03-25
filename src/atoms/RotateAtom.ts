@@ -47,9 +47,9 @@ export class RotateAtom {
 
   onClickChange(isClicked: boolean, clickCount: number): void {
     if (this.config.trigger !== 'click') return;
-    if (!isClicked) return;
 
     if (this.config.toggleOnClick) {
+      if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       if (isOddClick) {
         this.isActive = true;
@@ -59,8 +59,13 @@ export class RotateAtom {
         this.animateToRotate(this.config.defaultValue ?? 0);
       }
     } else {
-      this.isActive = true;
-      this.animateToRotate(this.config.value);
+      if (isClicked) {
+        this.isActive = true;
+        this.animateToRotate(this.config.value);
+      } else if (!this.config.keepOnRelease) {
+        this.isActive = false;
+        this.animateToRotate(this.config.defaultValue ?? 0);
+      }
     }
   }
 

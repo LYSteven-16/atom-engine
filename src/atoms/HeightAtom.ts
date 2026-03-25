@@ -42,9 +42,9 @@ export class HeightAtom {
 
   onClickChange(isClicked: boolean, clickCount: number): void {
     if (this.config.trigger !== 'click') return;
-    if (!isClicked) return;
 
     if (this.config.toggleOnClick) {
+      if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       if (isOddClick) {
         this.currentHeight = `${this.config.value}px`;
@@ -60,9 +60,19 @@ export class HeightAtom {
         this.isActive = false;
       }
     } else {
-      this.currentHeight = `${this.config.value}px`;
-      this.isExpanded = true;
-      this.isActive = true;
+      if (isClicked) {
+        this.currentHeight = `${this.config.value}px`;
+        this.isExpanded = true;
+        this.isActive = true;
+      } else if (!this.config.keepOnRelease) {
+        if (this.config.collapsedValue !== undefined) {
+          this.currentHeight = `${this.config.collapsedValue}px`;
+        } else {
+          this.currentHeight = 'auto';
+        }
+        this.isExpanded = false;
+        this.isActive = false;
+      }
     }
     this.apply();
   }
