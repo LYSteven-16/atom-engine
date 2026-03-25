@@ -11,6 +11,7 @@ export interface BackgroundAtomConfig {
 export class BackgroundAtom {
   readonly capability: 'background' = 'background';
   readonly context: AtomContext;
+  readonly element: HTMLElement;
   color: [number, number, number];
   position?: { x: number; y: number; z?: number };
   width?: number;
@@ -24,10 +25,10 @@ export class BackgroundAtom {
     this.width = config.width;
     this.height = config.height;
     this.radius = config.radius;
-    this.render(container);
+    this.element = this.render(container);
   }
 
-  private render(container: HTMLElement): void {
+  private render(container: HTMLElement): HTMLElement {
     const el = document.createElement('div');
     el.style.cssText = `
       position: absolute;
@@ -43,5 +44,18 @@ export class BackgroundAtom {
       z-index: ${this.position?.z ?? 0};
     `;
     container.appendChild(el);
+    return el;
+  }
+
+  updateSize(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+    this.element.style.width = `${width}px`;
+    this.element.style.height = `${height}px`;
+  }
+
+  updateRadius(radius: number): void {
+    this.radius = radius;
+    this.element.style.borderRadius = `${radius}px`;
   }
 }

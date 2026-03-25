@@ -37,6 +37,11 @@ export class Beaker {
   private onStateChange: StateChangeCallback | null = null;
   private contentAtoms: any[] = [];
   private atomIndexCounter: number = 0;
+  private decorationAtoms: {
+    background?: Atoms.BackgroundAtom;
+    border?: Atoms.BorderAtom;
+    shadow?: Atoms.ShadowAtom;
+  } = {};
 
   private animationAtoms: {
     scale?: ScaleAtom;
@@ -189,7 +194,7 @@ export class Beaker {
       try {
         switch (config.capability) {
           case 'background':
-            new Atoms.BackgroundAtom(context, this.element, {
+            this.decorationAtoms.background = new Atoms.BackgroundAtom(context, this.element, {
               color: config.color,
               position: config.position,
               width: config.width ?? moleculeWidth,
@@ -198,7 +203,7 @@ export class Beaker {
             });
             break;
           case 'border':
-            new Atoms.BorderAtom(context, this.element, {
+            this.decorationAtoms.border = new Atoms.BorderAtom(context, this.element, {
               borderWidth: config.borderWidth,
               color: config.color,
               position: config.position,
@@ -208,7 +213,7 @@ export class Beaker {
             });
             break;
           case 'shadow':
-            new Atoms.ShadowAtom(context, this.element, {
+            this.decorationAtoms.shadow = new Atoms.ShadowAtom(context, this.element, {
               x: config.x,
               y: config.y,
               shadowBlur: config.shadowBlur,
@@ -225,6 +230,21 @@ export class Beaker {
         console.error(`[Beaker Error] ${this.id} - 创建装饰原子失败:`, error);
       }
     });
+  }
+
+  private syncDecorationSize(width?: number, height?: number): void {
+    if (width !== undefined) {
+      this.decorationAtoms.background?.updateSize(width, this.state.height ?? 0);
+      this.decorationAtoms.border?.updateSize(width, this.state.height ?? 0);
+      this.decorationAtoms.shadow?.updateSize(width, this.state.height ?? 0);
+      this.state.width = width;
+    }
+    if (height !== undefined) {
+      this.decorationAtoms.background?.updateSize(this.state.width ?? 0, height);
+      this.decorationAtoms.border?.updateSize(this.state.width ?? 0, height);
+      this.decorationAtoms.shadow?.updateSize(this.state.width ?? 0, height);
+      this.state.height = height;
+    }
   }
 
   private createContentAtoms(atoms: any[]): void {
@@ -348,16 +368,18 @@ export class Beaker {
               value: config.value,
               trigger: config.trigger,
               collapsedValue: config.collapsedValue,
-              keepOnRelease: config.keepOnRelease
-            });
+              keepOnRelease: config.keepOnRelease,
+              toggleOnClick: config.toggleOnClick
+            }, (height) => this.syncDecorationSize(undefined, height));
             break;
           case 'width':
             this.animationAtoms.width = new Atoms.WidthAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
               collapsedValue: config.collapsedValue,
-              keepOnRelease: config.keepOnRelease
-            });
+              keepOnRelease: config.keepOnRelease,
+              toggleOnClick: config.toggleOnClick
+            }, (width) => this.syncDecorationSize(width, undefined));
             break;
           case 'collapse':
             if (!this.animationAtoms.collapse) {

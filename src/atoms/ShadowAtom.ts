@@ -15,6 +15,7 @@ export interface ShadowAtomConfig {
 export class ShadowAtom {
   readonly capability: 'shadow' = 'shadow';
   readonly context: AtomContext;
+  readonly element: HTMLElement;
   x: number;
   y: number;
   shadowBlur?: number;
@@ -36,10 +37,10 @@ export class ShadowAtom {
     this.width = config.width;
     this.height = config.height;
     this.radius = config.radius;
-    this.render(container);
+    this.element = this.render(container);
   }
 
-  private render(container: HTMLElement): void {
+  private render(container: HTMLElement): HTMLElement {
     const el = document.createElement('div');
     el.style.cssText = `
       position: absolute;
@@ -55,5 +56,18 @@ export class ShadowAtom {
       z-index: ${this.position?.z ?? -1};
     `;
     container.appendChild(el);
+    return el;
+  }
+
+  updateSize(width: number, height: number): void {
+    this.width = width;
+    this.height = height;
+    this.element.style.width = `${width}px`;
+    this.element.style.height = `${height}px`;
+  }
+
+  updateRadius(radius: number): void {
+    this.radius = radius;
+    this.element.style.borderRadius = `${radius}px`;
   }
 }
