@@ -5,6 +5,7 @@ export interface OpacityAtomConfig {
   trigger: 'hover' | 'click';
   defaultValue?: number;
   keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
   duration?: number;
 }
 
@@ -26,6 +27,7 @@ export class OpacityAtom {
     this.config = {
       defaultValue: 1,
       keepOnRelease: false,
+      toggleOnClick: true,
       duration: 0.15,
       ...config
     };
@@ -43,14 +45,22 @@ export class OpacityAtom {
     }
   }
 
-  onClickChange(isClicked: boolean): void {
+  onClickChange(isClicked: boolean, clickCount: number): void {
     if (this.config.trigger !== 'click') return;
-    if (isClicked) {
+    if (!isClicked) return;
+
+    if (this.config.toggleOnClick) {
+      const isOddClick = clickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToOpacity(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToOpacity(this.config.defaultValue ?? 1);
+      }
+    } else {
       this.isActive = true;
       this.animateToOpacity(this.config.value);
-    } else if (!this.config.keepOnRelease) {
-      this.isActive = false;
-      this.animateToOpacity(this.config.defaultValue ?? 1);
     }
   }
 

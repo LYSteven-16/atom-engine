@@ -1,30 +1,7 @@
 import type { AtomContext } from '../atoms';
 
-/**
- * 点击原子
- * 功能：为分子容器绑定点击相关事件
- * DOM：❌ 无DOM - 不创建任何DOM元素，仅绑定事件
- * 
- * 特点：
- * - 不渲染DOM元素，纯事件处理
- * - 支持单击、双击、鼠标按下、鼠标释放事件
- * - 事件绑定到Baker的容器元素上
- * - 通常配合动画原子使用（点击触发动画）
- * 
- * 使用场景：
- * - 点击切换展开/折叠状态
- * - 点击打开弹窗
- * - 点击切换激活状态
- * 
- * @example
- * {
- *   capability: 'click',
- *   context: { bakerId: 'baker-0', bakerIndex: 0, atomIndex: 0 },
- *   onClick: () => { console.log('clicked'); }
- * }
- */
-export interface ClickAtomConfig {
-  onClick?: (e: MouseEvent) => void;
+export interface ClickInputCallbacks {
+  onClick?: (e: MouseEvent, clickCount: number) => void;
   onDoubleClick?: (e: MouseEvent) => void;
   onMouseDown?: (e: MouseEvent) => void;
   onMouseUp?: (e: MouseEvent) => void;
@@ -33,27 +10,33 @@ export interface ClickAtomConfig {
 export class ClickAtom {
   readonly capability: 'click' = 'click';
   readonly context: AtomContext;
+  private element: HTMLElement;
+  private callbacks: ClickInputCallbacks;
+  private clickCount: number = 0;
 
-  constructor(context: AtomContext, baker: any, config?: ClickAtomConfig) {
-    this.apply(baker, config);
+  constructor(context: AtomContext, element: HTMLElement, callbacks: ClickInputCallbacks) {
+    this.context = context;
+    this.element = element;
+    this.callbacks = callbacks;
+    this.apply();
   }
 
-  private apply(baker: any, config?: ClickAtomConfig): void {
+  private apply(): void {
     try {
-      const container = baker.element;
-      if (!container) return;
-
-      if (config?.onClick) {
-        container.addEventListener('click', config.onClick);
+      if (this.callbacks.onClick) {
+        this.element.addEventListener('click', (e) => {
+          this.clickCount++;
+          this.callbacks.onClick?.(e, this.clickCount);
+        });
       }
-      if (config?.onDoubleClick) {
-        container.addEventListener('dblclick', config.onDoubleClick);
+      if (this.callbacks.onDoubleClick) {
+        this.element.addEventListener('dblclick', this.callbacks.onDoubleClick);
       }
-      if (config?.onMouseDown) {
-        container.addEventListener('mousedown', config.onMouseDown);
+      if (this.callbacks.onMouseDown) {
+        this.element.addEventListener('mousedown', this.callbacks.onMouseDown);
       }
-      if (config?.onMouseUp) {
-        container.addEventListener('mouseup', config.onMouseUp);
+      if (this.callbacks.onMouseUp) {
+        this.element.addEventListener('mouseup', this.callbacks.onMouseUp);
       }
       console.log(`[Atom] ${this.context.bakerId} - ClickAtom应用成功`);
     } catch (error) {

@@ -5,6 +5,7 @@ export interface RotateAtomConfig {
   trigger: 'hover' | 'click';
   defaultValue?: number;
   keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
   duration?: number;
 }
 
@@ -26,6 +27,7 @@ export class RotateAtom {
     this.config = {
       defaultValue: 0,
       keepOnRelease: false,
+      toggleOnClick: true,
       duration: 0.15,
       ...config
     };
@@ -43,14 +45,22 @@ export class RotateAtom {
     }
   }
 
-  onClickChange(isClicked: boolean): void {
+  onClickChange(isClicked: boolean, clickCount: number): void {
     if (this.config.trigger !== 'click') return;
-    if (isClicked) {
+    if (!isClicked) return;
+
+    if (this.config.toggleOnClick) {
+      const isOddClick = clickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToRotate(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToRotate(this.config.defaultValue ?? 0);
+      }
+    } else {
       this.isActive = true;
       this.animateToRotate(this.config.value);
-    } else if (!this.config.keepOnRelease) {
-      this.isActive = false;
-      this.animateToRotate(this.config.defaultValue ?? 0);
     }
   }
 

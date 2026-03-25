@@ -387,8 +387,8 @@ export class Beaker {
       const context = this.createContext();
       try {
         new Atoms.ClickAtom(context, this.element, {
-          onClick: () => {
-            this.updateClickState(true);
+          onClick: (_e, clickCount) => {
+            this.updateClickState(true, clickCount);
           },
           onDoubleClick: clickConfig.onDoubleClick
         });
@@ -526,12 +526,12 @@ export class Beaker {
     this.animationAtoms.width?.onHoverChange(isHovered);
   }
 
-  private notifyClickChange(isClicked: boolean): void {
-    this.animationAtoms.scale?.onClickChange(isClicked);
-    this.animationAtoms.opacity?.onClickChange(isClicked);
-    this.animationAtoms.rotate?.onClickChange(isClicked);
-    this.animationAtoms.height?.onClickChange(isClicked);
-    this.animationAtoms.width?.onClickChange(isClicked);
+  private notifyClickChange(isClicked: boolean, clickCount: number): void {
+    this.animationAtoms.scale?.onClickChange(isClicked, clickCount);
+    this.animationAtoms.opacity?.onClickChange(isClicked, clickCount);
+    this.animationAtoms.rotate?.onClickChange(isClicked, clickCount);
+    this.animationAtoms.height?.onClickChange(isClicked, clickCount);
+    this.animationAtoms.width?.onClickChange(isClicked, clickCount);
   }
 
   private emitStateChange(partialState: Partial<BakerState>): void {
@@ -546,9 +546,9 @@ export class Beaker {
     this.emitStateChange({ isHovered });
   }
 
-  public updateClickState(isClicked: boolean): void {
+  public updateClickState(isClicked: boolean, clickCount: number): void {
     this.state.isClicked = isClicked;
-    this.notifyClickChange(isClicked);
+    this.notifyClickChange(isClicked, clickCount);
     this.emitStateChange({ isClicked });
   }
 
