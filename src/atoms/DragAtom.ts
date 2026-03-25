@@ -1,14 +1,13 @@
 import type { AtomContext } from '../atoms';
 
 export interface DragInputCallbacks {
-  onDragStart?: (pos: { x: number; y: number }) => void;
-  onDragMove?: (pos: { x: number; y: number }) => void;
+  onDragStart?: (mouse: { clientX: number; clientY: number }) => void;
+  onDragMove?: (mouse: { clientX: number; clientY: number }) => void;
   onDragEnd?: () => void;
 }
 
 export interface DragAtomConfig {
   handle?: HTMLElement;
-  bounds?: { x: number; y: number; width: number; height: number };
 }
 
 export class DragAtom {
@@ -30,38 +29,17 @@ export class DragAtom {
     try {
       const handle = this.config.handle ?? this.element;
       let isDragging = false;
-      let startX = 0;
-      let startY = 0;
-      let elementStartX = 0;
-      let elementStartY = 0;
 
       const onMouseDown = (e: MouseEvent) => {
         if (e.button !== 0) return;
         e.preventDefault();
         isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        elementStartX = parseFloat(this.element.style.left) || 0;
-        elementStartY = parseFloat(this.element.style.top) || 0;
-        this.callbacks.onDragStart?.({ x: elementStartX, y: elementStartY });
+        this.callbacks.onDragStart?.({ clientX: e.clientX, clientY: e.clientY });
       };
 
       const onMouseMove = (e: MouseEvent) => {
         if (!isDragging) return;
-
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        let newX = elementStartX + dx;
-        let newY = elementStartY + dy;
-
-        if (this.config.bounds) {
-          const width = this.element.style.width ? parseFloat(this.element.style.width) : 0;
-          const height = this.element.style.height ? parseFloat(this.element.style.height) : 0;
-          newX = Math.max(this.config.bounds.x, Math.min(newX, this.config.bounds.x + this.config.bounds.width - width));
-          newY = Math.max(this.config.bounds.y, Math.min(newY, this.config.bounds.y + this.config.bounds.height - height));
-        }
-
-        this.callbacks.onDragMove?.({ x: newX, y: newY });
+        this.callbacks.onDragMove?.({ clientX: e.clientX, clientY: e.clientY });
       };
 
       const onMouseUp = () => {

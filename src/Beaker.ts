@@ -402,14 +402,13 @@ export class Beaker {
       const context = this.createContext();
       try {
         new Atoms.DragAtom(context, this.element, {
-          handle: dragConfig.handle,
-          bounds: dragConfig.bounds
+          handle: dragConfig.handle
         }, {
-          onDragStart: (pos) => {
-            this.updateDragStart(pos);
+          onDragStart: (mouse) => {
+            this.updateDragStart(mouse);
           },
-          onDragMove: (pos) => {
-            this.updateDragMove(pos);
+          onDragMove: (mouse) => {
+            this.updateDragMove(mouse);
           },
           onDragEnd: () => {
             this.updateDragEnd();
@@ -553,17 +552,14 @@ export class Beaker {
     this.emitStateChange({ isClicked });
   }
 
-  public updateDragStart(pos: { x: number; y: number }): void {
+  public updateDragStart(mouse: { clientX: number; clientY: number }): void {
     this.state.isDragging = true;
-    this.state.position = { x: pos.x, y: pos.y };
-    this.animationAtoms.translate?.onDragMove(pos.x, pos.y);
-    this.emitStateChange({ isDragging: true, position: pos });
+    this.animationAtoms.translate?.onDragStart(mouse);
+    this.emitStateChange({ isDragging: true });
   }
 
-  public updateDragMove(pos: { x: number; y: number }): void {
-    this.state.position = { x: pos.x, y: pos.y };
-    this.animationAtoms.translate?.onDragMove(pos.x, pos.y);
-    this.emitStateChange({ position: pos });
+  public updateDragMove(mouse: { clientX: number; clientY: number }): void {
+    this.animationAtoms.translate?.onDragMove(mouse);
   }
 
   public updateDragEnd(): void {
