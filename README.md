@@ -399,8 +399,8 @@ const canvasAtom = {
 ```javascript
 const clickAtom = {
   capability: 'click',
-  onClick: (e: MouseEvent) => {
-    console.log('按钮被点击');
+  onClick: (e: MouseEvent, clickCount: number) => {
+    console.log('第' + clickCount + '次点击');
   },
   onDoubleClick: (e: MouseEvent) => {
     console.log('双击');
@@ -409,7 +409,7 @@ const clickAtom = {
 ```
 
 **回调函数**：
-- `onClick?: (e: MouseEvent) => void` - 单击回调
+- `onClick?: (e: MouseEvent, clickCount: number) => void` - 单击回调（clickCount 为累计点击次数）
 - `onDoubleClick?: (e: MouseEvent) => void` - 双击回调
 - `onMouseDown?: (e: MouseEvent) => void` - 鼠标按下回调
 - `onMouseUp?: (e: MouseEvent) => void` - 鼠标抬起回调
@@ -438,29 +438,20 @@ const hoverAtom = {
 
 #### DragAtom - 拖拽交互
 
-实现元素拖拽功能：
+实现元素拖拽功能，输出鼠标坐标：
 
 ```javascript
 const dragAtom = {
   capability: 'drag',
-  bounds: {
-    x: 0,
-    y: 0,
-    width: 1000,
-    height: 800
-  }
+  handle: someElement  // 可选，指定拖拽手柄
 };
 ```
 
 **配置属性**：
 - `capability: 'drag'` - 原子类型标识
 - `handle?: HTMLElement` - 拖拽手柄元素（可选，默认整个容器）
-- `bounds?: { x: number; y: number; width: number; height: number }` - 拖拽边界限制
 
-**回调函数**：
-- `onDragStart?: (pos: { x: number; y: number }) => void` - 拖拽开始
-- `onDragMove?: (pos: { x: number; y: number }) => void` - 拖拽中
-- `onDragEnd?: () => void` - 拖拽结束
+**输出**：鼠标坐标 `{ clientX, clientY }`，通过 Beaker 传递给 TranslateAtom 计算位移
 
 #### ResizeAtom - 缩放交互
 
@@ -624,8 +615,25 @@ const shadowAtom = {
 
 动画原子通过 `trigger` 属性响应输入原子的状态变化：
 - `trigger: 'hover'` - 响应悬停状态
-- `trigger: 'click'` - 响应点击状态
+- `trigger: 'click'` - 响应单击状态
+- `trigger: 'doubleclick'` - 响应双击状态
 - `trigger: 'drag'` - 响应拖拽状态
+
+**通用配置**：
+- `keepOnRelease?: boolean` - 松开后保持效果（默认 false）
+- `toggleOnClick?: boolean` - 点击切换模式（默认 true，仅对 click/doubleclick 有效）
+
+**触发行为说明**：
+
+| trigger | toggleOnClick | keepOnRelease | 行为 |
+|---------|---------------|---------------|------|
+| hover | - | false | 悬停应用，离开复原 |
+| hover | - | true | 悬停应用，离开保持 |
+| click | true | - | 点击1次应用，点击2次复原 |
+| click | false | false | 点击应用，松开复原 |
+| click | false | true | 点击应用，松开保持 |
+| doubleclick | true | - | 双击1次应用，双击2次复原 |
+| doubleclick | false | - | 每次双击都应用 |
 
 #### ScaleAtom - 缩放动画
 
@@ -637,16 +645,18 @@ const scaleAtom = {
   value: 1.2,
   trigger: 'hover',
   duration: 0.3,
-  keepOnRelease: false
+  keepOnRelease: false,
+  toggleOnClick: true
 };
 ```
 
 **配置属性**：
 - `capability: 'scale'` - 原子类型标识
 - `value: number` - 缩放比例（必需）
-- `trigger: 'hover' | 'click'` - 触发方式（必需）
+- `trigger: 'hover' | 'click' | 'doubleclick'` - 触发方式（必需）
 - `duration?: number` - 动画时长（秒，默认 0.15）
 - `keepOnRelease?: boolean` - 松开后保持效果（默认 false）
+- `toggleOnClick?: boolean` - 点击切换模式（默认 true）
 - `defaultValue?: number` - 默认缩放值（默认 1）
 
 **实现细节**：
@@ -664,16 +674,18 @@ const opacityAtom = {
   value: 0.5,
   trigger: 'hover',
   duration: 0.2,
-  keepOnRelease: false
+  keepOnRelease: false,
+  toggleOnClick: true
 };
 ```
 
 **配置属性**：
 - `capability: 'opacity'` - 原子类型标识
 - `value: number` - 透明度值（0-1，必需）
-- `trigger: 'hover' | 'click'` - 触发方式（必需）
+- `trigger: 'hover' | 'click' | 'doubleclick'` - 触发方式（必需）
 - `duration?: number` - 动画时长（秒，默认 0.15）
 - `keepOnRelease?: boolean` - 松开后保持效果（默认 false）
+- `toggleOnClick?: boolean` - 点击切换模式（默认 true）
 
 #### RotateAtom - 旋转动画
 
@@ -685,20 +697,22 @@ const rotateAtom = {
   value: 45,
   trigger: 'hover',
   duration: 0.3,
-  keepOnRelease: false
+  keepOnRelease: false,
+  toggleOnClick: true
 };
 ```
 
 **配置属性**：
 - `capability: 'rotate'` - 原子类型标识
 - `value: number` - 旋转角度（度，必需）
-- `trigger: 'hover' | 'click'` - 触发方式（必需）
+- `trigger: 'hover' | 'click' | 'doubleclick'` - 触发方式（必需）
 - `duration?: number` - 动画时长（秒，默认 0.15）
 - `keepOnRelease?: boolean` - 松开后保持效果（默认 false）
+- `toggleOnClick?: boolean` - 点击切换模式（默认 true）
 
 #### TranslateAtom - 平移动画
 
-控制元素的位移（仅响应拖拽）：
+控制元素的位移（与 DragAtom 配合使用）：
 
 ```javascript
 const translateAtom = {
@@ -713,6 +727,10 @@ const translateAtom = {
 - `trigger: 'drag'` - 触发方式（必需，仅支持 'drag'）
 - `keepOnRelease?: boolean` - 松开后保持位置（默认 false）
 
+**实现细节**：
+- 接收 DragAtom 输出的鼠标坐标
+- 自己计算位移并应用到元素
+
 #### HeightAtom - 高度动画
 
 动态控制元素高度：
@@ -723,18 +741,18 @@ const heightAtom = {
   value: 200,
   trigger: 'click',
   collapsedValue: 50,
-  duration: 0.3,
-  keepOnRelease: true
+  keepOnRelease: true,
+  toggleOnClick: true
 };
 ```
 
 **配置属性**：
 - `capability: 'height'` - 原子类型标识
 - `value: number` - 展开高度值（必需）
-- `trigger: 'hover' | 'click'` - 触发方式（必需）
+- `trigger: 'hover' | 'click' | 'doubleclick'` - 触发方式（必需）
 - `collapsedValue?: number` - 折叠高度值
-- `duration?: number` - 动画时长（秒，默认 0.15）
 - `keepOnRelease?: boolean` - 松开后保持效果（默认 false）
+- `toggleOnClick?: boolean` - 点击切换模式（默认 true）
 
 #### WidthAtom - 宽度动画
 
@@ -746,18 +764,18 @@ const widthAtom = {
   value: 300,
   trigger: 'click',
   collapsedValue: 100,
-  duration: 0.3,
-  keepOnRelease: true
+  keepOnRelease: true,
+  toggleOnClick: true
 };
 ```
 
 **配置属性**：
 - `capability: 'width'` - 原子类型标识
 - `value: number` - 展开宽度值（必需）
-- `trigger: 'hover' | 'click'` - 触发方式（必需）
+- `trigger: 'hover' | 'click' | 'doubleclick'` - 触发方式（必需）
 - `collapsedValue?: number` - 折叠宽度值
-- `duration?: number` - 动画时长（秒，默认 0.15）
 - `keepOnRelease?: boolean` - 松开后保持效果（默认 false）
+- `toggleOnClick?: boolean` - 点击切换模式（默认 true）
 
 #### CollapseAtom - 折叠动画
 
@@ -838,9 +856,11 @@ class Beaker {
   updateState(newState: Partial<BakerState>): void;
   updatePosition(x: number, y: number): void;
   updateHoverState(isHovered: boolean): void;
-  updateClickState(isClicked: boolean): void;
-  updateDragStart(pos: { x: number; y: number }): void;
-  updateDragMove(pos: { x: number; y: number }): void;
+  updateClickState(isClicked: boolean, clickCount: number): void;
+  updateClickRelease(): void;
+  updateDoubleClick(): void;
+  updateDragStart(mouse: { clientX: number; clientY: number }): void;
+  updateDragMove(mouse: { clientX: number; clientY: number }): void;
   updateDragEnd(): void;
   updateResizeStart(size: { width: number; height: number }): void;
   updateResizeMove(size: { width: number; height: number }): void;
@@ -861,9 +881,11 @@ class Beaker {
 - `updateState(newState)` - 更新状态并触发回调
 - `updatePosition(x, y)` - 更新位置并同步 DOM
 - `updateHoverState(isHovered)` - 更新悬停状态
-- `updateClickState(isClicked)` - 更新点击状态
-- `updateDragStart(pos)` - 开始拖拽
-- `updateDragMove(pos)` - 拖拽中
+- `updateClickState(isClicked, clickCount)` - 更新点击状态（clickCount 为累计点击次数）
+- `updateClickRelease()` - 鼠标松开时调用（用于 toggleOnClick=false 时复原）
+- `updateDoubleClick()` - 双击时调用
+- `updateDragStart(mouse)` - 开始拖拽（传入鼠标坐标）
+- `updateDragMove(mouse)` - 拖拽中（传入鼠标坐标）
 - `updateDragEnd()` - 结束拖拽
 - `updateResizeStart(size)` - 开始调整大小
 - `updateResizeMove(size)` - 调整大小中

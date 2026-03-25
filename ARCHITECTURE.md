@@ -1045,49 +1045,57 @@ export interface ScaleAtom {
   capability: 'scale';
   context: AtomContext;
   value: number;
-  trigger: 'hover' | 'click';
+  trigger: 'hover' | 'click' | 'doubleclick';
   duration?: number;
+  keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
 }
 
 export interface OpacityAtom {
   capability: 'opacity';
   context: AtomContext;
   value: number;
-  trigger: 'hover' | 'click';
+  trigger: 'hover' | 'click' | 'doubleclick';
   duration?: number;
+  keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
 }
 
 export interface RotateAtom {
   capability: 'rotate';
   context: AtomContext;
   value: number;
-  trigger: 'hover' | 'click';
+  trigger: 'hover' | 'click' | 'doubleclick';
   duration?: number;
+  keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
 }
 
 export interface TranslateAtom {
   capability: 'translate';
   context: AtomContext;
   trigger: 'drag';
-  duration?: number;
+  keepOnRelease?: boolean;
 }
 
 export interface HeightAtom {
   capability: 'height';
   context: AtomContext;
   value: number;
-  trigger: 'click' | 'hover';
+  trigger: 'click' | 'hover' | 'doubleclick';
   collapsedValue?: number;
-  duration?: number;
+  keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
 }
 
 export interface WidthAtom {
   capability: 'width';
   context: AtomContext;
   value: number;
-  trigger: 'click' | 'hover';
+  trigger: 'click' | 'hover' | 'doubleclick';
   collapsedValue?: number;
-  duration?: number;
+  keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
 }
 
 export interface CollapseAtom {
@@ -1146,6 +1154,52 @@ Baker.updateState({ ... })
     │
     ▼
 界面更新完成
+```
+
+### 拖拽数据流
+
+```
+鼠标事件 → DragAtom(输出 clientX/clientY)
+    │
+    ▼
+Beaker.updateDragStart/Move/End(mouse)
+    │
+    ▼
+TranslateAtom.onDragStart/Move/End(mouse)
+    │
+    ├── 计算位移: dx = mouse.clientX - mouseStartX
+    ├── 应用位置: element.style.left = elementStartX + dx
+    └── 根据 keepOnRelease 决定是否复原
+```
+
+### 点击数据流
+
+```
+点击事件 → ClickAtom(输出 clickCount)
+    │
+    ▼
+Beaker.updateClickState(isClicked, clickCount)
+    │
+    ▼
+动画原子.onClickChange(isClicked, clickCount)
+    │
+    ├── toggleOnClick: true → 奇数次应用，偶数次复原
+    └── toggleOnClick: false → 点击应用，松开根据 keepOnRelease 决定
+```
+
+### 双击数据流
+
+```
+双击事件 → ClickAtom
+    │
+    ▼
+Beaker.updateDoubleClick()
+    │
+    ▼
+动画原子.onDoubleClick()
+    │
+    ├── trigger: 'doubleclick' → 执行动画
+    └── 支持 toggleOnClick 切换模式
 ```
 
 ### 布局计算数据流
@@ -1219,10 +1273,26 @@ BeakerManager 重新创建
 | ScaleAtom | `scale` | 缩放动画 |
 | OpacityAtom | `opacity` | 透明度动画 |
 | RotateAtom | `rotate` | 旋转动画 |
-| TranslateAtom | `translate` | 平移动画 |
+| TranslateAtom | `translate` | 平移动画（与DragAtom配合） |
 | HeightAtom | `height` | 高度动画 |
 | WidthAtom | `width` | 宽度动画 |
 | CollapseAtom | `collapse` | 折叠动画 |
+
+**触发方式**：`trigger: 'hover' | 'click' | 'doubleclick' | 'drag'`
+
+**行为控制**：
+- `keepOnRelease?: boolean` - 松开后保持效果（默认 false）
+- `toggleOnClick?: boolean` - 点击切换模式（默认 true，仅对 click/doubleclick 有效）
+
+| trigger | toggleOnClick | keepOnRelease | 行为 |
+|---------|---------------|---------------|------|
+| hover | - | false | 悬停应用，离开复原 |
+| hover | - | true | 悬停应用，离开保持 |
+| click | true | - | 点击1次应用，点击2次复原 |
+| click | false | false | 点击应用，松开复原 |
+| click | false | true | 点击应用，松开保持 |
+| doubleclick | true | - | 双击1次应用，双击2次复原 |
+| doubleclick | false | - | 每次双击都应用 |
 
 ### 原子创建流程
 
