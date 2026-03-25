@@ -43,8 +43,8 @@ export class Beaker {
     opacity?: OpacityAtom;
     rotate?: RotateAtom;
     translate?: TranslateAtom;
-    height?: HeightAtom;
-    width?: WidthAtom;
+    heights?: HeightAtom[];
+    widths?: WidthAtom[];
     collapse?: CollapseAtom[];
   } = {};
 
@@ -344,20 +344,26 @@ export class Beaker {
             }, this.state.position);
             break;
           case 'height':
-            this.animationAtoms.height = new Atoms.HeightAtom(context, this.element, {
+            if (!this.animationAtoms.heights) {
+              this.animationAtoms.heights = [];
+            }
+            this.animationAtoms.heights.push(new Atoms.HeightAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
               collapsedValue: config.collapsedValue,
               keepOnRelease: config.keepOnRelease
-            });
+            }));
             break;
           case 'width':
-            this.animationAtoms.width = new Atoms.WidthAtom(context, this.element, {
+            if (!this.animationAtoms.widths) {
+              this.animationAtoms.widths = [];
+            }
+            this.animationAtoms.widths.push(new Atoms.WidthAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
               collapsedValue: config.collapsedValue,
               keepOnRelease: config.keepOnRelease
-            });
+            }));
             break;
           case 'collapse':
             if (!this.animationAtoms.collapse) {
@@ -528,24 +534,24 @@ export class Beaker {
     this.animationAtoms.scale?.onHoverChange(isHovered);
     this.animationAtoms.opacity?.onHoverChange(isHovered);
     this.animationAtoms.rotate?.onHoverChange(isHovered);
-    this.animationAtoms.height?.onHoverChange(isHovered);
-    this.animationAtoms.width?.onHoverChange(isHovered);
+    this.animationAtoms.heights?.forEach(h => h.onHoverChange(isHovered));
+    this.animationAtoms.widths?.forEach(w => w.onHoverChange(isHovered));
   }
 
   private notifyClickChange(isClicked: boolean, clickCount: number): void {
     this.animationAtoms.scale?.onClickChange(isClicked, clickCount);
     this.animationAtoms.opacity?.onClickChange(isClicked, clickCount);
     this.animationAtoms.rotate?.onClickChange(isClicked, clickCount);
-    this.animationAtoms.height?.onClickChange(isClicked, clickCount);
-    this.animationAtoms.width?.onClickChange(isClicked, clickCount);
+    this.animationAtoms.heights?.forEach(h => h.onClickChange(isClicked, clickCount));
+    this.animationAtoms.widths?.forEach(w => w.onClickChange(isClicked, clickCount));
   }
 
   private notifyDoubleClick(): void {
     this.animationAtoms.scale?.onDoubleClick();
     this.animationAtoms.opacity?.onDoubleClick();
     this.animationAtoms.rotate?.onDoubleClick();
-    this.animationAtoms.height?.onDoubleClick();
-    this.animationAtoms.width?.onDoubleClick();
+    this.animationAtoms.heights?.forEach(h => h.onDoubleClick());
+    this.animationAtoms.widths?.forEach(w => w.onDoubleClick());
   }
 
   private emitStateChange(partialState: Partial<BakerState>): void {
