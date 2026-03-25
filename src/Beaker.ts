@@ -1,5 +1,12 @@
 import type { Molecule } from './molecules';
 import * as Atoms from './atoms/index';
+import type { ScaleAtom } from './atoms/ScaleAtom';
+import type { OpacityAtom } from './atoms/OpacityAtom';
+import type { RotateAtom } from './atoms/RotateAtom';
+import type { TranslateAtom } from './atoms/TranslateAtom';
+import type { HeightAtom } from './atoms/HeightAtom';
+import type { WidthAtom } from './atoms/WidthAtom';
+import type { CollapseAtom } from './atoms/CollapseAtom';
 
 interface BakerState {
   id: string;
@@ -25,13 +32,21 @@ export class Beaker {
   public readonly molecule: Molecule;
   public readonly element: HTMLElement;
   public state: BakerState;
-  private triggers: Set<string> = new Set();
+  public readonly bakerIndex: number;
+
   private onStateChange: StateChangeCallback | null = null;
   private contentAtoms: any[] = [];
-  private eventAtoms: any[] = [];
-  private resizeHandles: any[] = [];
-  public readonly bakerIndex: number;
   private atomIndexCounter: number = 0;
+
+  private animationAtoms: {
+    scale?: ScaleAtom;
+    opacity?: OpacityAtom;
+    rotate?: RotateAtom;
+    translate?: TranslateAtom;
+    height?: HeightAtom;
+    width?: WidthAtom;
+    collapse?: CollapseAtom[];
+  } = {};
 
   constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback) {
     this.id = id;
@@ -53,7 +68,13 @@ export class Beaker {
     this.element.style.boxShadow = 'transparent';
     this.element.style.cursor = 'default';
 
-    this.state = {
+    this.state = this.createInitialState(molecule);
+
+    this.init();
+  }
+
+  private createInitialState(molecule: Molecule): BakerState {
+    return {
       id: this.id,
       moleculeId: molecule.id,
       isHovered: false,
@@ -67,26 +88,20 @@ export class Beaker {
       scrollY: 0,
       collapsedGroups: new Set()
     };
-
-    this.init();
   }
 
   private init(): void {
     const atoms = [...(this.molecule.atoms || [])];
 
     const contentCapabilities = ['text', 'image', 'video', 'audio', 'code', 'icon', 'canvas'];
-    const eventCapabilities = ['drag', 'resize', 'scroll', 'click', 'hover'];
-    const resizeHandleCapabilities = ['resize-handle'];
     const decorationCapabilities = ['background', 'border', 'shadow'];
     const animationCapabilities = ['scale', 'opacity', 'rotate', 'translate', 'height', 'width', 'collapse'];
 
     const contentAtoms = atoms.filter(a => contentCapabilities.includes(a.capability));
-    const eventAtomConfigs = atoms.filter(a => eventCapabilities.includes(a.capability));
-    const resizeHandleConfigs = atoms.filter(a => resizeHandleCapabilities.includes(a.capability));
     const decorationAtoms = atoms.filter(a => decorationCapabilities.includes(a.capability)) as any[];
-    const animationAtoms = atoms.filter(a => animationCapabilities.includes(a.capability)) as any[];
+    const animationAtomConfigs = atoms.filter(a => animationCapabilities.includes(a.capability)) as any[];
 
-    const userDuration = animationAtoms.find(a => a.duration !== undefined)?.duration;
+    const userDuration = animationAtomConfigs.find(a => a.duration !== undefined)?.duration;
     const duration = userDuration !== undefined ? userDuration : 0;
     this.element.style.transition = `width ${duration}s ease, height ${duration}s ease, transform ${duration}s ease, opacity ${duration}s ease`;
 
@@ -101,8 +116,9 @@ export class Beaker {
 
     this.createDecorationAtoms(decorationAtoms, this.molecule.width, this.molecule.height);
     this.createContentAtoms(contentAtoms);
-    this.createEventAtoms(eventAtomConfigs, animationAtoms);
-    this.createResizeHandles(resizeHandleConfigs);
+    this.createAnimationAtoms(animationAtomConfigs);
+    this.createInputAtoms(atoms);
+    this.createResizeHandles(atoms.filter(a => a.capability === 'resize-handle'));
   }
 
   private createContext(): { bakerId: string; bakerIndex: number; atomIndex: number } {
@@ -289,117 +305,194 @@ export class Beaker {
     });
   }
 
-  private createEventAtoms(eventConfigs: any[], animationAtoms: any[]): void {
-    const clickConfig = eventConfigs.find(a => a.capability === 'click');
+  private createAnimationAtoms(animationConfigs: any[]): void {
+    animationConfigs.forEach(config => {
+      const context = this.createContext();
+      try {
+        switch (config.capability) {
+          case 'scale':
+            this.animationAtoms.scale = new Atoms.ScaleAtom(context, this.element, {
+              value: config.value,
+              trigger: config.trigger,
+              defaultValue: 1,
+              keepOnRelease: config.keepOnRelease,
+              duration: config.duration
+            });
+            break;
+          case 'opacity':
+            this.animationAtoms.opacity = new Atoms.OpacityAtom(context, this.element, {
+              value: config.value,
+              trigger: config.trigger,
+              defaultValue: 1,
+              keepOnRelease: config.keepOnRelease,
+              duration: config.duration
+            });
+            break;
+          case 'rotate':
+            this.animationAtoms.rotate = new Atoms.RotateAtom(context, this.element, {
+              value: config.value,
+              trigger: config.trigger,
+              defaultValue: 0,
+              keepOnRelease: config.keepOnRelease,
+              duration: config.duration
+            });
+            break;
+          case 'translate':
+            this.animationAtoms.translate = new Atoms.TranslateAtom(context, this.element, {
+              trigger: config.trigger,
+              keepOnRelease: config.keepOnRelease
+            }, this.state.position);
+            break;
+          case 'height':
+            this.animationAtoms.height = new Atoms.HeightAtom(context, this.element, {
+              value: config.value,
+              trigger: config.trigger,
+              collapsedValue: config.collapsedValue,
+              keepOnRelease: config.keepOnRelease
+            });
+            break;
+          case 'width':
+            this.animationAtoms.width = new Atoms.WidthAtom(context, this.element, {
+              value: config.value,
+              trigger: config.trigger,
+              collapsedValue: config.collapsedValue,
+              keepOnRelease: config.keepOnRelease
+            });
+            break;
+          case 'collapse':
+            if (!this.animationAtoms.collapse) {
+              this.animationAtoms.collapse = [];
+            }
+            this.animationAtoms.collapse.push(new Atoms.CollapseAtom(
+              context,
+              this.element,
+              {
+                group: config.group,
+                expandedValue: config.expandedValue,
+                collapsedValue: config.collapsedValue
+              },
+              this.state.collapsedGroups
+            ));
+            break;
+        }
+      } catch (error) {
+        console.error(`[Beaker Error] ${this.id} - 创建动画原子失败:`, error);
+      }
+    });
+  }
+
+  private createInputAtoms(atoms: any[]): void {
+    const clickConfig = atoms.find(a => a.capability === 'click');
     if (clickConfig) {
       const context = this.createContext();
       try {
-        const atom = new Atoms.ClickAtom(context, this, {
+        new Atoms.ClickAtom(context, this.element, {
           onClick: () => {
-            this.state.isClicked = !this.state.isClicked;
-            this.applyAnimations(animationAtoms);
+            this.updateClickState(true);
           },
           onDoubleClick: clickConfig.onDoubleClick
         });
-        this.eventAtoms.push(atom);
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ClickAtom失败:`, error);
       }
     }
 
-    const dragConfig = eventConfigs.find(a => a.capability === 'drag');
+    const dragConfig = atoms.find(a => a.capability === 'drag');
     if (dragConfig) {
       const context = this.createContext();
       try {
-        const atom = new Atoms.DragAtom(context, this, {
+        new Atoms.DragAtom(context, this.element, {
           handle: dragConfig.handle,
-          bounds: dragConfig.bounds,
-          onDragStart: dragConfig.onDragStart,
-          onDragMove: (pos) => {
-            this.element.style.left = `${pos.x}px`;
-            this.element.style.top = `${pos.y}px`;
-            dragConfig.onDragMove?.(pos);
+          bounds: dragConfig.bounds
+        }, {
+          onDragStart: (pos) => {
+            this.updateDragStart(pos);
           },
-          onDragEnd: dragConfig.onDragEnd
+          onDragMove: (pos) => {
+            this.updateDragMove(pos);
+          },
+          onDragEnd: () => {
+            this.updateDragEnd();
+          }
         });
-        this.eventAtoms.push(atom);
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建DragAtom失败:`, error);
       }
     }
 
-    const resizeConfig = eventConfigs.find(a => a.capability === 'resize');
+    const resizeConfig = atoms.find(a => a.capability === 'resize');
     if (resizeConfig) {
       const context = this.createContext();
       try {
-        const atom = new Atoms.ResizeAtom(context, this, {
+        new Atoms.ResizeAtom(context, this.element, {
           minWidth: resizeConfig.minWidth,
           minHeight: resizeConfig.minHeight,
           maxWidth: resizeConfig.maxWidth,
-          maxHeight: resizeConfig.maxHeight,
-          onResizeStart: resizeConfig.onResizeStart,
+          maxHeight: resizeConfig.maxHeight
+        }, {
+          onResizeStart: (size) => {
+            this.updateResizeStart(size);
+            resizeConfig.onResizeStart?.(size);
+          },
           onResize: (size) => {
-            this.element.style.width = `${size.width}px`;
-            this.element.style.height = `${size.height}px`;
+            this.updateResizeMove(size);
             resizeConfig.onResize?.(size);
           },
-          onResizeEnd: resizeConfig.onResizeEnd
+          onResizeEnd: (size) => {
+            this.updateResizeEnd(size);
+            resizeConfig.onResizeEnd?.(size);
+          }
         });
-        this.eventAtoms.push(atom);
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeAtom失败:`, error);
       }
     }
 
-    const scrollConfig = eventConfigs.find(a => a.capability === 'scroll');
+    const scrollConfig = atoms.find(a => a.capability === 'scroll');
     if (scrollConfig) {
       const context = this.createContext();
       try {
-        const atom = new Atoms.ScrollAtom(context, this, {
+        new Atoms.ScrollAtom(context, this.element, {
           direction: scrollConfig.direction,
-          scrollX: scrollConfig.scrollX,
-          scrollY: scrollConfig.scrollY,
           maxScrollX: scrollConfig.maxScrollX,
-          maxScrollY: scrollConfig.maxScrollY,
-          onScroll: scrollConfig.onScroll
+          maxScrollY: scrollConfig.maxScrollY
+        }, {
+          onScroll: (pos) => {
+            this.updateScrollState(pos.scrollX, pos.scrollY);
+            scrollConfig.onScroll?.(pos);
+          }
         });
-        this.eventAtoms.push(atom);
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ScrollAtom失败:`, error);
       }
     }
 
-    const hoverConfig = eventConfigs.find(a => a.capability === 'hover');
+    const hoverConfig = atoms.find(a => a.capability === 'hover');
     if (hoverConfig) {
       const context = this.createContext();
       try {
-        const atom = new Atoms.HoverAtom(context, this, {
-          onMouseEnter: () => {
-            this.triggers.add(`${this.molecule.id}-hover`);
-            this.state.isHovered = true;
-            this.applyAnimations(animationAtoms);
+        new Atoms.HoverAtom(context, this.element, {
+          onHoverStart: () => {
+            this.updateHoverState(true);
           },
-          onMouseLeave: () => {
-            this.triggers.delete(`${this.molecule.id}-hover`);
-            this.state.isHovered = false;
-            this.applyAnimations(animationAtoms);
+          onHoverEnd: () => {
+            this.updateHoverState(false);
           }
         });
-        this.eventAtoms.push(atom);
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建HoverAtom失败:`, error);
       }
     }
 
-    const collapseAtoms = animationAtoms.filter(a => a.capability === 'collapse');
-    collapseAtoms.forEach((atom: any) => {
+    const collapseConfigs = atoms.filter(a => a.capability === 'collapse');
+    collapseConfigs.forEach(config => {
       this.element.addEventListener('click', () => {
-        if (this.state.collapsedGroups.has(atom.group)) {
-          this.state.collapsedGroups.delete(atom.group);
-        } else {
-          this.state.collapsedGroups.add(atom.group);
+        if (this.animationAtoms.collapse) {
+          const collapseAtom = this.animationAtoms.collapse.find(c => c.getGroup() === config.group);
+          if (collapseAtom) {
+            collapseAtom.toggle();
+          }
         }
-        this.applyAnimations(animationAtoms);
       });
     });
   }
@@ -408,127 +501,107 @@ export class Beaker {
     configs.forEach(config => {
       const context = this.createContext();
       try {
-        const handle = new Atoms.ResizeHandleAtom(context, this, {
+        new Atoms.ResizeHandleAtom(context, this.element, {
           edge: config.edge,
           minWidth: config.minWidth,
           minHeight: config.minHeight,
           handleSize: config.handleSize,
           handleColor: config.handleColor,
           scaleMode: config.scaleMode
+        }, {
+          onResizeStart: (size) => this.updateResizeStart(size),
+          onResize: (size) => this.updateResizeMove(size),
+          onResizeEnd: (size) => this.updateResizeEnd(size)
         });
-        this.resizeHandles.push(handle);
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
       }
     });
   }
 
-  private applyAnimations(animationAtoms: any[]): void {
-    const isHovered = this.triggers.has(`${this.molecule.id}-hover`);
-    const isClicked = this.state.isClicked;
-    const isDragging = this.state.isDragging;
+  private notifyHoverChange(isHovered: boolean): void {
+    this.animationAtoms.scale?.onHoverChange(isHovered);
+    this.animationAtoms.opacity?.onHoverChange(isHovered);
+    this.animationAtoms.rotate?.onHoverChange(isHovered);
+    this.animationAtoms.height?.onHoverChange(isHovered);
+    this.animationAtoms.width?.onHoverChange(isHovered);
+  }
 
-    let scale = 1;
-    let opacity = 1;
-    let rotate = 0;
-    let translateX = 0;
-    let translateY = 0;
-    let height = 'auto';
-    let width = 'auto';
-    let hasScale = false;
-    let hasOpacity = false;
-    let hasRotate = false;
-    let hasTranslate = false;
-    let hasHeight = false;
-    let hasWidth = false;
+  private notifyClickChange(isClicked: boolean): void {
+    this.animationAtoms.scale?.onClickChange(isClicked);
+    this.animationAtoms.opacity?.onClickChange(isClicked);
+    this.animationAtoms.rotate?.onClickChange(isClicked);
+    this.animationAtoms.height?.onClickChange(isClicked);
+    this.animationAtoms.width?.onClickChange(isClicked);
+  }
 
-    animationAtoms.forEach((atom: any) => {
-      switch (atom.capability) {
-        case 'scale':
-          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
-            scale = atom.value;
-            hasScale = true;
-          } else if (atom.trigger === 'hover' || atom.trigger === 'click') {
-            scale = 1;
-            hasScale = true;
-          }
-          break;
-        case 'opacity':
-          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
-            opacity = atom.value;
-            hasOpacity = true;
-          } else if (atom.trigger === 'hover' || atom.trigger === 'click') {
-            opacity = 1;
-            hasOpacity = true;
-          }
-          break;
-        case 'rotate':
-          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
-            rotate = atom.value;
-            hasRotate = true;
-          } else if (atom.trigger === 'hover' || atom.trigger === 'click') {
-            rotate = 0;
-            hasRotate = true;
-          }
-          break;
-        case 'translate':
-          if (atom.trigger === 'drag' && isDragging) {
-            translateX = this.state.position.x - (this.molecule.position?.x ?? 0);
-            translateY = this.state.position.y - (this.molecule.position?.y ?? 0);
-            hasTranslate = true;
-          }
-          break;
-        case 'height':
-          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
-            height = `${atom.value}px`;
-            hasHeight = true;
-          } else if (atom.trigger === 'click' && !isClicked && atom.collapsedValue !== undefined) {
-            height = `${atom.collapsedValue}px`;
-            hasHeight = true;
-          }
-          break;
-        case 'width':
-          if ((atom.trigger === 'hover' && isHovered) || (atom.trigger === 'click' && isClicked)) {
-            width = `${atom.value}px`;
-            hasWidth = true;
-          } else if (atom.trigger === 'click' && !isClicked && atom.collapsedValue !== undefined) {
-            width = `${atom.collapsedValue}px`;
-            hasWidth = true;
-          }
-          break;
-        case 'collapse':
-          const isCollapsed = this.state.collapsedGroups.has(atom.group);
-          if (isCollapsed && atom.collapsedValue !== undefined) {
-            height = `${atom.collapsedValue}px`;
-            hasHeight = true;
-          } else if (!isCollapsed && atom.expandedValue !== undefined) {
-            height = `${atom.expandedValue}px`;
-            hasHeight = true;
-          }
-          break;
-      }
-    });
-
-    const transforms: string[] = [];
-    if (hasScale) transforms.push(`scale(${scale})`);
-    if (hasRotate) transforms.push(`rotate(${rotate}deg)`);
-    if (hasTranslate) transforms.push(`translate(${translateX}px, ${translateY}px)`);
-
-    if (transforms.length > 0) {
-      this.element.style.transform = transforms.join(' ');
+  private emitStateChange(partialState: Partial<BakerState>): void {
+    if (this.onStateChange) {
+      this.onStateChange(this.id, partialState);
     }
+  }
 
-    if (hasOpacity) {
-      this.element.style.opacity = opacity.toString();
-    }
+  public updateHoverState(isHovered: boolean): void {
+    this.state.isHovered = isHovered;
+    this.notifyHoverChange(isHovered);
+    this.emitStateChange({ isHovered });
+  }
 
-    if (hasHeight) {
-      this.element.style.height = height;
-    }
+  public updateClickState(isClicked: boolean): void {
+    this.state.isClicked = isClicked;
+    this.notifyClickChange(isClicked);
+    this.emitStateChange({ isClicked });
+  }
 
-    if (hasWidth) {
-      this.element.style.width = width;
+  public updateDragStart(pos: { x: number; y: number }): void {
+    this.state.isDragging = true;
+    this.state.position = { x: pos.x, y: pos.y };
+    this.animationAtoms.translate?.onDragMove(pos.x, pos.y);
+    this.emitStateChange({ isDragging: true, position: pos });
+  }
+
+  public updateDragMove(pos: { x: number; y: number }): void {
+    this.state.position = { x: pos.x, y: pos.y };
+    this.animationAtoms.translate?.onDragMove(pos.x, pos.y);
+    this.emitStateChange({ position: pos });
+  }
+
+  public updateDragEnd(): void {
+    this.state.isDragging = false;
+    this.animationAtoms.translate?.onDragEnd();
+    this.emitStateChange({ isDragging: false });
+  }
+
+  public updateResizeStart(size: { width: number; height: number }): void {
+    this.state.isResizing = true;
+    this.state.width = size.width;
+    this.state.height = size.height;
+    this.emitStateChange({ isResizing: true, width: size.width, height: size.height });
+  }
+
+  public updateResizeMove(size: { width: number; height: number }): void {
+    this.state.width = size.width;
+    this.state.height = size.height;
+    this.element.style.width = `${size.width}px`;
+    this.element.style.height = `${size.height}px`;
+    this.emitStateChange({ width: size.width, height: size.height });
+  }
+
+  public updateResizeEnd(size: { width: number; height: number }): void {
+    this.state.isResizing = false;
+    this.state.width = size.width;
+    this.state.height = size.height;
+    this.emitStateChange({ isResizing: false, width: size.width, height: size.height });
+  }
+
+  public updateScrollState(scrollX?: number, scrollY?: number): void {
+    if (scrollX !== undefined) {
+      this.state.scrollX = scrollX;
     }
+    if (scrollY !== undefined) {
+      this.state.scrollY = scrollY;
+    }
+    this.emitStateChange({ scrollX: this.state.scrollX, scrollY: this.state.scrollY });
   }
 
   public updateState(newState: Partial<BakerState>): void {
@@ -546,6 +619,9 @@ export class Beaker {
     this.state.position = { x, y };
     this.element.style.left = `${x}px`;
     this.element.style.top = `${y}px`;
+    if (this.animationAtoms.translate) {
+      this.animationAtoms.translate.updateOrigin({ x, y });
+    }
     if (this.onStateChange) {
       this.onStateChange(this.id, { position: { x, y } });
     }
