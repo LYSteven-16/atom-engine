@@ -75,7 +75,7 @@
           { capability: 'text', position: { x: 20, y: 30 }, text: '3. Video 原子 - 视频播放', size: 22, color: [100, 200, 150] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: video', size: 14, color: [150, 150, 150] },
           { capability: 'background', color: [50, 54, 62], radius: 8, position: { x: 20, y: 90 }, width: 360, height: 150 },
-          { capability: 'text', position: { x: 120, y: 160 }, text: '🎬 视频播放器', size: 20, color: [150, 150, 150] },
+          { capability: 'video', position: { x: 30, y: 100 }, src: 'http://upos-sz-mirrorcos.bilivideo.com/upgcxcode/78/24/36908502478/36908502478-1-192.mp4?e=ig8euxZM2rNcNbNVnWdVhwdlhbdHhwdVhoNvNC8BqJIzNbfq9rVEuxTEnE8L5F6VnEsSTx0vkX8fqJeYTj_lta53NCM=&og=hw&trid=9ba2a3ddd2084fe1b9914b2d0acda34O&deadline=1774344791&gen=playurlv3&nbs=1&platform=html5&mid=0&oi=1385955528&uipk=5&os=estghw&upsig=cf58ea08110ae62b0583f8cb3b758d88&uparams=e,og,trid,deadline,gen,nbs,platform,mid,oi,uipk,os&bvc=vod&nettype=1&bw=1678230&buvid=&build=7330300&dl=0&f=O_0_0&agrr=1&orderid=0,3', width: 340, height: 130 },
           { capability: 'text', position: { x: 20, y: 260 }, text: '支持本地/网络视频,带controls', size: 12, color: [150, 150, 150] }, 
           { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
@@ -95,7 +95,8 @@
           { capability: 'text', position: { x: 20, y: 30 }, text: '4. Audio 原子 - 音频播放', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: audio', size: 14, color: [150, 150, 150] },
           { capability: 'background', color: [245, 248, 255], radius: 8, position: { x: 20, y: 90 }, width: 360, height: 80 },
-          { capability: 'text', position: { x: 150, y: 125 }, text: '🎵 音频播放器', size: 20, color: [80, 80, 80] },
+          { capability: 'audio', position: { x: 40, y: 110 }, src: 'http://upos-sz-mirrorcos.bilivideo.com/upgcxcode/78/24/36908502478/36908502478-1-192.mp4?e=ig8euxZM2rNcNbNVnWdVhwdlhbdHhwdVhoNvNC8BqJIzNbfq9rVEuxTEnE8L5F6VnEsSTx0vkX8fqJeYTj_lta53NCM=&og=hw&trid=9ba2a3ddd2084fe1b9914b2d0acda34O&deadline=1774344791&gen=playurlv3&nbs=1&platform=html5&mid=0&oi=1385955528&uipk=5&os=estghw&upsig=cf58ea08110ae62b0583f8cb3b758d88&uparams=e,og,trid,deadline,gen,nbs,platform,mid,oi,uipk,os&bvc=vod&nettype=1&bw=1678230&buvid=&build=7330300&dl=0&f=O_0_0&agrr=1&orderid=0,3' },
+          { capability: 'text', position: { x: 120, y: 135 }, text: '🎵 音频播放器', size: 20, color: [80, 80, 80] },
           { capability: 'text', position: { x: 20, y: 200 }, text: '功能特性:', size: 16, color: [80, 80, 80] },
           { capability: 'text', position: { x: 20, y: 230 }, text: '• 播放/暂停控制', size: 14, color: [120, 120, 120] },
           { capability: 'text', position: { x: 20, y: 250 }, text: '• 进度条/快进/快退', size: 14, color: [120, 120, 120] },
@@ -286,8 +287,7 @@
           { capability: 'hover', position: { x: 280, y: 120 }, width: 100, height: 100 },
           { capability: 'scale', value: 0.8, trigger: 'hover', duration: 0.3 },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'hover 原子传递状态 + scale 原子响应', size: 12, color: [120, 120, 120] },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] },
-          { capability: 'rotate', value: 15, trigger: 'hover' },
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
 
@@ -372,12 +372,12 @@
           { capability: 'text', position: { x: 20, y: 95 }, text: '拖拽方块查看效果 (不回弹):', size: 14, color: [80, 80, 80] },
           { capability: 'background', color: [255, 100, 180], radius: 10, position: { x: 50, y: 120 }, width: 100, height: 100 },
           { capability: 'text', position: { x: 65, y: 175 }, text: '拖拽我', size: 14, color: [255, 255, 255] },
-          { capability: 'translate', trigger: 'drag', keepOnRelease: false },
-          { capability: 'drag' },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', keepOnRelease: false },
           { capability: 'background', color: [100, 200, 200], radius: 10, position: { x: 250, y: 120 }, width: 100, height: 100 },
           { capability: 'text', position: { x: 265, y: 175 }, text: '拖拽我', size: 14, color: [255, 255, 255] },
-          { capability: 'translate', trigger: 'drag', keepOnRelease: false },
-          { capability: 'drag' },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', keepOnRelease: false },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'drag 原子传递状态 + translate 原子响应', size: 12, color: [120, 120, 120] },
           { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
@@ -388,42 +388,27 @@
       // 支持 trigger: 'hover' | 'click'
       // 说明: 配置 trigger: 'hover' 响应悬停，trigger: 'click' 响应点击
       {
-        id: 'atom-height-title',
+        id: 'atom-height',
         position: { x: 0, y: 4480 },
         width: 400,
-        height: 50,
+        height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
           { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '15. Height 原子 - 高度动画', size: 22, color: [50, 100, 200] },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-height-1',
-        position: { x: 0, y: 4540 },
-        width: 190,
-        height: 80,
-        atoms: [
-          { capability: 'background', color: [200, 150, 255], radius: 10 },
-          { capability: 'text', position: { x: 20, y: 30 }, text: '点击展开', size: 14, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 20, y: 50 }, text: 'value: 150', size: 10, color: [255, 255, 255] },
-          { capability: 'height', value: 150, trigger: 'click', collapsedValue: 80, keepOnRelease: true, duration: 0.5 },
-          { capability: 'click' },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-height-2',
-        position: { x: 210, y: 4540 },
-        width: 190,
-        height: 80,
-        atoms: [
-          { capability: 'background', color: [150, 200, 150], radius: 10 },
-          { capability: 'text', position: { x: 20, y: 30 }, text: '点击展开', size: 14, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 20, y: 50 }, text: 'value: 200', size: 10, color: [255, 255, 255] },
-          { capability: 'height', value: 200, trigger: 'click', collapsedValue: 80, keepOnRelease: true, duration: 0.5 },
-          { capability: 'click' },
+          { capability: 'text', position: { x: 20, y: 60 }, text: 'trigger: "hover" | "click"', size: 14, color: [150, 150, 150] },
+          { capability: 'text', position: { x: 20, y: 95 }, text: '点击方块查看效果:', size: 14, color: [80, 80, 80] },
+          { capability: 'background', color: [200, 150, 255], radius: 10, position: { x: 40, y: 120 }, width: 150, height: 80 },
+          { capability: 'text', position: { x: 65, y: 165 }, text: '点击展开', size: 14, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 65, y: 180 }, text: 'value: 150', size: 10, color: [255, 255, 255] },
+          { capability: 'height', value: 150, trigger: 'click', collapsedValue: 80, duration: 0.5 },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'background', color: [150, 200, 150], radius: 10, position: { x: 220, y: 120 }, width: 150, height: 80 },
+          { capability: 'text', position: { x: 245, y: 165 }, text: '点击展开', size: 14, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 245, y: 180 }, text: 'value: 200', size: 10, color: [255, 255, 255] },
+          { capability: 'height', value: 200, trigger: 'click', collapsedValue: 80, duration: 0.5 },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'text', position: { x: 20, y: 260 }, text: 'click 原子传递状态 + height 原子响应', size: 12, color: [120, 120, 120] },
           { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
@@ -433,56 +418,32 @@
       // 支持 trigger: 'hover' | 'click'
       // 说明: 配置 trigger: 'hover' 响应悬停，trigger: 'click' 响应点击
       {
-        id: 'atom-width-title',
-        position: { x: 0, y: 4700 },
+        id: 'atom-width',
+        position: { x: 0, y: 4800 },
         width: 400,
-        height: 50,
+        height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
           { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '16. Width 原子 - 宽度动画', size: 22, color: [50, 100, 200] },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-width-1',
-        position: { x: 0, y: 4760 },
-        width: 100,
-        height: 120,
-        atoms: [
-          { capability: 'background', color: [100, 200, 255], radius: 10 },
-          { capability: 'text', position: { x: 15, y: 50 }, text: '点击', size: 14, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 70 }, text: '200→100', size: 10, color: [255, 255, 255] },
-          { capability: 'width', value: 200, trigger: 'click', collapsedValue: 100, keepOnRelease: true, duration: 0.5 },
-          { capability: 'click' },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-width-2',
-        position: { x: 110, y: 4760 },
-        width: 100,
-        height: 120,
-        atoms: [
-          { capability: 'background', color: [255, 200, 100], radius: 10 },
-          { capability: 'text', position: { x: 15, y: 50 }, text: '点击', size: 14, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 70 }, text: '300→100', size: 10, color: [255, 255, 255] },
-          { capability: 'width', value: 300, trigger: 'click', collapsedValue: 100, keepOnRelease: true, duration: 0.5 },
-          { capability: 'click' },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-width-3',
-        position: { x: 220, y: 4760 },
-        width: 100,
-        height: 120,
-        atoms: [
-          { capability: 'background', color: [255, 150, 150], radius: 10 },
-          { capability: 'text', position: { x: 15, y: 50 }, text: '点击', size: 14, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 15, y: 70 }, text: '120→100', size: 10, color: [255, 255, 255] },
-          { capability: 'width', value: 120, trigger: 'click', collapsedValue: 100, keepOnRelease: true, duration: 0.5 },
-          { capability: 'click' },
+          { capability: 'text', position: { x: 20, y: 60 }, text: 'trigger: "hover" | "click"', size: 14, color: [150, 150, 150] },
+          { capability: 'text', position: { x: 20, y: 95 }, text: '点击方块查看效果:', size: 14, color: [80, 80, 80] },
+          { capability: 'background', color: [100, 200, 255], radius: 10, position: { x: 40, y: 120 }, width: 100, height: 120 },
+          { capability: 'text', position: { x: 55, y: 165 }, text: '点击', size: 14, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 55, y: 185 }, text: '200→80', size: 10, color: [255, 255, 255] },
+          { capability: 'width', value: 200, trigger: 'click', collapsedValue: 100, duration: 0.5 },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'background', color: [255, 200, 100], radius: 10, position: { x: 160, y: 120 }, width: 100, height: 120 },
+          { capability: 'text', position: { x: 175, y: 165 }, text: '点击', size: 14, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 175, y: 185 }, text: '300→100', size: 10, color: [255, 255, 255] },
+          { capability: 'width', value: 300, trigger: 'click', collapsedValue: 100, duration: 0.5 },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'background', color: [255, 150, 150], radius: 10, position: { x: 280, y: 120 }, width: 100, height: 120 },
+          { capability: 'text', position: { x: 295, y: 165 }, text: '点击', size: 14, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 295, y: 185 }, text: '120→60', size: 10, color: [255, 255, 255] },
+          { capability: 'width', value: 120, trigger: 'click', collapsedValue: 100, duration: 0.5 },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'text', position: { x: 20, y: 260 }, text: 'click 原子传递状态 + width 原子响应', size: 12, color: [120, 120, 120] },
           { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
@@ -513,11 +474,13 @@
           { capability: 'background', color: [100, 180, 255], radius: 10, position: { x: 50, y: 120 }, width: 120, height: 100 },
           { capability: 'text', position: { x: 65, y: 165 }, text: '不回弹', size: 14, color: [255, 255, 255] },
           { capability: 'text', position: { x: 65, y: 185 }, text: 'false', size: 10, color: [255, 255, 255] },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', keepOnRelease: false },
           { capability: 'background', color: [255, 150, 100], radius: 10, position: { x: 230, y: 120 }, width: 120, height: 100 },
           { capability: 'text', position: { x: 245, y: 165 }, text: '回弹', size: 14, color: [255, 255, 255] },
           { capability: 'text', position: { x: 245, y: 185 }, text: 'true', size: 10, color: [255, 255, 255] },
-          { capability: 'translate', trigger: 'drag', keepOnRelease: true },
-          { capability: 'drag' },
+          { capability: 'translate', x: 0, y: 0, trigger: 'drag' },
+          { capability: 'drag', keepOnRelease: true },
           { capability: 'text', position: { x: 20, y: 250 }, text: 'drag 传递状态 + translate 响应 drag 触发器', size: 12, color: [120, 120, 120] },
           { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
@@ -528,42 +491,27 @@
       // 说明: 只传递点击状态 (isClicked)，不产生视觉变化
       //       其他原子通过 trigger: 'click' 响应此状态
       {
-        id: 'atom-click-title',
-        position: { x: 0, y: 5100 },
+        id: 'atom-click',
+        position: { x: 0, y: 5440 },
         width: 400,
-        height: 50,
+        height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
           { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '18. Click 原子 - 点击交互', size: 22, color: [50, 100, 200] },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-click-1',
-        position: { x: 0, y: 5160 },
-        width: 190,
-        height: 100,
-        atoms: [
-          { capability: 'background', color: [150, 255, 150], radius: 10 },
-          { capability: 'text', position: { x: 30, y: 40 }, text: '不保持', size: 14, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 30, y: 60 }, text: 'false', size: 10, color: [255, 255, 255] },
-          { capability: 'scale', value: 1.1, trigger: 'click', keepOnRelease: false },
-          { capability: 'click' },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-click-2',
-        position: { x: 210, y: 5160 },
-        width: 190,
-        height: 100,
-        atoms: [
-          { capability: 'background', color: [255, 200, 100], radius: 10 },
-          { capability: 'text', position: { x: 30, y: 40 }, text: '保持', size: 14, color: [255, 255, 255] },
-          { capability: 'text', position: { x: 30, y: 60 }, text: 'true', size: 10, color: [255, 255, 255] },
-          { capability: 'scale', value: 1.1, trigger: 'click', keepOnRelease: true },
-          { capability: 'click' },
+          { capability: 'text', position: { x: 20, y: 60 }, text: '能力: click + scale', size: 14, color: [150, 150, 150] },
+          { capability: 'text', position: { x: 20, y: 95 }, text: '点击方块查看效果:', size: 14, color: [80, 80, 80] },
+          { capability: 'background', color: [150, 255, 150], radius: 10, position: { x: 50, y: 120 }, width: 120, height: 100 },
+          { capability: 'text', position: { x: 65, y: 165 }, text: '不保持', size: 14, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 65, y: 185 }, text: 'false', size: 10, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.1, trigger: 'click' },
+          { capability: 'click', keepOnRelease: false },
+          { capability: 'background', color: [255, 200, 100], radius: 10, position: { x: 230, y: 120 }, width: 120, height: 100 },
+          { capability: 'text', position: { x: 245, y: 165 }, text: '保持', size: 14, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 245, y: 185 }, text: 'true', size: 10, color: [255, 255, 255] },
+          { capability: 'scale', value: 1.1, trigger: 'click' },
+          { capability: 'click', keepOnRelease: true },
+          { capability: 'text', position: { x: 20, y: 250 }, text: 'keepOnRelease: true=保持效果,false=松开恢复', size: 12, color: [120, 120, 120] },
           { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
@@ -573,53 +521,33 @@
       // 说明: 只传递悬停状态 (isHovered)，不产生视觉变化
       //       其他原子通过 trigger: 'hover' 响应此状态
       {
-        id: 'atom-hover-title',
-        position: { x: 0, y: 5340 },
+        id: 'atom-hover',
+        position: { x: 0, y: 5760 },
         width: 400,
-        height: 50,
+        height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
           { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '19. Hover 原子 - 悬停交互', size: 22, color: [50, 100, 200] },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-hover-1',
-        position: { x: 0, y: 5400 },
-        width: 130,
-        height: 100,
-        atoms: [
-          { capability: 'background', color: [200, 150, 255], radius: 10 },
-          { capability: 'text', position: { x: 20, y: 40 }, text: 'scale 1.2', size: 12, color: [255, 255, 255] },
-          { capability: 'hover' },
+          { capability: 'text', position: { x: 20, y: 60 }, text: '能力: hover + scale + opacity', size: 14, color: [150, 150, 150] },
+          { capability: 'text', position: { x: 20, y: 95 }, text: '悬停方块查看组合效果:', size: 14, color: [80, 80, 80] },
+          { capability: 'background', color: [200, 150, 255], radius: 10, position: { x: 40, y: 120 }, width: 100, height: 100 },
+          { capability: 'text', position: { x: 55, y: 165 }, text: 'scale', size: 12, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 55, y: 185 }, text: '1.2', size: 10, color: [255, 255, 255] },
+          { capability: 'hover', position: { x: 40, y: 120 }, width: 100, height: 100 },
           { capability: 'scale', value: 1.2, trigger: 'hover' },
-          { capability: 'shadow', x: 5, y: 5, shadowBlur: 15, shadowWidth: 8, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-hover-2',
-        position: { x: 140, y: 5400 },
-        width: 130,
-        height: 100,
-        atoms: [
-          { capability: 'background', color: [255, 180, 120], radius: 10 },
-          { capability: 'text', position: { x: 20, y: 40 }, text: 'opacity 0.5', size: 12, color: [80, 80, 80] },
-          { capability: 'hover' },
+          { capability: 'shadow', x: 5, y: 5, shadowBlur: 15, shadowWidth: 8, color: [0, 0, 0], position: { x: 40, y: 120 }, width: 100, height: 100 },
+          { capability: 'background', color: [255, 180, 120], radius: 10, position: { x: 160, y: 120 }, width: 100, height: 100 },
+          { capability: 'text', position: { x: 175, y: 165 }, text: 'opacity', size: 12, color: [80, 80, 80] },
+          { capability: 'text', position: { x: 175, y: 185 }, text: '0.5', size: 10, color: [80, 80, 80] },
+          { capability: 'hover', position: { x: 160, y: 120 }, width: 100, height: 100 },
           { capability: 'opacity', value: 0.5, trigger: 'hover' },
-          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
-        ]
-      },
-      {
-        id: 'atom-hover-3',
-        position: { x: 280, y: 5400 },
-        width: 120,
-        height: 100,
-        atoms: [
-          { capability: 'background', color: [120, 200, 200], radius: 10 },
-          { capability: 'text', position: { x: 20, y: 40 }, text: 'rotate 15°', size: 12, color: [255, 255, 255] },
-          { capability: 'hover' },
+          { capability: 'background', color: [120, 200, 200], radius: 10, position: { x: 280, y: 120 }, width: 100, height: 100 },
+          { capability: 'text', position: { x: 295, y: 165 }, text: 'rotate', size: 12, color: [255, 255, 255] },
+          { capability: 'text', position: { x: 295, y: 185 }, text: '15°', size: 10, color: [255, 255, 255] },
+          { capability: 'hover', position: { x: 280, y: 120 }, width: 100, height: 100 },
           { capability: 'rotate', value: 15, trigger: 'hover' },
+          { capability: 'text', position: { x: 20, y: 250 }, text: 'hover原子传递状态 + 动画原子响应', size: 12, color: [120, 120, 120] },
           { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       },
@@ -629,16 +557,24 @@
       // 说明: 支持调整大小,可通过 edge 指定控制手柄位置
       {
         id: 'atom-resize-handle',
-        position: { x: 0, y: 5580 },
+        position: { x: 0, y: 6080 },
         width: 400,
-        height: 200,
+        height: 300,
         atoms: [
           { capability: 'background', color: [255, 255, 255] },
           { capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
           { capability: 'text', position: { x: 20, y: 30 }, text: '20. Resize-handle 原子 - 调整大小', size: 22, color: [50, 100, 200] },
           { capability: 'text', position: { x: 20, y: 60 }, text: '能力: resize-handle', size: 14, color: [150, 150, 150] },
-          { capability: 'text', position: { x: 20, y: 85 }, text: '拖拽右下角手柄调整卡片大小', size: 14, color: [80, 80, 80] },
-          { capability: 'resize-handle', edge: 'se', minWidth: 200, minHeight: 100, handleSize: 20, handleColor: [100, 150, 255] },
+          { capability: 'text', position: { x: 20, y: 95 }, text: '拖拽右下角手柄调整大小:', size: 14, color: [80, 80, 80] },
+          { capability: 'background', color: [245, 248, 255], position: { x: 40, y: 120 }, width: 200, height: 140 },
+          { capability: 'border', borderWidth: 1, color: [200, 220, 240], radius: 8, position: { x: 40, y: 120 }, width: 200, height: 140 },
+          { capability: 'text', position: { x: 60, y: 150 }, text: 'SE 手柄 (右下)', size: 14, color: [80, 80, 80] },
+          { capability: 'text', position: { x: 60, y: 175 }, text: 'edge: "se"', size: 12, color: [120, 120, 120] },
+          { capability: 'text', position: { x: 60, y: 195 }, text: 'minWidth: 100', size: 10, color: [120, 120, 120] },
+          { capability: 'text', position: { x: 60, y: 210 }, text: 'minHeight: 80', size: 10, color: [120, 120, 120] },
+          { capability: 'resize-handle', edge: 'se', minWidth: 100, minHeight: 80, handleSize: 20, handleColor: [180, 180, 190], position: { x: 40, y: 120 }, width: 200, height: 140 },
+          { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0], position: { x: 40, y: 120 }, width: 200, height: 140 },
+          { capability: 'text', position: { x: 20, y: 280 }, text: 'edge: n/ne/e/se/s/sw/w/nw 控制手柄位置', size: 11, color: [120, 120, 120] },
           { capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
       }
