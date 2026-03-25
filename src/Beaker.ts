@@ -232,19 +232,24 @@ export class Beaker {
     });
   }
 
-  private syncDecorationSize(width?: number, height?: number): void {
-    if (width !== undefined) {
-      this.decorationAtoms.background?.updateSize(width, this.state.height ?? 0);
-      this.decorationAtoms.border?.updateSize(width, this.state.height ?? 0);
-      this.decorationAtoms.shadow?.updateSize(width, this.state.height ?? 0);
-      this.state.width = width;
-    }
-    if (height !== undefined) {
-      this.decorationAtoms.background?.updateSize(this.state.width ?? 0, height);
-      this.decorationAtoms.border?.updateSize(this.state.width ?? 0, height);
-      this.decorationAtoms.shadow?.updateSize(this.state.width ?? 0, height);
-      this.state.height = height;
-    }
+  public setHeight(height: number): void {
+    this.element.style.height = `${height}px`;
+    this.element.style.overflow = 'hidden';
+    this.decorationAtoms.background?.updateSize(this.state.width ?? 0, height);
+    this.decorationAtoms.border?.updateSize(this.state.width ?? 0, height);
+    this.decorationAtoms.shadow?.updateSize(this.state.width ?? 0, height);
+    this.state.height = height;
+    this.emitStateChange({ height });
+  }
+
+  public setWidth(width: number): void {
+    this.element.style.width = `${width}px`;
+    this.element.style.overflow = 'hidden';
+    this.decorationAtoms.background?.updateSize(width, this.state.height ?? 0);
+    this.decorationAtoms.border?.updateSize(width, this.state.height ?? 0);
+    this.decorationAtoms.shadow?.updateSize(width, this.state.height ?? 0);
+    this.state.width = width;
+    this.emitStateChange({ width });
   }
 
   private createContentAtoms(atoms: any[]): void {
@@ -364,22 +369,26 @@ export class Beaker {
             }, this.state.position);
             break;
           case 'height':
-            this.animationAtoms.height = new Atoms.HeightAtom(context, this.element, {
+            this.animationAtoms.height = new Atoms.HeightAtom(context, {
               value: config.value,
               trigger: config.trigger,
               collapsedValue: config.collapsedValue,
               keepOnRelease: config.keepOnRelease,
               toggleOnClick: config.toggleOnClick
-            }, (height) => this.syncDecorationSize(undefined, height));
+            }, {
+              onHeightChange: (height) => this.setHeight(height)
+            });
             break;
           case 'width':
-            this.animationAtoms.width = new Atoms.WidthAtom(context, this.element, {
+            this.animationAtoms.width = new Atoms.WidthAtom(context, {
               value: config.value,
               trigger: config.trigger,
               collapsedValue: config.collapsedValue,
               keepOnRelease: config.keepOnRelease,
               toggleOnClick: config.toggleOnClick
-            }, (width) => this.syncDecorationSize(width, undefined));
+            }, {
+              onWidthChange: (width) => this.setWidth(width)
+            });
             break;
           case 'collapse':
             if (!this.animationAtoms.collapse) {

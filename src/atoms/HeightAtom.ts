@@ -8,21 +8,21 @@ export interface HeightAtomConfig {
   toggleOnClick?: boolean;
 }
 
-export type HeightChangeCallback = (height: number) => void;
+export interface HeightAtomCallbacks {
+  onHeightChange?: (height: number) => void;
+}
 
 export class HeightAtom {
   readonly capability: 'height' = 'height';
   readonly context: AtomContext;
-  private element: HTMLElement;
   private config: HeightAtomConfig;
   private expandedHeight: number;
   private collapsedHeight: number;
   private isExpanded: boolean = true;
-  private onHeightChange: HeightChangeCallback | null;
+  private callbacks: HeightAtomCallbacks;
 
-  constructor(context: AtomContext, element: HTMLElement, config: HeightAtomConfig, onHeightChange?: HeightChangeCallback) {
+  constructor(context: AtomContext, config: HeightAtomConfig, callbacks: HeightAtomCallbacks) {
     this.context = context;
-    this.element = element;
     this.config = {
       keepOnRelease: true,
       toggleOnClick: true,
@@ -30,7 +30,7 @@ export class HeightAtom {
     };
     this.expandedHeight = this.config.value;
     this.collapsedHeight = this.config.collapsedValue ?? 0;
-    this.onHeightChange = onHeightChange ?? null;
+    this.callbacks = callbacks;
   }
 
   onHoverChange(isHovered: boolean): void {
@@ -72,21 +72,7 @@ export class HeightAtom {
   }
 
   private setHeight(height: number): void {
-    this.element.style.height = `${height}px`;
-    this.element.style.overflow = 'hidden';
-    this.onHeightChange?.(height);
-  }
-
-  toggle(): void {
-    this.isExpanded = !this.isExpanded;
-    this.setHeight(this.isExpanded ? this.expandedHeight : this.collapsedHeight);
-  }
-
-  reset(): void {
-    this.isExpanded = true;
-    this.element.style.height = 'auto';
-    this.element.style.overflow = '';
-    this.onHeightChange?.(this.expandedHeight);
+    this.callbacks.onHeightChange?.(height);
   }
 
   getValue(): number {

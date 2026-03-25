@@ -8,21 +8,21 @@ export interface WidthAtomConfig {
   toggleOnClick?: boolean;
 }
 
-export type WidthChangeCallback = (width: number) => void;
+export interface WidthAtomCallbacks {
+  onWidthChange?: (width: number) => void;
+}
 
 export class WidthAtom {
   readonly capability: 'width' = 'width';
   readonly context: AtomContext;
-  private element: HTMLElement;
   private config: WidthAtomConfig;
   private expandedWidth: number;
   private collapsedWidth: number;
   private isExpanded: boolean = true;
-  private onWidthChange: WidthChangeCallback | null;
+  private callbacks: WidthAtomCallbacks;
 
-  constructor(context: AtomContext, element: HTMLElement, config: WidthAtomConfig, onWidthChange?: WidthChangeCallback) {
+  constructor(context: AtomContext, config: WidthAtomConfig, callbacks: WidthAtomCallbacks) {
     this.context = context;
-    this.element = element;
     this.config = {
       keepOnRelease: true,
       toggleOnClick: true,
@@ -30,7 +30,7 @@ export class WidthAtom {
     };
     this.expandedWidth = this.config.value;
     this.collapsedWidth = this.config.collapsedValue ?? 0;
-    this.onWidthChange = onWidthChange ?? null;
+    this.callbacks = callbacks;
   }
 
   onHoverChange(isHovered: boolean): void {
@@ -72,21 +72,7 @@ export class WidthAtom {
   }
 
   private setWidth(width: number): void {
-    this.element.style.width = `${width}px`;
-    this.element.style.overflow = 'hidden';
-    this.onWidthChange?.(width);
-  }
-
-  toggle(): void {
-    this.isExpanded = !this.isExpanded;
-    this.setWidth(this.isExpanded ? this.expandedWidth : this.collapsedWidth);
-  }
-
-  reset(): void {
-    this.isExpanded = true;
-    this.element.style.width = 'auto';
-    this.element.style.overflow = '';
-    this.onWidthChange?.(this.expandedWidth);
+    this.callbacks.onWidthChange?.(width);
   }
 
   getValue(): number {
