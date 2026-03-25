@@ -2,7 +2,7 @@ import type { AtomContext } from '../atoms';
 
 export interface RotateAtomConfig {
   value: number;
-  trigger: 'hover' | 'click';
+  trigger: 'hover' | 'click' | 'doubleclick';
   defaultValue?: number;
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
@@ -66,6 +66,26 @@ export class RotateAtom {
         this.isActive = false;
         this.animateToRotate(this.config.defaultValue ?? 0);
       }
+    }
+  }
+
+  private doubleClickCount: number = 0;
+
+  onDoubleClick(): void {
+    if (this.config.trigger !== 'doubleclick') return;
+    this.doubleClickCount++;
+    if (this.config.toggleOnClick) {
+      const isOddClick = this.doubleClickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToRotate(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToRotate(this.config.defaultValue ?? 0);
+      }
+    } else {
+      this.isActive = true;
+      this.animateToRotate(this.config.value);
     }
   }
 

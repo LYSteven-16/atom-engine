@@ -2,7 +2,7 @@ import type { AtomContext } from '../atoms';
 
 export interface HeightAtomConfig {
   value: number;
-  trigger: 'hover' | 'click';
+  trigger: 'hover' | 'click' | 'doubleclick';
   collapsedValue?: number;
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
@@ -73,6 +73,34 @@ export class HeightAtom {
         this.isExpanded = false;
         this.isActive = false;
       }
+    }
+    this.apply();
+  }
+
+  private doubleClickCount: number = 0;
+
+  onDoubleClick(): void {
+    if (this.config.trigger !== 'doubleclick') return;
+    this.doubleClickCount++;
+    if (this.config.toggleOnClick) {
+      const isOddClick = this.doubleClickCount % 2 === 1;
+      if (isOddClick) {
+        this.currentHeight = `${this.config.value}px`;
+        this.isExpanded = true;
+        this.isActive = true;
+      } else {
+        if (this.config.collapsedValue !== undefined) {
+          this.currentHeight = `${this.config.collapsedValue}px`;
+        } else {
+          this.currentHeight = 'auto';
+        }
+        this.isExpanded = false;
+        this.isActive = false;
+      }
+    } else {
+      this.currentHeight = `${this.config.value}px`;
+      this.isExpanded = true;
+      this.isActive = true;
     }
     this.apply();
   }

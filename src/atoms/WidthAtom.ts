@@ -2,7 +2,7 @@ import type { AtomContext } from '../atoms';
 
 export interface WidthAtomConfig {
   value: number;
-  trigger: 'hover' | 'click';
+  trigger: 'hover' | 'click' | 'doubleclick';
   collapsedValue?: number;
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
@@ -73,6 +73,34 @@ export class WidthAtom {
         this.isExpanded = false;
         this.isActive = false;
       }
+    }
+    this.apply();
+  }
+
+  private doubleClickCount: number = 0;
+
+  onDoubleClick(): void {
+    if (this.config.trigger !== 'doubleclick') return;
+    this.doubleClickCount++;
+    if (this.config.toggleOnClick) {
+      const isOddClick = this.doubleClickCount % 2 === 1;
+      if (isOddClick) {
+        this.currentWidth = `${this.config.value}px`;
+        this.isExpanded = true;
+        this.isActive = true;
+      } else {
+        if (this.config.collapsedValue !== undefined) {
+          this.currentWidth = `${this.config.collapsedValue}px`;
+        } else {
+          this.currentWidth = 'auto';
+        }
+        this.isExpanded = false;
+        this.isActive = false;
+      }
+    } else {
+      this.currentWidth = `${this.config.value}px`;
+      this.isExpanded = true;
+      this.isActive = true;
     }
     this.apply();
   }

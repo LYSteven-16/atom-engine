@@ -2,7 +2,7 @@ import type { AtomContext } from '../atoms';
 
 export interface OpacityAtomConfig {
   value: number;
-  trigger: 'hover' | 'click';
+  trigger: 'hover' | 'click' | 'doubleclick';
   defaultValue?: number;
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
@@ -66,6 +66,26 @@ export class OpacityAtom {
         this.isActive = false;
         this.animateToOpacity(this.config.defaultValue ?? 1);
       }
+    }
+  }
+
+  private doubleClickCount: number = 0;
+
+  onDoubleClick(): void {
+    if (this.config.trigger !== 'doubleclick') return;
+    this.doubleClickCount++;
+    if (this.config.toggleOnClick) {
+      const isOddClick = this.doubleClickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToOpacity(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToOpacity(this.config.defaultValue ?? 1);
+      }
+    } else {
+      this.isActive = true;
+      this.animateToOpacity(this.config.value);
     }
   }
 

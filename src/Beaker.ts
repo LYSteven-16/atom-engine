@@ -393,7 +393,10 @@ export class Beaker {
           onMouseUp: () => {
             this.updateClickRelease();
           },
-          onDoubleClick: clickConfig.onDoubleClick
+          onDoubleClick: (e) => {
+            this.updateDoubleClick();
+            clickConfig.onDoubleClick?.(e);
+          }
         });
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ClickAtom失败:`, error);
@@ -537,6 +540,14 @@ export class Beaker {
     this.animationAtoms.width?.onClickChange(isClicked, clickCount);
   }
 
+  private notifyDoubleClick(): void {
+    this.animationAtoms.scale?.onDoubleClick();
+    this.animationAtoms.opacity?.onDoubleClick();
+    this.animationAtoms.rotate?.onDoubleClick();
+    this.animationAtoms.height?.onDoubleClick();
+    this.animationAtoms.width?.onDoubleClick();
+  }
+
   private emitStateChange(partialState: Partial<BakerState>): void {
     if (this.onStateChange) {
       this.onStateChange(this.id, partialState);
@@ -559,6 +570,10 @@ export class Beaker {
     this.state.isClicked = false;
     this.notifyClickChange(false, 0);
     this.emitStateChange({ isClicked: false });
+  }
+
+  public updateDoubleClick(): void {
+    this.notifyDoubleClick();
   }
 
   public updateDragStart(mouse: { clientX: number; clientY: number }): void {
