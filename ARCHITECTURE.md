@@ -290,12 +290,18 @@ public readonly molecule: Molecule;             // 分子配置对象
 public readonly element: HTMLElement;           // DOM 容器
 public readonly bakerIndex: number;             // Baker 索引
 public state: BakerState;                       // 当前状态
-private triggers: Set<string> = new Set();      // 触发器集合
 private onStateChange: StateChangeCallback | null; // 状态变更回调
 private contentAtoms: any[] = [];               // 内容原子数组
-private eventAtoms: any[] = [];                 // 事件原子数组
-private resizeHandles: any[] = [];              // 调整大小手柄数组
 private atomIndexCounter: number = 0;            // 原子索引计数器
+private animationAtoms: {
+  scale?: ScaleAtom;
+  opacity?: OpacityAtom;
+  rotate?: RotateAtom;
+  translate?: TranslateAtom;
+  height?: HeightAtom;
+  width?: WidthAtom;
+  collapse?: CollapseAtom[];
+} = {};
 ```
 
 **BakerState 接口**：
@@ -342,20 +348,7 @@ constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: 
   this.element.style.cursor = 'default';
 
   // 初始化状态
-  this.state = {
-    id: this.id,
-    moleculeId: molecule.id,
-    isHovered: false,
-    isClicked: false,
-    isDragging: false,
-    isResizing: false,
-    position: { ...(molecule.position ?? { x: 0, y: 0 }) },
-    width: undefined,
-    height: undefined,
-    scrollX: 0,
-    scrollY: 0,
-    collapsedGroups: new Set()
-  };
+  this.state = this.createInitialState(molecule);
 
   // 初始化
   this.init();
@@ -364,41 +357,48 @@ constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: 
 
 #### init()
 ```typescript
-init(): void {
+private init(): void {
   // 1. 获取原子配置
   const atoms = [...(this.molecule.atoms || [])];
 
   // 2. 根据 capability 分类原子
   const contentCapabilities = ['text', 'image', 'video', 'audio', 'code', 'icon', 'canvas'];
-  const eventCapabilities = ['drag', 'resize', 'scroll', 'click', 'hover'];
   const decorationCapabilities = ['background', 'border', 'shadow'];
   const animationCapabilities = ['scale', 'opacity', 'rotate', 'translate', 'height', 'width', 'collapse'];
 
   const contentAtoms = atoms.filter(a => contentCapabilities.includes(a.capability));
-  const decorationAtoms = atoms.filter(a => decorationCapabilities.includes(a.capability));
-  const animationAtoms = atoms.filter(a => animationCapabilities.includes(a.capability));
+  const decorationAtoms = atoms.filter(a => decorationCapabilities.includes(a.capability)) as any[];
+  const animationAtomConfigs = atoms.filter(a => animationCapabilities.includes(a.capability)) as any[];
 
-  // 3. 计算容器尺寸
+  // 3. 设置动画过渡
+  const userDuration = animationAtomConfigs.find(a => a.duration !== undefined)?.duration;
+  const duration = userDuration !== undefined ? userDuration : 0;
+  this.element.style.transition = `width ${duration}s ease, height ${duration}s ease, transform ${duration}s ease, opacity ${duration}s ease`;
+
+  // 4. 计算容器尺寸
   const calculatedSize = this.calculateContainerSize(contentAtoms);
   let width = this.molecule.width ?? calculatedSize.width;
   let height = this.molecule.height ?? calculatedSize.height;
 
-  // 4. 设置容器尺寸
+  // 5. 设置容器尺寸
   this.element.style.width = `${width}px`;
   this.element.style.height = `${height}px`;
   this.state.width = width;
   this.state.height = height;
 
-  // 5. 创建装饰原子（底层）
+  // 6. 创建装饰原子（底层）
   this.createDecorationAtoms(decorationAtoms, this.molecule.width, this.molecule.height);
 
-  // 6. 创建内容原子（上层）
+  // 7. 创建内容原子（上层）
   this.createContentAtoms(contentAtoms);
 
-  // 7. 创建事件原子
-  this.createEventAtoms(atoms.filter(a => eventCapabilities.includes(a.capability)), animationAtoms);
+  // 8. 创建动画原子
+  this.createAnimationAtoms(animationAtomConfigs);
 
-  // 8. 创建调整大小手柄
+  // 9. 创建输入原子
+  this.createInputAtoms(atoms);
+
+  // 10. 创建调整大小手柄
   this.createResizeHandles(atoms.filter(a => a.capability === 'resize-handle'));
 }
 ```
@@ -426,6 +426,9 @@ public updatePosition(x: number, y: number): void {
   this.state.position = { x, y };
   this.element.style.left = `${x}px`;
   this.element.style.top = `${y}px`;
+  if (this.animationAtoms.translate) {
+    this.animationAtoms.translate.updateOrigin({ x, y });
+  }
   if (this.onStateChange) {
     this.onStateChange(this.id, { position: { x, y } });
   }
@@ -459,12 +462,12 @@ private calculateContainerSize(atoms: any[]): { width: number; height: number } 
         atomHeight = atom.height || 200;
         break;
       case 'audio':
-        atomWidth = atom.width || 300;
-        atomHeight = atom.height || 42;
+        atomWidth = 200;
+        atomHeight = 40;
         break;
       case 'code':
-        atomWidth = atom.width || 400;
-        atomHeight = atom.height || 200;
+        atomWidth = 300;
+        atomHeight = 150;
         break;
       case 'icon':
         atomWidth = atom.size || 24;
@@ -569,10 +572,7 @@ private createContentAtoms(atoms: any[]): void {
             width: atomConfig.width,
             height: atomConfig.height,
             alt: atomConfig.alt,
-            position: atomConfig.position,
-            fitMode: atomConfig.fitMode,
-            offsetX: atomConfig.offsetX,
-            offsetY: atomConfig.offsetY
+            position: atomConfig.position
           }));
           break;
         case 'video':
@@ -586,12 +586,7 @@ private createContentAtoms(atoms: any[]): void {
         case 'audio':
           this.contentAtoms.push(new Atoms.AudioAtom(context, this.element, {
             src: atomConfig.src,
-            position: atomConfig.position,
-            width: atomConfig.width,
-            height: atomConfig.height,
-            autoplay: atomConfig.autoplay,
-            loop: atomConfig.loop,
-            muted: atomConfig.muted
+            position: atomConfig.position
           }));
           break;
         case 'code':
@@ -621,14 +616,11 @@ private createContentAtoms(atoms: any[]): void {
             strokeWidth: atomConfig.strokeWidth,
             backgroundColor: atomConfig.backgroundColor,
             blackboardStyle: atomConfig.blackboardStyle,
-            defaultColors: atomConfig.defaultColors,
             defaultWidths: atomConfig.defaultWidths,
             showToolbar: atomConfig.showToolbar,
             resizable: atomConfig.resizable,
             minWidth: atomConfig.minWidth,
-            minHeight: atomConfig.minHeight,
-            offsetX: atomConfig.offsetX,
-            offsetY: atomConfig.offsetY
+            minHeight: atomConfig.minHeight
           }));
           break;
       }
@@ -639,20 +631,335 @@ private createContentAtoms(atoms: any[]): void {
 }
 ```
 
-#### getState(): BakerState
+#### createAnimationAtoms(animationConfigs: any[]): void
 ```typescript
-getState(): BakerState {
-  return this.state;
+private createAnimationAtoms(animationConfigs: any[]): void {
+  animationConfigs.forEach(config => {
+    const context = this.createContext();
+    try {
+      switch (config.capability) {
+        case 'scale':
+          this.animationAtoms.scale = new Atoms.ScaleAtom(context, this.element, {
+            value: config.value,
+            trigger: config.trigger,
+            defaultValue: 1,
+            keepOnRelease: config.keepOnRelease
+          });
+          break;
+        case 'opacity':
+          this.animationAtoms.opacity = new Atoms.OpacityAtom(context, this.element, {
+            value: config.value,
+            trigger: config.trigger,
+            defaultValue: 1,
+            keepOnRelease: config.keepOnRelease
+          });
+          break;
+        case 'rotate':
+          this.animationAtoms.rotate = new Atoms.RotateAtom(context, this.element, {
+            value: config.value,
+            trigger: config.trigger,
+            defaultValue: 0,
+            keepOnRelease: config.keepOnRelease
+          });
+          break;
+        case 'translate':
+          this.animationAtoms.translate = new Atoms.TranslateAtom(context, this.element, {
+            trigger: config.trigger,
+            keepOnRelease: config.keepOnRelease
+          }, this.state.position);
+          break;
+        case 'height':
+          this.animationAtoms.height = new Atoms.HeightAtom(context, this.element, {
+            value: config.value,
+            trigger: config.trigger,
+            collapsedValue: config.collapsedValue,
+            keepOnRelease: config.keepOnRelease
+          });
+          break;
+        case 'width':
+          this.animationAtoms.width = new Atoms.WidthAtom(context, this.element, {
+            value: config.value,
+            trigger: config.trigger,
+            collapsedValue: config.collapsedValue,
+            keepOnRelease: config.keepOnRelease
+          });
+          break;
+        case 'collapse':
+          if (!this.animationAtoms.collapse) {
+            this.animationAtoms.collapse = [];
+          }
+          this.animationAtoms.collapse.push(new Atoms.CollapseAtom(
+            context,
+            this.element,
+            {
+              group: config.group,
+              expandedValue: config.expandedValue,
+              collapsedValue: config.collapsedValue
+            },
+            this.state.collapsedGroups
+          ));
+          break;
+      }
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建动画原子失败:`, error);
+    }
+  });
 }
 ```
 
-#### updateState(newState: Partial<BakerState>): void
+#### createInputAtoms(atoms: any[]): void
 ```typescript
-updateState(newState: Partial<BakerState>): void {
-  this.state = { ...this.state, ...newState };
-  if (this.onStateChange) {
-    this.onStateChange(this.id, newState);
+private createInputAtoms(atoms: any[]): void {
+  const clickConfig = atoms.find(a => a.capability === 'click');
+  if (clickConfig) {
+    const context = this.createContext();
+    try {
+      new Atoms.ClickAtom(context, this.element, {
+        onClick: () => {
+          this.updateClickState(true);
+        },
+        onDoubleClick: clickConfig.onDoubleClick
+      });
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建ClickAtom失败:`, error);
+    }
   }
+
+  const dragConfig = atoms.find(a => a.capability === 'drag');
+  if (dragConfig) {
+    const context = this.createContext();
+    try {
+      new Atoms.DragAtom(context, this.element, {
+        handle: dragConfig.handle,
+        bounds: dragConfig.bounds
+      }, {
+        onDragStart: (pos) => {
+          this.updateDragStart(pos);
+        },
+        onDragMove: (pos) => {
+          this.updateDragMove(pos);
+        },
+        onDragEnd: () => {
+          this.updateDragEnd();
+        }
+      });
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建DragAtom失败:`, error);
+    }
+  }
+
+  const resizeConfig = atoms.find(a => a.capability === 'resize');
+  if (resizeConfig) {
+    const context = this.createContext();
+    try {
+      new Atoms.ResizeAtom(context, this.element, {
+        minWidth: resizeConfig.minWidth,
+        minHeight: resizeConfig.minHeight,
+        maxWidth: resizeConfig.maxWidth,
+        maxHeight: resizeConfig.maxHeight
+      }, {
+        onResizeStart: (size) => {
+          this.updateResizeStart(size);
+          resizeConfig.onResizeStart?.(size);
+        },
+        onResize: (size) => {
+          this.updateResizeMove(size);
+          resizeConfig.onResize?.(size);
+        },
+        onResizeEnd: (size) => {
+          this.updateResizeEnd(size);
+          resizeConfig.onResizeEnd?.(size);
+        }
+      });
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建ResizeAtom失败:`, error);
+    }
+  }
+
+  const scrollConfig = atoms.find(a => a.capability === 'scroll');
+  if (scrollConfig) {
+    const context = this.createContext();
+    try {
+      new Atoms.ScrollAtom(context, this.element, {
+        direction: scrollConfig.direction,
+        maxScrollX: scrollConfig.maxScrollX,
+        maxScrollY: scrollConfig.maxScrollY
+      }, {
+        onScroll: (pos) => {
+          this.updateScrollState(pos.scrollX, pos.scrollY);
+          scrollConfig.onScroll?.(pos);
+        }
+      });
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建ScrollAtom失败:`, error);
+    }
+  }
+
+  const hoverConfig = atoms.find(a => a.capability === 'hover');
+  if (hoverConfig) {
+    const context = this.createContext();
+    try {
+      new Atoms.HoverAtom(context, this.element, {
+        onHoverStart: () => {
+          this.updateHoverState(true);
+        },
+        onHoverEnd: () => {
+          this.updateHoverState(false);
+        }
+      });
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建HoverAtom失败:`, error);
+    }
+  }
+
+  const collapseConfigs = atoms.filter(a => a.capability === 'collapse');
+  collapseConfigs.forEach(config => {
+    this.element.addEventListener('click', () => {
+      if (this.animationAtoms.collapse) {
+        const collapseAtom = this.animationAtoms.collapse.find(c => c.getGroup() === config.group);
+        if (collapseAtom) {
+          collapseAtom.toggle();
+        }
+      }
+    });
+  });
+}
+```
+
+#### createResizeHandles(configs: any[]): void
+```typescript
+private createResizeHandles(configs: any[]): void {
+  configs.forEach(config => {
+    const context = this.createContext();
+    try {
+      new Atoms.ResizeHandleAtom(context, this.element, {
+        edge: config.edge,
+        minWidth: config.minWidth,
+        minHeight: config.minHeight,
+        handleSize: config.handleSize,
+        handleColor: config.handleColor,
+        scaleMode: config.scaleMode
+      }, {
+        onResizeStart: (size) => this.updateResizeStart(size),
+        onResize: (size) => this.updateResizeMove(size),
+        onResizeEnd: (size) => this.updateResizeEnd(size)
+      });
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
+    }
+  });
+}
+```
+
+#### notifyHoverChange(isHovered: boolean): void
+```typescript
+private notifyHoverChange(isHovered: boolean): void {
+  this.animationAtoms.scale?.onHoverChange(isHovered);
+  this.animationAtoms.opacity?.onHoverChange(isHovered);
+  this.animationAtoms.rotate?.onHoverChange(isHovered);
+  this.animationAtoms.height?.onHoverChange(isHovered);
+  this.animationAtoms.width?.onHoverChange(isHovered);
+}
+```
+
+#### notifyClickChange(isClicked: boolean): void
+```typescript
+private notifyClickChange(isClicked: boolean): void {
+  this.animationAtoms.scale?.onClickChange(isClicked);
+  this.animationAtoms.opacity?.onClickChange(isClicked);
+  this.animationAtoms.rotate?.onClickChange(isClicked);
+  this.animationAtoms.height?.onClickChange(isClicked);
+  this.animationAtoms.width?.onClickChange(isClicked);
+}
+```
+
+#### updateHoverState(isHovered: boolean): void
+```typescript
+public updateHoverState(isHovered: boolean): void {
+  this.state.isHovered = isHovered;
+  this.notifyHoverChange(isHovered);
+  this.emitStateChange({ isHovered });
+}
+```
+
+#### updateClickState(isClicked: boolean): void
+```typescript
+public updateClickState(isClicked: boolean): void {
+  this.state.isClicked = isClicked;
+  this.notifyClickChange(isClicked);
+  this.emitStateChange({ isClicked });
+}
+```
+
+#### updateDragStart(pos: { x: number; y: number }): void
+```typescript
+public updateDragStart(pos: { x: number; y: number }): void {
+  this.state.isDragging = true;
+  this.state.position = { x: pos.x, y: pos.y };
+  this.animationAtoms.translate?.onDragMove(pos.x, pos.y);
+  this.emitStateChange({ isDragging: true, position: pos });
+}
+```
+
+#### updateDragMove(pos: { x: number; y: number }): void
+```typescript
+public updateDragMove(pos: { x: number; y: number }): void {
+  this.state.position = { x: pos.x, y: pos.y };
+  this.animationAtoms.translate?.onDragMove(pos.x, pos.y);
+  this.emitStateChange({ position: pos });
+}
+```
+
+#### updateDragEnd(): void
+```typescript
+public updateDragEnd(): void {
+  this.state.isDragging = false;
+  this.animationAtoms.translate?.onDragEnd();
+  this.emitStateChange({ isDragging: false });
+}
+```
+
+#### updateResizeStart(size: { width: number; height: number }): void
+```typescript
+public updateResizeStart(size: { width: number; height: number }): void {
+  this.state.isResizing = true;
+  this.state.width = size.width;
+  this.state.height = size.height;
+  this.emitStateChange({ isResizing: true, width: size.width, height: size.height });
+}
+```
+
+#### updateResizeMove(size: { width: number; height: number }): void
+```typescript
+public updateResizeMove(size: { width: number; height: number }): void {
+  this.state.width = size.width;
+  this.state.height = size.height;
+  this.element.style.width = `${size.width}px`;
+  this.element.style.height = `${size.height}px`;
+  this.emitStateChange({ width: size.width, height: size.height });
+}
+```
+
+#### updateResizeEnd(size: { width: number; height: number }): void
+```typescript
+public updateResizeEnd(size: { width: number; height: number }): void {
+  this.state.isResizing = false;
+  this.state.width = size.width;
+  this.state.height = size.height;
+  this.emitStateChange({ isResizing: false, width: size.width, height: size.height });
+}
+```
+
+#### updateScrollState(scrollX?: number, scrollY?: number): void
+```typescript
+public updateScrollState(scrollX?: number, scrollY?: number): void {
+  if (scrollX !== undefined) {
+    this.state.scrollX = scrollX;
+  }
+  if (scrollY !== undefined) {
+    this.state.scrollY = scrollY;
+  }
+  this.emitStateChange({ scrollX: this.state.scrollX, scrollY: this.state.scrollY });
 }
 ```
 
@@ -697,6 +1004,12 @@ export interface Molecule {
 
 **接口定义**：
 ```typescript
+export interface AtomContext {
+  bakerId: string;
+  bakerIndex: number;
+  atomIndex: number;
+}
+
 // 装饰原子接口
 export interface BackgroundAtom {
   capability: 'background';
@@ -713,6 +1026,8 @@ export interface BorderAtom {
   width: number;
   color: [number, number, number];
   radius?: number;
+  borderWidth?: number;
+  borderHeight?: number;
 }
 
 export interface ShadowAtom {
@@ -753,8 +1068,6 @@ export interface RotateAtom {
 export interface TranslateAtom {
   capability: 'translate';
   context: AtomContext;
-  x: number;
-  y: number;
   trigger: 'drag';
   duration?: number;
 }
@@ -782,7 +1095,6 @@ export interface CollapseAtom {
   context: AtomContext;
   group: string;
   expandedValue?: number;
-  collapsedValue?: number;
   duration?: number;
 }
 ```
@@ -866,9 +1178,9 @@ BeakerManager 重新创建
 | 原子类型 | 文件位置 | 功能描述 |
 |---------|---------|---------|
 | TextAtom | `/src/atoms/TextAtom.ts` | 显示文本内容 |
-| ImageAtom | `/src/atoms/ImageAtom.ts` | 显示图片（支持滚动/裁切/拉伸模式） |
+| ImageAtom | `/src/atoms/ImageAtom.ts` | 显示图片 |
 | VideoAtom | `/src/atoms/VideoAtom.ts` | 播放视频 |
-| AudioAtom | `/src/atoms/AudioAtom.ts` | 播放音频/视频音频流 |
+| AudioAtom | `/src/atoms/AudioAtom.ts` | 播放音频 |
 | CodeAtom | `/src/atoms/CodeAtom.ts` | 显示代码（内联语法高亮/自动格式化/语言识别） |
 | IconAtom | `/src/atoms/IconAtom.ts` | 显示图标 |
 | CanvasAtom | `/src/atoms/CanvasAtom.ts` | 绘图画布（支持工具栏/黑板模式/可调整大小） |
@@ -904,15 +1216,13 @@ BeakerManager 重新创建
 
 | 原子类型 | capability | 功能描述 |
 |---------|---------|---------|
-| ScaleAtom | `scale` | 缩放动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
-| OpacityAtom | `opacity` | 透明度动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
-| RotateAtom | `rotate` | 旋转动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
-| TranslateAtom | `translate` | 平移动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
-| HeightAtom | `height` | 高度动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
-| WidthAtom | `width` | 宽度动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
-| CollapseAtom | `collapse` | 折叠动画（实现于 `/src/Beaker.ts` 的 `applyAnimations` 方法） |
-
-注意：动画原子没有单独的文件，直接在`Beaker.ts`的`applyAnimations`方法中实现。
+| ScaleAtom | `scale` | 缩放动画 |
+| OpacityAtom | `opacity` | 透明度动画 |
+| RotateAtom | `rotate` | 旋转动画 |
+| TranslateAtom | `translate` | 平移动画 |
+| HeightAtom | `height` | 高度动画 |
+| WidthAtom | `width` | 宽度动画 |
+| CollapseAtom | `collapse` | 折叠动画 |
 
 ### 原子创建流程
 
@@ -1055,6 +1365,37 @@ updateState(newState):
 
 **复杂度**：O(1)，状态更新为常量时间
 
+### 4. 缩放动画算法
+
+**目的**：实现平滑的缩放动画
+
+**输入**：起始缩放值、目标缩放值、动画时长
+
+**输出**：更新后的 DOM 样式
+
+**算法**：
+```
+animateToScale(targetScale):
+    startScale = currentScale
+    startTime = performance.now()
+    
+    animate(currentTime):
+        elapsed = currentTime - startTime
+        progress = min(elapsed / duration, 1)
+        eased = progress * (2 - progress)  // ease-out
+        
+        currentScale = startScale + (targetScale - startScale) * eased
+        applyScale(currentScale)
+        
+        if progress < 1:
+            requestAnimationFrame(animate)
+```
+
+**特点**：
+- 使用 `requestAnimationFrame` 实现平滑动画
+- 采用 ease-out 缓动函数
+- 自动缩放所有子元素的位置、尺寸、字体、边框、阴影
+
 ## 扩展机制
 
 ### 自定义原子
@@ -1070,38 +1411,21 @@ interface CustomAtomConfig {
 
 // 2. 实现原子创建逻辑
 class CustomAtom {
-  static create(id: string, config: CustomAtomConfig, container: HTMLElement) {
-    const element = document.createElement('div');
-    element.id = id;
+  readonly capability = 'custom';
+  readonly context: AtomContext;
+
+  constructor(context: AtomContext, element: HTMLElement, config: CustomAtomConfig) {
+    this.context = context;
+    // 自定义逻辑
     element.textContent = config.customProperty;
-
-    // 应用配置
-    element.style.backgroundColor = 'blue';
-    element.style.color = 'white';
-    element.style.padding = '10px';
-
-    // 绑定事件
     element.addEventListener('click', config.onCustomEvent);
-
-    // 添加到容器
-    container.appendChild(element);
-
-    return {
-      element,
-      update(newConfig: CustomAtomConfig) {
-        element.textContent = newConfig.customProperty;
-      },
-      destroy() {
-        element.remove();
-      }
-    };
   }
 }
 
 // 3. 在 Beaker 中添加支持
 private createCustomAtom(id: string, config: CustomAtomConfig): void {
-  const atom = CustomAtom.create(id, config, this.element);
-  this.atoms.set(id, atom);
+  const atom = new CustomAtom(this.createContext(), this.element, config);
+  this.contentAtoms.push(atom);
 }
 ```
 
@@ -1112,14 +1436,14 @@ interface CustomDecoratorConfig {
   customStyle: string;
 }
 
-// 实现自定义装饰器
-function applyCustomDecorator(element: HTMLElement, config: CustomDecoratorConfig) {
-  element.style.filter = config.customStyle;
-}
+class CustomDecorator {
+  readonly capability = 'custom-decorator';
+  readonly context: AtomContext;
 
-// 在 Beaker.applyDecorators 中添加
-if (decorator.type === 'CustomDecorator') {
-  this.applyCustomDecorator(this.element, decorator.config);
+  constructor(context: AtomContext, element: HTMLElement, config: CustomDecoratorConfig) {
+    this.context = context;
+    element.style.filter = config.customStyle;
+  }
 }
 ```
 
@@ -1131,18 +1455,17 @@ interface CustomAnimationConfig {
   duration: number;
 }
 
-// 实现自定义动画
-function applyCustomAnimation(element: HTMLElement, config: CustomAnimationConfig) {
-  element.style.transition = `customProperty ${config.duration}ms`;
+class CustomAnimation {
+  readonly capability = 'custom-animation';
+  readonly context: AtomContext;
 
-  requestAnimationFrame(() => {
-    element.style.customProperty = config.customProperty;
-  });
-}
-
-// 在 Beaker.applyAnimations 中添加
-if (animation.type === 'CustomAnimation') {
-  this.applyCustomAnimation(this.element, animation.config);
+  constructor(context: AtomContext, element: HTMLElement, config: CustomAnimationConfig) {
+    this.context = context;
+    element.style.transition = `customProperty ${config.duration}ms`;
+    requestAnimationFrame(() => {
+      element.style.customProperty = config.customProperty;
+    });
+  }
 }
 ```
 
@@ -1173,7 +1496,14 @@ if (animation.type === 'CustomAnimation') {
 │       ├── HoverAtom.ts         # 悬停原子
 │       ├── ResizeAtom.ts        # 调整大小原子
 │       ├── ResizeHandleAtom.ts  # 调整把手原子
-│       └── ScrollAtom.ts        # 滚动原子
+│       ├── ScrollAtom.ts        # 滚动原子
+│       ├── ScaleAtom.ts         # 缩放动画原子
+│       ├── OpacityAtom.ts       # 透明度动画原子
+│       ├── RotateAtom.ts        # 旋转动画原子
+│       ├── TranslateAtom.ts     # 平移动画原子
+│       ├── HeightAtom.ts        # 高度动画原子
+│       ├── WidthAtom.ts         # 宽度动画原子
+│       └── CollapseAtom.ts      # 折叠动画原子
 ├── demo/
 │   └── index.html               # 示例页面
 ├── package.json                 # 项目配置
@@ -1190,9 +1520,16 @@ if (animation.type === 'CustomAnimation') {
 {
   "name": "@component-chemistry/atom-engine",
   "version": "3.0.0",
-  "main": "dist/SubstanceManager.js",       # CommonJS 入口
-  "module": "dist/SubstanceManager.mjs",     # ES Module 入口
-  "types": "dist/SubstanceManager.d.ts",     # 类型声明入口
+  "main": "dist/SubstanceManager.js",
+  "module": "dist/SubstanceManager.mjs",
+  "types": "dist/SubstanceManager.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/SubstanceManager.d.ts",
+      "import": "./dist/SubstanceManager.mjs",
+      "require": "./dist/SubstanceManager.js"
+    }
+  },
   "scripts": {
     "build": "tsup src/SubstanceManager.ts --format cjs,esm --dts",
     "dev": "tsup src/SubstanceManager.ts --format cjs,esm --dts --watch",
@@ -1212,13 +1549,24 @@ if (animation.type === 'CustomAnimation') {
 ```json
 {
   "compilerOptions": {
-    "target": "ES2020",           // 编译目标
-    "module": "ESNext",            // 模块系统
-    "lib": ["ES2020", "DOM"],      // 类型库
-    "strict": true,                // 严格模式
-    "noImplicitAny": true,         // 禁止隐式 any
-    "strictNullChecks": true       // 严格空检查
-  }
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
 ```
 
