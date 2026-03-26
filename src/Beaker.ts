@@ -232,26 +232,6 @@ export class Beaker {
     });
   }
 
-  public setHeight(height: number): void {
-    this.element.style.height = `${height}px`;
-    this.element.style.overflow = 'hidden';
-    this.decorationAtoms.background?.updateSize(this.state.width ?? 0, height);
-    this.decorationAtoms.border?.updateSize(this.state.width ?? 0, height);
-    this.decorationAtoms.shadow?.updateSize(this.state.width ?? 0, height);
-    this.state.height = height;
-    this.emitStateChange({ height });
-  }
-
-  public setWidth(width: number): void {
-    this.element.style.width = `${width}px`;
-    this.element.style.overflow = 'hidden';
-    this.decorationAtoms.background?.updateSize(width, this.state.height ?? 0);
-    this.decorationAtoms.border?.updateSize(width, this.state.height ?? 0);
-    this.decorationAtoms.shadow?.updateSize(width, this.state.height ?? 0);
-    this.state.width = width;
-    this.emitStateChange({ width });
-  }
-
   private createContentAtoms(atoms: any[]): void {
     atoms.forEach(atomConfig => {
       const context = this.createContext();
@@ -369,25 +349,23 @@ export class Beaker {
             }, this.state.position);
             break;
           case 'height':
-            this.animationAtoms.height = new Atoms.HeightAtom(context, {
+            this.animationAtoms.height = new Atoms.HeightAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
               collapsedValue: config.collapsedValue,
               keepOnRelease: config.keepOnRelease,
-              toggleOnClick: config.toggleOnClick
-            }, {
-              onHeightChange: (height) => this.setHeight(height)
+              toggleOnClick: config.toggleOnClick,
+              duration: config.duration
             });
             break;
           case 'width':
-            this.animationAtoms.width = new Atoms.WidthAtom(context, {
+            this.animationAtoms.width = new Atoms.WidthAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
               collapsedValue: config.collapsedValue,
               keepOnRelease: config.keepOnRelease,
-              toggleOnClick: config.toggleOnClick
-            }, {
-              onWidthChange: (width) => this.setWidth(width)
+              toggleOnClick: config.toggleOnClick,
+              duration: config.duration
             });
             break;
           case 'collapse':
