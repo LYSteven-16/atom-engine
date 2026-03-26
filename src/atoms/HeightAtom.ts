@@ -13,6 +13,15 @@ interface OriginalCSS {
   top: number;
   height: number;
   fontSize: number;
+  borderRadius: number;
+  borderWidth: number;
+  borderStyle: string;
+  borderColor: string;
+  boxShadowX: number;
+  boxShadowY: number;
+  boxShadowBlur: number;
+  boxShadowSpread: number;
+  boxShadowColor: string;
   isText: boolean;
 }
 
@@ -55,14 +64,64 @@ export class HeightAtom {
       const child = children[i] as HTMLElement;
       const style = child.style;
       const isText = child.tagName === 'DIV' && child.textContent && !child.querySelector('canvas, img, video, audio');
+      const { width, style: borderStyle, color: borderColor } = this.parseBorder(style.border);
+      const boxShadowParts = this.parseBoxShadow(style.boxShadow);
 
       this.originalStyles.set(child, {
         top: parseFloat(style.top) || 0,
         height: parseFloat(style.height) || child.offsetHeight || 0,
         fontSize: parseFloat(style.fontSize) || parseFloat(getComputedStyle(child).fontSize) || 0,
+        borderRadius: parseFloat(style.borderRadius) || 0,
+        borderWidth: width,
+        borderStyle: borderStyle,
+        borderColor: borderColor,
+        boxShadowX: boxShadowParts.x,
+        boxShadowY: boxShadowParts.y,
+        boxShadowBlur: boxShadowParts.blur,
+        boxShadowSpread: boxShadowParts.spread,
+        boxShadowColor: boxShadowParts.color,
         isText: !!isText
       });
     }
+  }
+
+  private parseBorder(border: string): { width: number; style: string; color: string } {
+    if (!border || border === 'transparent' || border === 'none') {
+      return { width: 0, style: 'none', color: 'transparent' };
+    }
+    const parts = border.split(' ');
+    let width = 0;
+    let style = 'solid';
+    let color = 'rgb(0, 0, 0)';
+
+    for (const part of parts) {
+      if (part.endsWith('px')) {
+        width = parseFloat(part);
+      } else if (['solid', 'dashed', 'dotted', 'double', 'groove', 'ridge', 'inset', 'outset', 'none', 'hidden'].includes(part)) {
+        style = part;
+      } else if (part.startsWith('rgb') || part.startsWith('#') || part === 'transparent') {
+        color = part;
+      }
+    }
+
+    return { width, style, color };
+  }
+
+  private parseBoxShadow(boxShadow: string): { x: number; y: number; blur: number; spread: number; color: string } {
+    if (!boxShadow || boxShadow === 'none' || boxShadow === 'transparent') {
+      return { x: 0, y: 0, blur: 0, spread: 0, color: 'rgba(0, 0, 0, 0.5)' };
+    }
+    const parts = boxShadow.split(' ');
+    if (parts.length >= 5) {
+      return {
+        x: parseFloat(parts[0]) || 0,
+        y: parseFloat(parts[1]) || 0,
+        blur: parseFloat(parts[2]) || 0,
+        spread: parseFloat(parts[3]) || 0,
+        color: parts.slice(4).join(' ')
+      };
+    }
+    return { x: 0, y: 0, blur: 0, spread: 0, color: 'rgba(0, 0, 0, 0.5)' };
   }
 
   onHoverChange(isHovered: boolean): void {
@@ -78,13 +137,11 @@ export class HeightAtom {
 
   onClickChange(isClicked: boolean, clickCount: number): void {
     if (this.config.trigger !== 'click') return;
-    console.log(`[HeightAtom] onClickChange: isClicked=${isClicked}, clickCount=${clickCount}, toggleOnClick=${this.config.toggleOnClick}, isExpanded=${this.isExpanded}`);
 
     if (this.config.toggleOnClick) {
       if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       this.isExpanded = isOddClick;
-      console.log(`[HeightAtom] isOddClick=${isOddClick}, targetHeight=${isOddClick ? this.expandedHeight : this.collapsedHeight}`);
       this.animateToHeight(isOddClick ? this.expandedHeight : this.collapsedHeight);
     } else {
       if (isClicked) {
@@ -152,6 +209,22 @@ export class HeightAtom {
       // 文字元素额外改变字号
       if (original.isText) {
         child.style.fontSize = `${original.fontSize * scaleY}px`;
+      }
+
+      // 圆角同步
+      if (original.borderRadius > 0) {
+        child.style.borderRadius = `${original.borderRadius * scaleY}px`;
+      }
+
+      // 边框同步
+      if (original.borderWidth > 0) {
+        child.style.border = `${original.borderWidth * scaleY}px ${original.borderStyle} ${original.borderColor}`;
+      }
+
+      // 阴影同步
+      const hasBoxShadow = original.boxShadowX !== 0 || original.boxShadowY !== 0 || original.boxShadowBlur !== 0 || original.boxShadowSpread !== 0;
+      if (hasBoxShadow) {
+        child.style.boxShadow = `${original.boxShadowX * scaleY}px ${original.boxShadowY * scaleY}px ${original.boxShadowBlur * scaleY}px ${original.boxShadowSpread * scaleY}px ${original.boxShadowColor}`;
       }
     }
   }
