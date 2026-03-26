@@ -188,8 +188,6 @@ export class HeightAtom {
         this.animationId = 0;
         this.currentHeight = this.targetHeight;
         this.apply();
-        // 强制刷新渲染，消除影子
-        void this.element.offsetHeight;
       }
     };
 
