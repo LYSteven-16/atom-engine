@@ -72,6 +72,7 @@ export class Beaker {
     this.element.style.outline = 'transparent';
     this.element.style.boxShadow = 'transparent';
     this.element.style.cursor = 'default';
+    this.element.style.borderRadius = `${(molecule as any).radius ?? 12}px`;
 
     this.state = this.createInitialState(molecule);
 

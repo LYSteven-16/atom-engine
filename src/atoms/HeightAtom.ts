@@ -39,6 +39,7 @@ export class HeightAtom {
   private animationStartTime: number = 0;
   private isExpanded: boolean = false;
   private originalStyles: Map<HTMLElement, OriginalCSS> = new Map();
+  private originalBorderRadius: number = 0;
 
   constructor(context: AtomContext, element: HTMLElement, config: HeightAtomConfig) {
     this.context = context;
@@ -54,6 +55,7 @@ export class HeightAtom {
     this.collapsedHeight = this.config.collapsedValue;
     this.expandedHeight = this.config.moleculeHeight;
     this.currentHeight = this.collapsedHeight;
+    this.originalBorderRadius = parseFloat(element.style.borderRadius) || 0;
     this.saveOriginalStyles();
     this.apply();
   }
@@ -195,6 +197,7 @@ export class HeightAtom {
   private apply(): void {
     const scaleY = this.currentHeight / this.expandedHeight;
     this.element.style.height = `${this.currentHeight}px`;
+    this.element.style.borderRadius = `${this.originalBorderRadius * scaleY}px`;
 
     const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
