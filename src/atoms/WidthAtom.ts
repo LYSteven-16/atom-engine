@@ -3,7 +3,7 @@ import type { AtomContext } from '../atoms';
 export interface WidthAtomConfig {
   value: number;
   trigger: 'hover' | 'click' | 'doubleclick';
-  collapsedValue?: number;
+  defaultValue?: number;
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
   duration?: number;
@@ -31,29 +31,26 @@ export class WidthAtom {
   readonly context: AtomContext;
   private element: HTMLElement;
   private config: WidthAtomConfig;
-  private originalWidth: number;
-  private collapsedWidth: number;
-  private currentWidth: number;
-  private targetWidth: number = 0;
-  private startWidth: number = 0;
+  private currentScale: number = 1;
+  private targetScale: number = 1;
+  private startScale: number = 1;
   private animationId: number = 0;
   private animationStartTime: number = 0;
-  private isExpanded: boolean = true;
   private originalStyles: Map<HTMLElement, OriginalCSS> = new Map();
+  private isActive: boolean = false;
 
   constructor(context: AtomContext, element: HTMLElement, config: WidthAtomConfig) {
     this.context = context;
     this.element = element;
     this.config = {
-      keepOnRelease: true,
+      defaultValue: 1,
+      keepOnRelease: false,
       toggleOnClick: true,
       duration: 0.15,
       ...config
     };
-    this.originalWidth = element.offsetWidth;
-    this.collapsedWidth = this.config.collapsedValue ?? 0;
-    this.currentWidth = this.originalWidth;
     this.saveOriginalStyles();
+    this.apply();
   }
 
   private saveOriginalStyles(): void {
@@ -125,9 +122,11 @@ export class WidthAtom {
   onHoverChange(isHovered: boolean): void {
     if (this.config.trigger !== 'hover') return;
     if (isHovered) {
-      this.animateToWidth(this.config.value);
+      this.isActive = true;
+      this.animateToScale(this.config.value);
     } else if (!this.config.keepOnRelease) {
-      this.animateToWidth(this.collapsedWidth);
+      this.isActive = false;
+      this.animateToScale(this.config.defaultValue ?? 1);
     }
   }
 
@@ -137,15 +136,20 @@ export class WidthAtom {
     if (this.config.toggleOnClick) {
       if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
-      this.isExpanded = isOddClick;
-      this.animateToWidth(isOddClick ? this.config.value : this.collapsedWidth);
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
     } else {
       if (isClicked) {
-        this.isExpanded = true;
-        this.animateToWidth(this.config.value);
+        this.isActive = true;
+        this.animateToScale(this.config.value);
       } else if (!this.config.keepOnRelease) {
-        this.isExpanded = false;
-        this.animateToWidth(this.collapsedWidth);
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
       }
     }
   }
@@ -155,52 +159,76 @@ export class WidthAtom {
   onDoubleClick(): void {
     if (this.config.trigger !== 'doubleclick') return;
     this.doubleClickCount++;
-    const isOddClick = this.doubleClickCount % 2 === 1;
-    this.isExpanded = isOddClick;
-    this.animateToWidth(isOddClick ? this.config.value : this.collapsedWidth);
+    if (this.config.toggleOnClick) {
+      const isOddClick = this.doubleClickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
+    } else {
+      this.isActive = true;
+      this.animateToScale(this.config.value);
+    }
   }
 
-  private animateToWidth(targetWidth: number): void {
+  private animateToScale(targetScale: number): void {
     if (this.animationId !== 0) {
       cancelAnimationFrame(this.animationId);
     }
-    this.startWidth = this.currentWidth;
-    this.targetWidth = targetWidth;
+    this.startScale = this.currentScale;
+    this.targetScale = targetScale;
     this.animationStartTime = performance.now();
     const duration = (this.config.duration ?? 0.15) * 1000;
-
+    
     const animate = (currentTime: number) => {
       const elapsed = currentTime - this.animationStartTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = progress * (2 - progress);
-      this.currentWidth = this.startWidth + (this.targetWidth - this.startWidth) * eased;
+      this.currentScale = this.startScale + (this.targetScale - this.startScale) * eased;
       this.apply();
-
+      
       if (progress < 1) {
         this.animationId = requestAnimationFrame(animate);
       } else {
         this.animationId = 0;
-        this.currentWidth = this.targetWidth;
+        this.currentScale = this.targetScale;
         this.apply();
       }
     };
-
+    
     this.animationId = requestAnimationFrame(animate);
   }
 
-  private apply(): void {
-    const scale = this.currentWidth / this.config.value;
-    this.element.style.width = `${this.currentWidth}px`;
-    this.element.style.overflow = 'hidden';
+  reset(): void {
+    if (this.animationId !== 0) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = 0;
+    }
+    this.currentScale = this.config.defaultValue ?? 1;
+    this.isActive = false;
+    this.apply();
+  }
 
+  private apply(): void {
+    const scale = this.currentScale;
+    const containerCenterX = this.element.offsetWidth / 2;
+    const containerCenterY = this.element.offsetHeight / 2;
     const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       const original = this.originalStyles.get(child);
       if (!original) continue;
 
-      child.style.left = `${original.left * scale}px`;
-      child.style.top = `${original.top * scale}px`;
+      const childCenterX = original.left + original.width / 2;
+      const childCenterY = original.top + original.height / 2;
+      const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scale;
+      const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scale;
+
+      child.style.left = `${newChildCenterX - original.width * scale / 2}px`;
+      child.style.top = `${newChildCenterY - original.height * scale / 2}px`;
       child.style.width = `${original.width * scale}px`;
       child.style.height = `${original.height * scale}px`;
       child.style.fontSize = `${original.fontSize * scale}px`;
@@ -217,21 +245,11 @@ export class WidthAtom {
     }
   }
 
-  reset(): void {
-    if (this.animationId !== 0) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = 0;
-    }
-    this.currentWidth = this.config.value;
-    this.isExpanded = true;
-    this.apply();
-  }
-
   getValue(): number {
-    return this.currentWidth;
+    return this.currentScale;
   }
 
-  getIsExpanded(): boolean {
-    return this.isExpanded;
+  getIsActive(): boolean {
+    return this.isActive;
   }
 }

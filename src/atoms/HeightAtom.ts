@@ -3,7 +3,7 @@ import type { AtomContext } from '../atoms';
 export interface HeightAtomConfig {
   value: number;
   trigger: 'hover' | 'click' | 'doubleclick';
-  collapsedValue?: number;
+  defaultValue?: number;
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
   duration?: number;
@@ -31,29 +31,26 @@ export class HeightAtom {
   readonly context: AtomContext;
   private element: HTMLElement;
   private config: HeightAtomConfig;
-  private originalHeight: number;
-  private collapsedHeight: number;
-  private currentHeight: number;
-  private targetHeight: number = 0;
-  private startHeight: number = 0;
+  private currentScale: number = 1;
+  private targetScale: number = 1;
+  private startScale: number = 1;
   private animationId: number = 0;
   private animationStartTime: number = 0;
-  private isExpanded: boolean = true;
   private originalStyles: Map<HTMLElement, OriginalCSS> = new Map();
+  private isActive: boolean = false;
 
   constructor(context: AtomContext, element: HTMLElement, config: HeightAtomConfig) {
     this.context = context;
     this.element = element;
     this.config = {
-      keepOnRelease: true,
+      defaultValue: 1,
+      keepOnRelease: false,
       toggleOnClick: true,
       duration: 0.15,
       ...config
     };
-    this.originalHeight = element.offsetHeight;
-    this.collapsedHeight = this.config.collapsedValue ?? 0;
-    this.currentHeight = this.originalHeight;
     this.saveOriginalStyles();
+    this.apply();
   }
 
   private saveOriginalStyles(): void {
@@ -125,9 +122,11 @@ export class HeightAtom {
   onHoverChange(isHovered: boolean): void {
     if (this.config.trigger !== 'hover') return;
     if (isHovered) {
-      this.animateToHeight(this.config.value);
+      this.isActive = true;
+      this.animateToScale(this.config.value);
     } else if (!this.config.keepOnRelease) {
-      this.animateToHeight(this.collapsedHeight);
+      this.isActive = false;
+      this.animateToScale(this.config.defaultValue ?? 1);
     }
   }
 
@@ -137,15 +136,20 @@ export class HeightAtom {
     if (this.config.toggleOnClick) {
       if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
-      this.isExpanded = isOddClick;
-      this.animateToHeight(isOddClick ? this.config.value : this.collapsedHeight);
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
     } else {
       if (isClicked) {
-        this.isExpanded = true;
-        this.animateToHeight(this.config.value);
+        this.isActive = true;
+        this.animateToScale(this.config.value);
       } else if (!this.config.keepOnRelease) {
-        this.isExpanded = false;
-        this.animateToHeight(this.collapsedHeight);
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
       }
     }
   }
@@ -155,52 +159,76 @@ export class HeightAtom {
   onDoubleClick(): void {
     if (this.config.trigger !== 'doubleclick') return;
     this.doubleClickCount++;
-    const isOddClick = this.doubleClickCount % 2 === 1;
-    this.isExpanded = isOddClick;
-    this.animateToHeight(isOddClick ? this.config.value : this.collapsedHeight);
+    if (this.config.toggleOnClick) {
+      const isOddClick = this.doubleClickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
+    } else {
+      this.isActive = true;
+      this.animateToScale(this.config.value);
+    }
   }
 
-  private animateToHeight(targetHeight: number): void {
+  private animateToScale(targetScale: number): void {
     if (this.animationId !== 0) {
       cancelAnimationFrame(this.animationId);
     }
-    this.startHeight = this.currentHeight;
-    this.targetHeight = targetHeight;
+    this.startScale = this.currentScale;
+    this.targetScale = targetScale;
     this.animationStartTime = performance.now();
     const duration = (this.config.duration ?? 0.15) * 1000;
-
+    
     const animate = (currentTime: number) => {
       const elapsed = currentTime - this.animationStartTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = progress * (2 - progress);
-      this.currentHeight = this.startHeight + (this.targetHeight - this.startHeight) * eased;
+      this.currentScale = this.startScale + (this.targetScale - this.startScale) * eased;
       this.apply();
-
+      
       if (progress < 1) {
         this.animationId = requestAnimationFrame(animate);
       } else {
         this.animationId = 0;
-        this.currentHeight = this.targetHeight;
+        this.currentScale = this.targetScale;
         this.apply();
       }
     };
-
+    
     this.animationId = requestAnimationFrame(animate);
   }
 
-  private apply(): void {
-    const scale = this.currentHeight / this.config.value;
-    this.element.style.height = `${this.currentHeight}px`;
-    this.element.style.overflow = 'hidden';
+  reset(): void {
+    if (this.animationId !== 0) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = 0;
+    }
+    this.currentScale = this.config.defaultValue ?? 1;
+    this.isActive = false;
+    this.apply();
+  }
 
+  private apply(): void {
+    const scale = this.currentScale;
+    const containerCenterX = this.element.offsetWidth / 2;
+    const containerCenterY = this.element.offsetHeight / 2;
     const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       const original = this.originalStyles.get(child);
       if (!original) continue;
 
-      child.style.left = `${original.left * scale}px`;
-      child.style.top = `${original.top * scale}px`;
+      const childCenterX = original.left + original.width / 2;
+      const childCenterY = original.top + original.height / 2;
+      const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scale;
+      const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scale;
+
+      child.style.left = `${newChildCenterX - original.width * scale / 2}px`;
+      child.style.top = `${newChildCenterY - original.height * scale / 2}px`;
       child.style.width = `${original.width * scale}px`;
       child.style.height = `${original.height * scale}px`;
       child.style.fontSize = `${original.fontSize * scale}px`;
@@ -217,21 +245,11 @@ export class HeightAtom {
     }
   }
 
-  reset(): void {
-    if (this.animationId !== 0) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = 0;
-    }
-    this.currentHeight = this.config.value;
-    this.isExpanded = true;
-    this.apply();
-  }
-
   getValue(): number {
-    return this.currentHeight;
+    return this.currentScale;
   }
 
-  getIsExpanded(): boolean {
-    return this.isExpanded;
+  getIsActive(): boolean {
+    return this.isActive;
   }
 }
