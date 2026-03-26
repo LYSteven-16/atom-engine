@@ -119,7 +119,7 @@ export class Beaker {
     this.state.width = width;
     this.state.height = height;
 
-    this.createDecorationAtoms(decorationAtoms, this.molecule.width, this.molecule.height);
+    this.createDecorationAtoms(decorationAtoms, width, height);
     this.createContentAtoms(contentAtoms);
     this.createAnimationAtoms(animationAtomConfigs);
     this.createInputAtoms(atoms);
