@@ -321,6 +321,7 @@ export class Beaker {
               trigger: config.trigger,
               defaultValue: 1,
               keepOnRelease: config.keepOnRelease,
+              toggleOnClick: config.toggleOnClick,
               duration: config.duration
             });
             break;
@@ -330,6 +331,7 @@ export class Beaker {
               trigger: config.trigger,
               defaultValue: 1,
               keepOnRelease: config.keepOnRelease,
+              toggleOnClick: config.toggleOnClick,
               duration: config.duration
             });
             break;
@@ -339,6 +341,7 @@ export class Beaker {
               trigger: config.trigger,
               defaultValue: 0,
               keepOnRelease: config.keepOnRelease,
+              toggleOnClick: config.toggleOnClick,
               duration: config.duration
             });
             break;
