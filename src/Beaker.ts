@@ -319,7 +319,7 @@ export class Beaker {
             this.animationAtoms.scale = new Atoms.ScaleAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
-              defaultValue: 1,
+              defaultValue: config.defaultValue ?? 1,
               keepOnRelease: config.keepOnRelease,
               toggleOnClick: config.toggleOnClick,
               duration: config.duration
@@ -329,7 +329,7 @@ export class Beaker {
             this.animationAtoms.opacity = new Atoms.OpacityAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
-              defaultValue: 1,
+              defaultValue: config.defaultValue ?? 1,
               keepOnRelease: config.keepOnRelease,
               toggleOnClick: config.toggleOnClick,
               duration: config.duration
@@ -339,7 +339,7 @@ export class Beaker {
             this.animationAtoms.rotate = new Atoms.RotateAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
-              defaultValue: 0,
+              defaultValue: config.defaultValue ?? 0,
               keepOnRelease: config.keepOnRelease,
               toggleOnClick: config.toggleOnClick,
               duration: config.duration
