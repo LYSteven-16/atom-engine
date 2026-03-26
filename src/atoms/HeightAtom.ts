@@ -35,10 +35,12 @@ export class HeightAtom {
     this.context = context;
     this.element = element;
     this.config = {
-      keepOnRelease: false,
-      toggleOnClick: true,
-      duration: 0.15,
-      ...config
+      keepOnRelease: config.keepOnRelease ?? false,
+      toggleOnClick: config.toggleOnClick ?? true,
+      duration: config.duration ?? 0.15,
+      collapsedValue: config.collapsedValue,
+      moleculeHeight: config.moleculeHeight,
+      trigger: config.trigger
     };
     this.collapsedHeight = this.config.collapsedValue;
     this.expandedHeight = this.config.moleculeHeight;
@@ -76,11 +78,13 @@ export class HeightAtom {
 
   onClickChange(isClicked: boolean, clickCount: number): void {
     if (this.config.trigger !== 'click') return;
+    console.log(`[HeightAtom] onClickChange: isClicked=${isClicked}, clickCount=${clickCount}, toggleOnClick=${this.config.toggleOnClick}, isExpanded=${this.isExpanded}`);
 
     if (this.config.toggleOnClick) {
       if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       this.isExpanded = isOddClick;
+      console.log(`[HeightAtom] isOddClick=${isOddClick}, targetHeight=${isOddClick ? this.expandedHeight : this.collapsedHeight}`);
       this.animateToHeight(isOddClick ? this.expandedHeight : this.collapsedHeight);
     } else {
       if (isClicked) {
