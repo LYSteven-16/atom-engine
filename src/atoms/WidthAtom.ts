@@ -6,6 +6,7 @@ export interface WidthAtomConfig {
   collapsedValue?: number;
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
+  duration?: number;
 }
 
 export interface WidthAtomCallbacks {
@@ -18,6 +19,11 @@ export class WidthAtom {
   private config: WidthAtomConfig;
   private expandedWidth: number;
   private collapsedWidth: number;
+  private currentWidth: number;
+  private targetWidth: number = 0;
+  private startWidth: number = 0;
+  private animationId: number = 0;
+  private animationStartTime: number = 0;
   private isExpanded: boolean = true;
   private callbacks: WidthAtomCallbacks;
 
@@ -26,19 +32,21 @@ export class WidthAtom {
     this.config = {
       keepOnRelease: true,
       toggleOnClick: true,
+      duration: 0.15,
       ...config
     };
     this.expandedWidth = this.config.value;
     this.collapsedWidth = this.config.collapsedValue ?? 0;
+    this.currentWidth = this.expandedWidth;
     this.callbacks = callbacks;
   }
 
   onHoverChange(isHovered: boolean): void {
     if (this.config.trigger !== 'hover') return;
     if (isHovered) {
-      this.setWidth(this.expandedWidth);
+      this.animateToWidth(this.expandedWidth);
     } else if (!this.config.keepOnRelease) {
-      this.setWidth(this.collapsedWidth);
+      this.animateToWidth(this.collapsedWidth);
     }
   }
 
@@ -49,14 +57,14 @@ export class WidthAtom {
       if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       this.isExpanded = isOddClick;
-      this.setWidth(isOddClick ? this.expandedWidth : this.collapsedWidth);
+      this.animateToWidth(isOddClick ? this.expandedWidth : this.collapsedWidth);
     } else {
       if (isClicked) {
         this.isExpanded = true;
-        this.setWidth(this.expandedWidth);
+        this.animateToWidth(this.expandedWidth);
       } else if (!this.config.keepOnRelease) {
         this.isExpanded = false;
-        this.setWidth(this.collapsedWidth);
+        this.animateToWidth(this.collapsedWidth);
       }
     }
   }
@@ -68,15 +76,53 @@ export class WidthAtom {
     this.doubleClickCount++;
     const isOddClick = this.doubleClickCount % 2 === 1;
     this.isExpanded = isOddClick;
-    this.setWidth(isOddClick ? this.expandedWidth : this.collapsedWidth);
+    this.animateToWidth(isOddClick ? this.expandedWidth : this.collapsedWidth);
   }
 
-  private setWidth(width: number): void {
-    this.callbacks.onWidthChange?.(width);
+  private animateToWidth(targetWidth: number): void {
+    if (this.animationId !== 0) {
+      cancelAnimationFrame(this.animationId);
+    }
+    this.startWidth = this.currentWidth;
+    this.targetWidth = targetWidth;
+    this.animationStartTime = performance.now();
+    const duration = (this.config.duration ?? 0.15) * 1000;
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - this.animationStartTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = progress * (2 - progress);
+      this.currentWidth = this.startWidth + (this.targetWidth - this.startWidth) * eased;
+      this.apply();
+
+      if (progress < 1) {
+        this.animationId = requestAnimationFrame(animate);
+      } else {
+        this.animationId = 0;
+        this.currentWidth = this.targetWidth;
+        this.apply();
+      }
+    };
+
+    this.animationId = requestAnimationFrame(animate);
+  }
+
+  private apply(): void {
+    this.callbacks.onWidthChange?.(Math.round(this.currentWidth));
+  }
+
+  reset(): void {
+    if (this.animationId !== 0) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = 0;
+    }
+    this.currentWidth = this.expandedWidth;
+    this.isExpanded = true;
+    this.apply();
   }
 
   getValue(): number {
-    return this.isExpanded ? this.expandedWidth : this.collapsedWidth;
+    return this.currentWidth;
   }
 
   getIsExpanded(): boolean {
