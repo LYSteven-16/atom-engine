@@ -138,7 +138,6 @@ export class HeightAtom {
   private apply(): void {
     const scaleY = this.currentHeight / this.expandedHeight;
     this.element.style.height = `${this.currentHeight}px`;
-    this.element.style.overflow = 'hidden';
 
     const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
