@@ -54,6 +54,7 @@ export class HeightAtom {
     this.collapsedHeight = this.config.collapsedValue ?? this.config.value;
     this.currentHeight = this.expandedHeight;
     this.saveOriginalStyles();
+    this.apply();
   }
 
   private saveOriginalStyles(): void {
