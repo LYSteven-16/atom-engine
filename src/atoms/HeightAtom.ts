@@ -50,7 +50,7 @@ export class HeightAtom {
       duration: 0.15,
       ...config
     };
-    this.expandedHeight = this.config.value;
+    this.expandedHeight = element.offsetHeight || this.config.value;
     this.collapsedHeight = this.config.collapsedValue ?? 0;
     this.currentHeight = this.expandedHeight;
     this.saveOriginalStyles();

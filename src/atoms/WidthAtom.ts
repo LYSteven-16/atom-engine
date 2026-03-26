@@ -50,7 +50,7 @@ export class WidthAtom {
       duration: 0.15,
       ...config
     };
-    this.expandedWidth = this.config.value;
+    this.expandedWidth = element.offsetWidth || this.config.value;
     this.collapsedWidth = this.config.collapsedValue ?? 0;
     this.currentWidth = this.expandedWidth;
     this.saveOriginalStyles();
