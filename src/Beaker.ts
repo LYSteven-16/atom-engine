@@ -355,7 +355,7 @@ export class Beaker {
             this.animationAtoms.height = new Atoms.HeightAtom(context, this.element, {
               value: config.value,
               trigger: config.trigger,
-              defaultValue: config.defaultValue ?? 1,
+              collapsedValue: config.collapsedValue,
               keepOnRelease: config.keepOnRelease,
               toggleOnClick: config.toggleOnClick,
               duration: config.duration
