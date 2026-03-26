@@ -31,7 +31,7 @@ export class WidthAtom {
   readonly context: AtomContext;
   private element: HTMLElement;
   private config: WidthAtomConfig;
-  private expandedWidth: number;
+  private originalWidth: number;
   private collapsedWidth: number;
   private currentWidth: number;
   private targetWidth: number = 0;
@@ -50,9 +50,9 @@ export class WidthAtom {
       duration: 0.15,
       ...config
     };
-    this.expandedWidth = element.offsetWidth || this.config.value;
+    this.originalWidth = element.offsetWidth;
     this.collapsedWidth = this.config.collapsedValue ?? 0;
-    this.currentWidth = this.expandedWidth;
+    this.currentWidth = this.originalWidth;
     this.saveOriginalStyles();
   }
 
@@ -125,7 +125,7 @@ export class WidthAtom {
   onHoverChange(isHovered: boolean): void {
     if (this.config.trigger !== 'hover') return;
     if (isHovered) {
-      this.animateToWidth(this.expandedWidth);
+      this.animateToWidth(this.config.value);
     } else if (!this.config.keepOnRelease) {
       this.animateToWidth(this.collapsedWidth);
     }
@@ -138,11 +138,11 @@ export class WidthAtom {
       if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       this.isExpanded = isOddClick;
-      this.animateToWidth(isOddClick ? this.expandedWidth : this.collapsedWidth);
+      this.animateToWidth(isOddClick ? this.config.value : this.collapsedWidth);
     } else {
       if (isClicked) {
         this.isExpanded = true;
-        this.animateToWidth(this.expandedWidth);
+        this.animateToWidth(this.config.value);
       } else if (!this.config.keepOnRelease) {
         this.isExpanded = false;
         this.animateToWidth(this.collapsedWidth);
@@ -157,7 +157,7 @@ export class WidthAtom {
     this.doubleClickCount++;
     const isOddClick = this.doubleClickCount % 2 === 1;
     this.isExpanded = isOddClick;
-    this.animateToWidth(isOddClick ? this.expandedWidth : this.collapsedWidth);
+    this.animateToWidth(isOddClick ? this.config.value : this.collapsedWidth);
   }
 
   private animateToWidth(targetWidth: number): void {
@@ -189,7 +189,7 @@ export class WidthAtom {
   }
 
   private apply(): void {
-    const scaleX = this.currentWidth / this.expandedWidth;
+    const scale = this.currentWidth / this.config.value;
     this.element.style.width = `${this.currentWidth}px`;
     this.element.style.overflow = 'hidden';
 
@@ -199,18 +199,20 @@ export class WidthAtom {
       const original = this.originalStyles.get(child);
       if (!original) continue;
 
-      child.style.left = `${original.left * scaleX}px`;
-      child.style.width = `${original.width * scaleX}px`;
-      child.style.fontSize = `${original.fontSize * scaleX}px`;
-      child.style.borderRadius = `${original.borderRadius * scaleX}px`;
+      child.style.left = `${original.left * scale}px`;
+      child.style.top = `${original.top * scale}px`;
+      child.style.width = `${original.width * scale}px`;
+      child.style.height = `${original.height * scale}px`;
+      child.style.fontSize = `${original.fontSize * scale}px`;
+      child.style.borderRadius = `${original.borderRadius * scale}px`;
 
       if (original.borderWidth > 0) {
-        child.style.border = `${original.borderWidth * scaleX}px ${original.borderStyle} ${original.borderColor}`;
+        child.style.border = `${original.borderWidth * scale}px ${original.borderStyle} ${original.borderColor}`;
       }
 
       const hasBoxShadow = original.boxShadowX !== 0 || original.boxShadowY !== 0 || original.boxShadowBlur !== 0 || original.boxShadowSpread !== 0;
       if (hasBoxShadow) {
-        child.style.boxShadow = `${original.boxShadowX * scaleX}px ${original.boxShadowY * scaleX}px ${original.boxShadowBlur * scaleX}px ${original.boxShadowSpread * scaleX}px ${original.boxShadowColor}`;
+        child.style.boxShadow = `${original.boxShadowX * scale}px ${original.boxShadowY * scale}px ${original.boxShadowBlur * scale}px ${original.boxShadowSpread * scale}px ${original.boxShadowColor}`;
       }
     }
   }
@@ -220,7 +222,7 @@ export class WidthAtom {
       cancelAnimationFrame(this.animationId);
       this.animationId = 0;
     }
-    this.currentWidth = this.expandedWidth;
+    this.currentWidth = this.config.value;
     this.isExpanded = true;
     this.apply();
   }

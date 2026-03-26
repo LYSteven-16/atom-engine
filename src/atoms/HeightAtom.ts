@@ -31,7 +31,7 @@ export class HeightAtom {
   readonly context: AtomContext;
   private element: HTMLElement;
   private config: HeightAtomConfig;
-  private expandedHeight: number;
+  private originalHeight: number;
   private collapsedHeight: number;
   private currentHeight: number;
   private targetHeight: number = 0;
@@ -50,9 +50,9 @@ export class HeightAtom {
       duration: 0.15,
       ...config
     };
-    this.expandedHeight = element.offsetHeight || this.config.value;
+    this.originalHeight = element.offsetHeight;
     this.collapsedHeight = this.config.collapsedValue ?? 0;
-    this.currentHeight = this.expandedHeight;
+    this.currentHeight = this.originalHeight;
     this.saveOriginalStyles();
   }
 
@@ -125,7 +125,7 @@ export class HeightAtom {
   onHoverChange(isHovered: boolean): void {
     if (this.config.trigger !== 'hover') return;
     if (isHovered) {
-      this.animateToHeight(this.expandedHeight);
+      this.animateToHeight(this.config.value);
     } else if (!this.config.keepOnRelease) {
       this.animateToHeight(this.collapsedHeight);
     }
@@ -138,11 +138,11 @@ export class HeightAtom {
       if (!isClicked) return;
       const isOddClick = clickCount % 2 === 1;
       this.isExpanded = isOddClick;
-      this.animateToHeight(isOddClick ? this.expandedHeight : this.collapsedHeight);
+      this.animateToHeight(isOddClick ? this.config.value : this.collapsedHeight);
     } else {
       if (isClicked) {
         this.isExpanded = true;
-        this.animateToHeight(this.expandedHeight);
+        this.animateToHeight(this.config.value);
       } else if (!this.config.keepOnRelease) {
         this.isExpanded = false;
         this.animateToHeight(this.collapsedHeight);
@@ -157,7 +157,7 @@ export class HeightAtom {
     this.doubleClickCount++;
     const isOddClick = this.doubleClickCount % 2 === 1;
     this.isExpanded = isOddClick;
-    this.animateToHeight(isOddClick ? this.expandedHeight : this.collapsedHeight);
+    this.animateToHeight(isOddClick ? this.config.value : this.collapsedHeight);
   }
 
   private animateToHeight(targetHeight: number): void {
@@ -189,7 +189,7 @@ export class HeightAtom {
   }
 
   private apply(): void {
-    const scaleY = this.currentHeight / this.expandedHeight;
+    const scale = this.currentHeight / this.config.value;
     this.element.style.height = `${this.currentHeight}px`;
     this.element.style.overflow = 'hidden';
 
@@ -199,18 +199,20 @@ export class HeightAtom {
       const original = this.originalStyles.get(child);
       if (!original) continue;
 
-      child.style.top = `${original.top * scaleY}px`;
-      child.style.height = `${original.height * scaleY}px`;
-      child.style.fontSize = `${original.fontSize * scaleY}px`;
-      child.style.borderRadius = `${original.borderRadius * scaleY}px`;
+      child.style.left = `${original.left * scale}px`;
+      child.style.top = `${original.top * scale}px`;
+      child.style.width = `${original.width * scale}px`;
+      child.style.height = `${original.height * scale}px`;
+      child.style.fontSize = `${original.fontSize * scale}px`;
+      child.style.borderRadius = `${original.borderRadius * scale}px`;
 
       if (original.borderWidth > 0) {
-        child.style.border = `${original.borderWidth * scaleY}px ${original.borderStyle} ${original.borderColor}`;
+        child.style.border = `${original.borderWidth * scale}px ${original.borderStyle} ${original.borderColor}`;
       }
 
       const hasBoxShadow = original.boxShadowX !== 0 || original.boxShadowY !== 0 || original.boxShadowBlur !== 0 || original.boxShadowSpread !== 0;
       if (hasBoxShadow) {
-        child.style.boxShadow = `${original.boxShadowX * scaleY}px ${original.boxShadowY * scaleY}px ${original.boxShadowBlur * scaleY}px ${original.boxShadowSpread * scaleY}px ${original.boxShadowColor}`;
+        child.style.boxShadow = `${original.boxShadowX * scale}px ${original.boxShadowY * scale}px ${original.boxShadowBlur * scale}px ${original.boxShadowSpread * scale}px ${original.boxShadowColor}`;
       }
     }
   }
@@ -220,7 +222,7 @@ export class HeightAtom {
       cancelAnimationFrame(this.animationId);
       this.animationId = 0;
     }
-    this.currentHeight = this.expandedHeight;
+    this.currentHeight = this.config.value;
     this.isExpanded = true;
     this.apply();
   }
