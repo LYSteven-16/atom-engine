@@ -60,6 +60,7 @@ export class ResizeHandleAtom {
     this.originalHeight = element.offsetHeight;
     this.saveOriginalStyles();
     this.createHandle();
+    this.apply();
   }
 
   private saveOriginalStyles(): void {
@@ -167,29 +168,26 @@ export class ResizeHandleAtom {
       }
 
       this.element.appendChild(handle);
-      this.setupResize(handle);
       console.log(`[Atom] ${this.context.bakerId} - ResizeHandleAtom应用成功`);
     } catch (error) {
       console.error(`[Atom Error] ${this.context.bakerId} - ResizeHandleAtom创建失败:`, error);
     }
   }
 
-  private apply(scaleX: number, scaleY: number): void {
-    this.currentScaleX = scaleX;
-    this.currentScaleY = scaleY;
-    
+  private apply(): void {
+    const scaleX = this.currentScaleX;
+    const scaleY = this.currentScaleY;
     const scale = Math.min(scaleX, scaleY);
     const containerCenterX = this.originalWidth / 2;
     const containerCenterY = this.originalHeight / 2;
     const children = this.element.children;
-    
+
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       const original = this.originalStyles.get(child);
       if (!original) continue;
 
       if (this.config.scaleMode === 'proportional') {
-        // proportional模式：缩放所有元素
         const childCenterX = original.left + original.width / 2;
         const childCenterY = original.top + original.height / 2;
         const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scaleX;
@@ -211,7 +209,6 @@ export class ResizeHandleAtom {
           child.style.boxShadow = `${original.boxShadowX * scale}px ${original.boxShadowY * scale}px ${original.boxShadowBlur * scale}px ${original.boxShadowSpread * scale}px ${original.boxShadowColor}`;
         }
       } else {
-        // container模式：只缩放装饰原子
         if (original.isDecoration) {
           const childCenterX = original.left + original.width / 2;
           const childCenterY = original.top + original.height / 2;
@@ -233,7 +230,6 @@ export class ResizeHandleAtom {
             child.style.boxShadow = `${original.boxShadowX * scale}px ${original.boxShadowY * scale}px ${original.boxShadowBlur * scale}px ${original.boxShadowSpread * scale}px ${original.boxShadowColor}`;
           }
         }
-        // 其他内容保持原样
       }
     }
   }
@@ -292,13 +288,12 @@ export class ResizeHandleAtom {
           newHeight = Math.max(minHeight, newHeight + dy);
       }
 
-      const newScaleX = newWidth / this.originalWidth;
-      const newScaleY = newHeight / this.originalHeight;
-      
-      this.apply(newScaleX, newScaleY);
+      this.currentScaleX = newWidth / this.originalWidth;
+      this.currentScaleY = newHeight / this.originalHeight;
+      this.apply();
       this.element.style.width = `${newWidth}px`;
       this.element.style.height = `${newHeight}px`;
-      
+
       this.callbacks.onResize?.({ width: newWidth, height: newHeight });
     };
 
