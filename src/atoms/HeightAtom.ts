@@ -239,10 +239,12 @@ export class HeightAtom {
         child.style.boxShadow = `${original.boxShadowX * scaleY}px ${original.boxShadowY * scaleY}px ${original.boxShadowBlur * scaleY}px ${original.boxShadowSpread * scaleY}px ${original.boxShadowColor}`;
       }
 
-      // 隐藏原子：根据scaleY渐隐
+      // 隐藏原子：先缩小，再渐隐
       if (hiddenAtomIds.includes(original.atomId)) {
-        child.style.opacity = `${scaleY}`;
-        child.style.pointerEvents = scaleY < 0.5 ? 'none' : 'auto';
+        // scaleY > 0.5 时完全显示，< 0.5 时渐隐
+        const opacity = scaleY > 0.5 ? 1 : scaleY * 2;
+        child.style.opacity = `${opacity}`;
+        child.style.pointerEvents = opacity < 0.3 ? 'none' : 'auto';
       }
     }
   }
