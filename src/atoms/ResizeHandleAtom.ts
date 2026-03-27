@@ -154,24 +154,34 @@ export class ResizeHandleAtom {
       cursor: se-resize;
       z-index: 1000;
       pointer-events: auto;
+      background: transparent;
       overflow: hidden;
     `;
     
-    // 创建斜向线条（类似macOS的缩放把手）
-    for (let i = 0; i < 3; i++) {
-      const line = document.createElement('div');
-      line.style.cssText = `
+    // 创建斜向点阵（类似macOS/Windows的缩放把手）
+    // 3x3网格，只显示右下角的6个点
+    const dots = [
+      { x: 10, y: 10 }, // 右下角
+      { x: 6, y: 10 },  // 中下
+      { x: 10, y: 6 },  // 右中
+      { x: 2, y: 10 },  // 左下
+      { x: 6, y: 6 },   // 中心
+      { x: 10, y: 2 },  // 右上
+    ];
+    
+    dots.forEach(pos => {
+      const dot = document.createElement('div');
+      dot.style.cssText = `
         position: absolute;
-        right: ${3 + i * 4}px;
-        bottom: ${3 + i * 4}px;
-        width: ${10 - i * 2}px;
-        height: 1px;
+        left: ${pos.x}px;
+        top: ${pos.y}px;
+        width: 2px;
+        height: 2px;
         background: rgb(${color[0]}, ${color[1]}, ${color[2]});
-        transform: rotate(-45deg);
-        transform-origin: right bottom;
+        border-radius: 50%;
       `;
-      this.handle.appendChild(line);
-    }
+      this.handle.appendChild(dot);
+    });
     
     this.element.appendChild(this.handle);
     this.setupDrag();
