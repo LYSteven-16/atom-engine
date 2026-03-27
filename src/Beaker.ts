@@ -550,10 +550,12 @@ export class Beaker {
       try {
         this.animationAtoms.resizeHandle = new Atoms.ResizeHandleAtom(context, this.element, {
           id: config.id,
-          handleSize: config.handleSize,
-          handleColor: config.handleColor,
-          minWidth: config.minWidth,
-          minHeight: config.minHeight
+          value: config.value,
+          trigger: config.trigger,
+          defaultValue: config.defaultValue ?? 1,
+          keepOnRelease: config.keepOnRelease,
+          toggleOnClick: config.toggleOnClick,
+          duration: config.duration
         });
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);

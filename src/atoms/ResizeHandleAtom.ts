@@ -2,10 +2,12 @@ import type { AtomContext } from '../atoms';
 
 export interface ResizeHandleAtomConfig {
   id: string;
-  handleSize?: number;
-  handleColor?: [number, number, number];
-  minWidth?: number;
-  minHeight?: number;
+  value: number;
+  trigger: 'hover' | 'click' | 'doubleclick';
+  defaultValue?: number;
+  keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
+  duration?: number;
 }
 
 interface OriginalCSS {
@@ -32,7 +34,12 @@ export class ResizeHandleAtom {
   private element: HTMLElement;
   private config: ResizeHandleAtomConfig;
   private currentScale: number = 1;
+  private targetScale: number = 1;
+  private startScale: number = 1;
+  private animationId: number = 0;
+  private animationStartTime: number = 0;
   private originalStyles: Map<HTMLElement, OriginalCSS> = new Map();
+  private isActive: boolean = false;
   private handle: HTMLElement | null = null;
   private originalWidth: number = 0;
   private originalHeight: number = 0;
@@ -42,16 +49,17 @@ export class ResizeHandleAtom {
     this.id = config.id;
     this.element = element;
     this.config = {
-      handleSize: 20,
-      handleColor: [180, 180, 180],
-      minWidth: 50,
-      minHeight: 50,
+      defaultValue: 1,
+      keepOnRelease: false,
+      toggleOnClick: true,
+      duration: 0.15,
       ...config
     };
     this.originalWidth = element.offsetWidth;
     this.originalHeight = element.offsetHeight;
     this.saveOriginalStyles();
     this.createHandle();
+    this.apply();
   }
 
   private saveOriginalStyles(): void {
@@ -140,7 +148,6 @@ export class ResizeHandleAtom {
       overflow: hidden;
     `;
     
-    // 创建斜向点阵
     const dots = [
       { x: 14, y: 14 },
       { x: 10, y: 14 },
@@ -173,9 +180,7 @@ export class ResizeHandleAtom {
     let isDragging = false;
     let startX = 0;
     let startY = 0;
-    let targetScale = 1;
-    const minWidth = this.config.minWidth ?? 50;
-    const minHeight = this.config.minHeight ?? 50;
+    let startScale = 1;
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
@@ -184,10 +189,7 @@ export class ResizeHandleAtom {
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
-      targetScale = this.currentScale;
-      
-      // 添加虚线边框提示
-      this.element.style.outline = '2px dashed rgba(0, 150, 255, 0.5)';
+      startScale = this.currentScale;
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -195,31 +197,13 @@ export class ResizeHandleAtom {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       const delta = Math.max(dx, dy);
-      const newWidth = Math.max(minWidth, this.originalWidth * targetScale + delta);
-      const newHeight = Math.max(minHeight, this.originalHeight * targetScale + delta);
-      
-      // 实时更新容器尺寸预览
-      this.element.style.width = `${newWidth}px`;
-      this.element.style.height = `${newHeight}px`;
+      this.currentScale = Math.max(0.1, startScale + delta / 100);
+      this.apply();
     };
 
-    const onMouseUp = (e: MouseEvent) => {
+    const onMouseUp = () => {
       if (!isDragging) return;
       isDragging = false;
-      
-      // 移除虚线边框
-      this.element.style.outline = '';
-      
-      // 计算最终scale
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      const delta = Math.max(dx, dy);
-      const newWidth = Math.max(minWidth, this.originalWidth * targetScale + delta);
-      const newHeight = Math.max(minHeight, this.originalHeight * targetScale + delta);
-      this.currentScale = Math.min(newWidth / this.originalWidth, newHeight / this.originalHeight);
-      
-      // 松手后应用缩放
-      this.apply();
     };
 
     this.handle.addEventListener('mousedown', onMouseDown);
@@ -227,12 +211,104 @@ export class ResizeHandleAtom {
     document.addEventListener('mouseup', onMouseUp);
   }
 
+  onHoverChange(isHovered: boolean): void {
+    if (this.config.trigger !== 'hover') return;
+    if (isHovered) {
+      this.isActive = true;
+      this.animateToScale(this.config.value);
+    } else if (!this.config.keepOnRelease) {
+      this.isActive = false;
+      this.animateToScale(this.config.defaultValue ?? 1);
+    }
+  }
+
+  onClickChange(isClicked: boolean, clickCount: number): void {
+    if (this.config.trigger !== 'click') return;
+
+    if (this.config.toggleOnClick) {
+      if (!isClicked) return;
+      const isOddClick = clickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
+    } else {
+      if (isClicked) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else if (!this.config.keepOnRelease) {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
+    }
+  }
+
+  private doubleClickCount: number = 0;
+
+  onDoubleClick(): void {
+    if (this.config.trigger !== 'doubleclick') return;
+    this.doubleClickCount++;
+    if (this.config.toggleOnClick) {
+      const isOddClick = this.doubleClickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
+    } else {
+      this.isActive = true;
+      this.animateToScale(this.config.value);
+    }
+  }
+
+  private animateToScale(targetScale: number): void {
+    if (this.animationId !== 0) {
+      cancelAnimationFrame(this.animationId);
+    }
+    this.startScale = this.currentScale;
+    this.targetScale = targetScale;
+    this.animationStartTime = performance.now();
+    const duration = (this.config.duration ?? 0.15) * 1000;
+    
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - this.animationStartTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = progress * (2 - progress);
+      this.currentScale = this.startScale + (this.targetScale - this.startScale) * eased;
+      this.apply();
+      
+      if (progress < 1) {
+        this.animationId = requestAnimationFrame(animate);
+      } else {
+        this.animationId = 0;
+        this.currentScale = this.targetScale;
+        this.apply();
+      }
+    };
+    
+    this.animationId = requestAnimationFrame(animate);
+  }
+
+  reset(): void {
+    if (this.animationId !== 0) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = 0;
+    }
+    this.currentScale = this.config.defaultValue ?? 1;
+    this.isActive = false;
+    this.apply();
+  }
+
   private apply(): void {
     const scale = this.currentScale;
-    const containerCenterX = this.originalWidth / 2;
-    const containerCenterY = this.originalHeight / 2;
+    const containerCenterX = this.element.offsetWidth / 2;
+    const containerCenterY = this.element.offsetHeight / 2;
     const children = this.element.children;
-    
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       if (child === this.handle) continue;
@@ -264,5 +340,9 @@ export class ResizeHandleAtom {
 
   getValue(): number {
     return this.currentScale;
+  }
+
+  getIsActive(): boolean {
+    return this.isActive;
   }
 }
