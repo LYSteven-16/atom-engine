@@ -1,19 +1,13 @@
 import type { AtomContext } from '../atoms';
 
-export interface ResizeHandleInputCallbacks {
-  onResizeStart?: (size: { width: number; height: number }) => void;
-  onResize?: (size: { width: number; height: number }) => void;
-  onResizeEnd?: (size: { width: number; height: number }) => void;
-}
-
 export interface ResizeHandleAtomConfig {
   id: string;
-  edge?: 'nw' | 'ne' | 'sw' | 'se';
-  minWidth?: number;
-  minHeight?: number;
-  handleSize?: number;
-  handleColor?: [number, number, number];
-  scaleMode?: 'container' | 'proportional';
+  value: number;
+  trigger: 'hover' | 'click' | 'doubleclick';
+  defaultValue?: number;
+  keepOnRelease?: boolean;
+  toggleOnClick?: boolean;
+  duration?: number;
 }
 
 interface OriginalCSS {
@@ -31,7 +25,6 @@ interface OriginalCSS {
   boxShadowBlur: number;
   boxShadowSpread: number;
   boxShadowColor: string;
-  isDecoration: boolean;
 }
 
 export class ResizeHandleAtom {
@@ -40,26 +33,26 @@ export class ResizeHandleAtom {
   readonly id: string;
   private element: HTMLElement;
   private config: ResizeHandleAtomConfig;
-  private callbacks: ResizeHandleInputCallbacks;
+  private currentScale: number = 1;
+  private targetScale: number = 1;
+  private startScale: number = 1;
+  private animationId: number = 0;
+  private animationStartTime: number = 0;
   private originalStyles: Map<HTMLElement, OriginalCSS> = new Map();
-  private originalWidth: number = 0;
-  private originalHeight: number = 0;
-  private currentScaleX: number = 1;
-  private currentScaleY: number = 1;
+  private isActive: boolean = false;
 
-  constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig, callbacks: ResizeHandleInputCallbacks) {
+  constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig) {
     this.context = context;
     this.id = config.id;
     this.element = element;
     this.config = {
-      scaleMode: 'proportional',
+      defaultValue: 1,
+      keepOnRelease: false,
+      toggleOnClick: true,
+      duration: 0.15,
       ...config
     };
-    this.callbacks = callbacks;
-    this.originalWidth = element.offsetWidth;
-    this.originalHeight = element.offsetHeight;
     this.saveOriginalStyles();
-    this.createHandle();
     this.apply();
   }
 
@@ -70,8 +63,6 @@ export class ResizeHandleAtom {
       const style = child.style;
       const { width, style: borderStyle, color: borderColor } = this.parseBorder(style.border);
       const boxShadowParts = this.parseBoxShadow(style.boxShadow);
-      const atomId = child.getAttribute('data-atom-id') || '';
-      const isDecoration = atomId.startsWith('bg-') || atomId.startsWith('border-') || atomId.startsWith('shadow-');
 
       this.originalStyles.set(child, {
         left: parseFloat(style.left) || 0,
@@ -87,8 +78,7 @@ export class ResizeHandleAtom {
         boxShadowY: boxShadowParts.y,
         boxShadowBlur: boxShadowParts.blur,
         boxShadowSpread: boxShadowParts.spread,
-        boxShadowColor: boxShadowParts.color,
-        isDecoration: isDecoration
+        boxShadowColor: boxShadowParts.color
       });
     }
   }
@@ -132,192 +122,137 @@ export class ResizeHandleAtom {
     return { x: 0, y: 0, blur: 0, spread: 0, color: 'rgba(0, 0, 0, 0.5)' };
   }
 
-  private createHandle(): void {
-    try {
-      const handle = document.createElement('div');
-      handle.setAttribute('data-atom-id', this.id);
-      const size = this.config.handleSize ?? 10;
-      handle.style.cssText = `
-        position: absolute;
-        width: ${size}px;
-        height: ${size}px;
-        background: rgb(${this.config.handleColor?.[0] ?? 200}, ${this.config.handleColor?.[1] ?? 200}, ${this.config.handleColor?.[2] ?? 200});
-        cursor: ${this.getCursor(this.config.edge)};
-      `;
-
-      switch (this.config.edge) {
-        case 'se':
-          handle.style.right = '0';
-          handle.style.bottom = '0';
-          break;
-        case 'sw':
-          handle.style.left = '0';
-          handle.style.bottom = '0';
-          break;
-        case 'ne':
-          handle.style.right = '0';
-          handle.style.top = '0';
-          break;
-        case 'nw':
-          handle.style.left = '0';
-          handle.style.top = '0';
-          break;
-        default:
-          handle.style.right = '0';
-          handle.style.bottom = '0';
-      }
-
-      this.element.appendChild(handle);
-      console.log(`[Atom] ${this.context.bakerId} - ResizeHandleAtom应用成功`);
-    } catch (error) {
-      console.error(`[Atom Error] ${this.context.bakerId} - ResizeHandleAtom创建失败:`, error);
+  onHoverChange(isHovered: boolean): void {
+    if (this.config.trigger !== 'hover') return;
+    if (isHovered) {
+      this.isActive = true;
+      this.animateToScale(this.config.value);
+    } else if (!this.config.keepOnRelease) {
+      this.isActive = false;
+      this.animateToScale(this.config.defaultValue ?? 1);
     }
   }
 
-  private apply(): void {
-    const scaleX = this.currentScaleX;
-    const scaleY = this.currentScaleY;
-    const scale = Math.min(scaleX, scaleY);
-    const containerCenterX = this.originalWidth / 2;
-    const containerCenterY = this.originalHeight / 2;
-    const children = this.element.children;
+  onClickChange(isClicked: boolean, clickCount: number): void {
+    if (this.config.trigger !== 'click') return;
 
+    if (this.config.toggleOnClick) {
+      if (!isClicked) return;
+      const isOddClick = clickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
+    } else {
+      if (isClicked) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else if (!this.config.keepOnRelease) {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
+    }
+  }
+
+  private doubleClickCount: number = 0;
+
+  onDoubleClick(): void {
+    if (this.config.trigger !== 'doubleclick') return;
+    this.doubleClickCount++;
+    if (this.config.toggleOnClick) {
+      const isOddClick = this.doubleClickCount % 2 === 1;
+      if (isOddClick) {
+        this.isActive = true;
+        this.animateToScale(this.config.value);
+      } else {
+        this.isActive = false;
+        this.animateToScale(this.config.defaultValue ?? 1);
+      }
+    } else {
+      this.isActive = true;
+      this.animateToScale(this.config.value);
+    }
+  }
+
+  private animateToScale(targetScale: number): void {
+    if (this.animationId !== 0) {
+      cancelAnimationFrame(this.animationId);
+    }
+    this.startScale = this.currentScale;
+    this.targetScale = targetScale;
+    this.animationStartTime = performance.now();
+    const duration = (this.config.duration ?? 0.15) * 1000;
+    
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - this.animationStartTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = progress * (2 - progress);
+      this.currentScale = this.startScale + (this.targetScale - this.startScale) * eased;
+      this.apply();
+      
+      if (progress < 1) {
+        this.animationId = requestAnimationFrame(animate);
+      } else {
+        this.animationId = 0;
+        this.currentScale = this.targetScale;
+        this.apply();
+      }
+    };
+    
+    this.animationId = requestAnimationFrame(animate);
+  }
+
+  reset(): void {
+    if (this.animationId !== 0) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = 0;
+    }
+    this.currentScale = this.config.defaultValue ?? 1;
+    this.isActive = false;
+    this.apply();
+  }
+
+  private apply(): void {
+    const scale = this.currentScale;
+    const containerCenterX = this.element.offsetWidth / 2;
+    const containerCenterY = this.element.offsetHeight / 2;
+    const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       const original = this.originalStyles.get(child);
       if (!original) continue;
 
-      if (this.config.scaleMode === 'proportional') {
-        const childCenterX = original.left + original.width / 2;
-        const childCenterY = original.top + original.height / 2;
-        const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scaleX;
-        const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scaleY;
+      const childCenterX = original.left + original.width / 2;
+      const childCenterY = original.top + original.height / 2;
+      const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scale;
+      const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scale;
 
-        child.style.left = `${newChildCenterX - original.width * scaleX / 2}px`;
-        child.style.top = `${newChildCenterY - original.height * scaleY / 2}px`;
-        child.style.width = `${original.width * scaleX}px`;
-        child.style.height = `${original.height * scaleY}px`;
-        child.style.fontSize = `${original.fontSize * scale}px`;
-        child.style.borderRadius = `${original.borderRadius * scale}px`;
+      child.style.left = `${newChildCenterX - original.width * scale / 2}px`;
+      child.style.top = `${newChildCenterY - original.height * scale / 2}px`;
+      child.style.width = `${original.width * scale}px`;
+      child.style.height = `${original.height * scale}px`;
+      child.style.fontSize = `${original.fontSize * scale}px`;
+      child.style.borderRadius = `${original.borderRadius * scale}px`;
 
-        if (original.borderWidth > 0) {
-          child.style.border = `${original.borderWidth * scale}px ${original.borderStyle} ${original.borderColor}`;
-        }
+      if (original.borderWidth > 0) {
+        child.style.border = `${original.borderWidth * scale}px ${original.borderStyle} ${original.borderColor}`;
+      }
 
-        const hasBoxShadow = original.boxShadowX !== 0 || original.boxShadowY !== 0 || original.boxShadowBlur !== 0 || original.boxShadowSpread !== 0;
-        if (hasBoxShadow) {
-          child.style.boxShadow = `${original.boxShadowX * scale}px ${original.boxShadowY * scale}px ${original.boxShadowBlur * scale}px ${original.boxShadowSpread * scale}px ${original.boxShadowColor}`;
-        }
-      } else {
-        if (original.isDecoration) {
-          const childCenterX = original.left + original.width / 2;
-          const childCenterY = original.top + original.height / 2;
-          const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scaleX;
-          const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scaleY;
-
-          child.style.left = `${newChildCenterX - original.width * scaleX / 2}px`;
-          child.style.top = `${newChildCenterY - original.height * scaleY / 2}px`;
-          child.style.width = `${original.width * scaleX}px`;
-          child.style.height = `${original.height * scaleY}px`;
-          child.style.borderRadius = `${original.borderRadius * scale}px`;
-
-          if (original.borderWidth > 0) {
-            child.style.border = `${original.borderWidth * scale}px ${original.borderStyle} ${original.borderColor}`;
-          }
-
-          const hasBoxShadow = original.boxShadowX !== 0 || original.boxShadowY !== 0 || original.boxShadowBlur !== 0 || original.boxShadowSpread !== 0;
-          if (hasBoxShadow) {
-            child.style.boxShadow = `${original.boxShadowX * scale}px ${original.boxShadowY * scale}px ${original.boxShadowBlur * scale}px ${original.boxShadowSpread * scale}px ${original.boxShadowColor}`;
-          }
-        }
+      const hasBoxShadow = original.boxShadowX !== 0 || original.boxShadowY !== 0 || original.boxShadowBlur !== 0 || original.boxShadowSpread !== 0;
+      if (hasBoxShadow) {
+        child.style.boxShadow = `${original.boxShadowX * scale}px ${original.boxShadowY * scale}px ${original.boxShadowBlur * scale}px ${original.boxShadowSpread * scale}px ${original.boxShadowColor}`;
       }
     }
   }
 
-  private setupResize(handle: HTMLElement): void {
-    let isResizing = false;
-    let startX = 0;
-    let startY = 0;
-    let startScaleX = 1;
-    let startScaleY = 1;
-    const minWidth = this.config.minWidth ?? 50;
-    const minHeight = this.config.minHeight ?? 50;
-
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      e.stopPropagation();
-      isResizing = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startScaleX = this.currentScaleX;
-      startScaleY = this.currentScaleY;
-      this.callbacks.onResizeStart?.({
-        width: this.originalWidth * this.currentScaleX,
-        height: this.originalHeight * this.currentScaleY
-      });
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      let newWidth = this.originalWidth * startScaleX;
-      let newHeight = this.originalHeight * startScaleY;
-
-      switch (this.config.edge) {
-        case 'se':
-          newWidth = Math.max(minWidth, newWidth + dx);
-          newHeight = Math.max(minHeight, newHeight + dy);
-          break;
-        case 'sw':
-          newWidth = Math.max(minWidth, newWidth - dx);
-          newHeight = Math.max(minHeight, newHeight + dy);
-          break;
-        case 'ne':
-          newWidth = Math.max(minWidth, newWidth + dx);
-          newHeight = Math.max(minHeight, newHeight - dy);
-          break;
-        case 'nw':
-          newWidth = Math.max(minWidth, newWidth - dx);
-          newHeight = Math.max(minHeight, newHeight - dy);
-          break;
-        default:
-          newWidth = Math.max(minWidth, newWidth + dx);
-          newHeight = Math.max(minHeight, newHeight + dy);
-      }
-
-      this.currentScaleX = newWidth / this.originalWidth;
-      this.currentScaleY = newHeight / this.originalHeight;
-      this.apply();
-      this.element.style.width = `${newWidth}px`;
-      this.element.style.height = `${newHeight}px`;
-
-      this.callbacks.onResize?.({ width: newWidth, height: newHeight });
-    };
-
-    const onMouseUp = () => {
-      if (!isResizing) return;
-      isResizing = false;
-      this.callbacks.onResizeEnd?.({
-        width: this.originalWidth * this.currentScaleX,
-        height: this.originalHeight * this.currentScaleY
-      });
-    };
-
-    handle.addEventListener('mousedown', onMouseDown);
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+  getValue(): number {
+    return this.currentScale;
   }
 
-  private getCursor(edge?: string): string {
-    switch (edge) {
-      case 'se': return 'se-resize';
-      case 'sw': return 'sw-resize';
-      case 'ne': return 'ne-resize';
-      case 'nw': return 'nw-resize';
-      default: return 'se-resize';
-    }
+  getIsActive(): boolean {
+    return this.isActive;
   }
 }

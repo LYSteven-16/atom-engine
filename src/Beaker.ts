@@ -548,16 +548,12 @@ export class Beaker {
       try {
         new Atoms.ResizeHandleAtom(context, this.element, {
           id: config.id,
-          edge: config.edge,
-          minWidth: config.minWidth,
-          minHeight: config.minHeight,
-          handleSize: config.handleSize,
-          handleColor: config.handleColor,
-          scaleMode: config.scaleMode
-        }, {
-          onResizeStart: (size) => this.updateResizeStart(size),
-          onResize: (size) => this.updateResizeMove(size),
-          onResizeEnd: (size) => this.updateResizeEnd(size)
+          value: config.value,
+          trigger: config.trigger,
+          defaultValue: config.defaultValue ?? 1,
+          keepOnRelease: config.keepOnRelease,
+          toggleOnClick: config.toggleOnClick,
+          duration: config.duration
         });
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
