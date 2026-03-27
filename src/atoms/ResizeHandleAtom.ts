@@ -140,46 +140,35 @@ export class ResizeHandleAtom {
   private createHandle(): void {
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
-    const size = this.config.handleSize ?? 16;
-    const color = this.config.handleColor ?? [150, 150, 150];
+    const color = this.config.handleColor ?? [180, 180, 180];
     this.handle.style.cssText = `
       position: absolute;
-      right: 2px;
-      bottom: 2px;
-      width: ${size}px;
-      height: ${size}px;
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
       cursor: se-resize;
       z-index: 1000;
       pointer-events: auto;
+      overflow: hidden;
     `;
     
-    // 创建斜向双箭头图标
-    const arrow1 = document.createElement('div');
-    arrow1.style.cssText = `
-      position: absolute;
-      right: 0;
-      bottom: 4px;
-      width: 0;
-      height: 0;
-      border-left: 4px solid transparent;
-      border-right: 4px solid transparent;
-      border-bottom: 6px solid rgb(${color[0]}, ${color[1]}, ${color[2]});
-    `;
+    // 创建斜向线条（类似macOS的缩放把手）
+    for (let i = 0; i < 3; i++) {
+      const line = document.createElement('div');
+      line.style.cssText = `
+        position: absolute;
+        right: ${3 + i * 4}px;
+        bottom: ${3 + i * 4}px;
+        width: ${10 - i * 2}px;
+        height: 1px;
+        background: rgb(${color[0]}, ${color[1]}, ${color[2]});
+        transform: rotate(-45deg);
+        transform-origin: right bottom;
+      `;
+      this.handle.appendChild(line);
+    }
     
-    const arrow2 = document.createElement('div');
-    arrow2.style.cssText = `
-      position: absolute;
-      right: 4px;
-      bottom: 0;
-      width: 0;
-      height: 0;
-      border-left: 4px solid transparent;
-      border-right: 4px solid transparent;
-      border-bottom: 6px solid rgb(${color[0]}, ${color[1]}, ${color[2]});
-    `;
-    
-    this.handle.appendChild(arrow1);
-    this.handle.appendChild(arrow2);
     this.element.appendChild(this.handle);
     this.setupDrag();
   }
