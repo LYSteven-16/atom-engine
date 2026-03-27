@@ -44,7 +44,6 @@ export class HeightAtom {
   private animationStartTime: number = 0;
   private isExpanded: boolean = false;
   private originalStyles: Map<HTMLElement, OriginalCSS> = new Map();
-  private originalBorderRadius: number = 0;
 
   constructor(context: AtomContext, element: HTMLElement, config: HeightAtomConfig) {
     this.context = context;
@@ -63,9 +62,8 @@ export class HeightAtom {
     };
     this.collapsedHeight = this.config.collapsedValue;
     this.expandedHeight = this.config.moleculeHeight;
-    this.currentHeight = this.expandedHeight;  // 初始状态为展开
-    this.isExpanded = true;
-    this.originalBorderRadius = parseFloat(element.style.borderRadius) || 0;
+    this.currentHeight = this.collapsedHeight;
+    this.isExpanded = false;
     this.saveOriginalStyles();
     this.apply();
   }
@@ -211,7 +209,7 @@ export class HeightAtom {
     const hiddenAtomIds = this.config.hiddenAtomIds || [];
     const fixedAtomIds = this.config.fixedAtomIds || [];
     this.element.style.height = `${this.currentHeight}px`;
-    this.element.style.borderRadius = `${this.originalBorderRadius * scaleY}px`;
+    // 圆角不参与缩放，保持原样
 
     const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
@@ -221,6 +219,7 @@ export class HeightAtom {
 
       // fixed原子：不缩放、不隐藏
       if (fixedAtomIds.includes(original.atomId)) {
+        console.log(`[HeightAtom] fixed原子跳过: ${original.atomId}`);
         continue;
       }
 
@@ -233,10 +232,7 @@ export class HeightAtom {
         child.style.fontSize = `${original.fontSize * scaleY}px`;
       }
 
-      // 圆角同步
-      if (original.borderRadius > 0) {
-        child.style.borderRadius = `${original.borderRadius * scaleY}px`;
-      }
+      // 圆角不参与缩放，保持原样
 
       // 边框同步
       if (original.borderWidth > 0) {
