@@ -8,6 +8,10 @@ export interface ResizeHandleAtomConfig {
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
   duration?: number;
+  handleSize?: number;
+  handleColor?: [number, number, number];
+  minWidth?: number;
+  minHeight?: number;
 }
 
 interface OriginalCSS {
@@ -40,6 +44,9 @@ export class ResizeHandleAtom {
   private animationStartTime: number = 0;
   private originalStyles: Map<HTMLElement, OriginalCSS> = new Map();
   private isActive: boolean = false;
+  private handle: HTMLElement | null = null;
+  private originalWidth: number = 0;
+  private originalHeight: number = 0;
 
   constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig) {
     this.context = context;
@@ -50,9 +57,16 @@ export class ResizeHandleAtom {
       keepOnRelease: false,
       toggleOnClick: true,
       duration: 0.15,
+      handleSize: 10,
+      handleColor: [200, 200, 200],
+      minWidth: 50,
+      minHeight: 50,
       ...config
     };
+    this.originalWidth = element.offsetWidth;
+    this.originalHeight = element.offsetHeight;
     this.saveOriginalStyles();
+    this.createHandle();
     this.apply();
   }
 
@@ -60,6 +74,7 @@ export class ResizeHandleAtom {
     const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
+      if (child === this.handle) continue;
       const style = child.style;
       const { width, style: borderStyle, color: borderColor } = this.parseBorder(style.border);
       const boxShadowParts = this.parseBoxShadow(style.boxShadow);
@@ -120,6 +135,68 @@ export class ResizeHandleAtom {
       };
     }
     return { x: 0, y: 0, blur: 0, spread: 0, color: 'rgba(0, 0, 0, 0.5)' };
+  }
+
+  private createHandle(): void {
+    this.handle = document.createElement('div');
+    this.handle.setAttribute('data-atom-id', this.id);
+    const size = this.config.handleSize ?? 10;
+    const color = this.config.handleColor ?? [200, 200, 200];
+    this.handle.style.cssText = `
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: ${size}px;
+      height: ${size}px;
+      background: rgb(${color[0]}, ${color[1]}, ${color[2]});
+      cursor: se-resize;
+      border-radius: 2px;
+      z-index: 1000;
+    `;
+    this.element.appendChild(this.handle);
+    this.setupDrag();
+  }
+
+  private setupDrag(): void {
+    if (!this.handle) return;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startScale = 1;
+    const minWidth = this.config.minWidth ?? 50;
+    const minHeight = this.config.minHeight ?? 50;
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startScale = this.currentScale;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const delta = Math.max(dx, dy);
+      const newWidth = Math.max(minWidth, this.originalWidth * startScale + delta);
+      const newHeight = Math.max(minHeight, this.originalHeight * startScale + delta);
+      this.currentScale = Math.min(newWidth / this.originalWidth, newHeight / this.originalHeight);
+      this.element.style.width = `${this.originalWidth * this.currentScale}px`;
+      this.element.style.height = `${this.originalHeight * this.currentScale}px`;
+      this.apply();
+    };
+
+    const onMouseUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+    };
+
+    this.handle.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   }
 
   onHoverChange(isHovered: boolean): void {
@@ -191,6 +268,8 @@ export class ResizeHandleAtom {
       const progress = Math.min(elapsed / duration, 1);
       const eased = progress * (2 - progress);
       this.currentScale = this.startScale + (this.targetScale - this.startScale) * eased;
+      this.element.style.width = `${this.originalWidth * this.currentScale}px`;
+      this.element.style.height = `${this.originalHeight * this.currentScale}px`;
       this.apply();
       
       if (progress < 1) {
@@ -212,16 +291,20 @@ export class ResizeHandleAtom {
     }
     this.currentScale = this.config.defaultValue ?? 1;
     this.isActive = false;
+    this.element.style.width = `${this.originalWidth * this.currentScale}px`;
+    this.element.style.height = `${this.originalHeight * this.currentScale}px`;
     this.apply();
   }
 
   private apply(): void {
     const scale = this.currentScale;
-    const containerCenterX = this.element.offsetWidth / 2;
-    const containerCenterY = this.element.offsetHeight / 2;
+    const containerCenterX = this.originalWidth / 2;
+    const containerCenterY = this.originalHeight / 2;
     const children = this.element.children;
+    
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
+      if (child === this.handle) continue;
       const original = this.originalStyles.get(child);
       if (!original) continue;
 
