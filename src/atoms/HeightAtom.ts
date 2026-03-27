@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface HeightAtomConfig {
+  id: string;
   collapsedValue: number;
   moleculeHeight: number;
   trigger: 'hover' | 'click' | 'doubleclick';
@@ -28,6 +29,7 @@ interface OriginalCSS {
 export class HeightAtom {
   readonly capability: 'height' = 'height';
   readonly context: AtomContext;
+  readonly id: string;
   private element: HTMLElement;
   private config: HeightAtomConfig;
   private collapsedHeight: number;
@@ -43,8 +45,10 @@ export class HeightAtom {
 
   constructor(context: AtomContext, element: HTMLElement, config: HeightAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.element = element;
     this.config = {
+      id: config.id,
       keepOnRelease: config.keepOnRelease ?? false,
       toggleOnClick: config.toggleOnClick ?? true,
       duration: config.duration ?? 0.15,

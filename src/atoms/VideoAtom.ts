@@ -21,6 +21,7 @@ import type { AtomContext } from '../atoms';
  * }
  */
 export interface VideoAtomConfig {
+  id: string;
   src: string;
   width?: number;
   height?: number;
@@ -30,8 +31,11 @@ export interface VideoAtomConfig {
 export class VideoAtom {
   readonly capability: 'video' = 'video';
   readonly context: AtomContext;
+  readonly id: string;
 
   constructor(context: AtomContext, container: HTMLElement, config: VideoAtomConfig) {
+    this.context = context;
+    this.id = config.id;
     this.render(container, config);
   }
 

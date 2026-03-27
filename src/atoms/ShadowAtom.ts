@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface ShadowAtomConfig {
+  id: string;
   x?: number;
   y?: number;
   shadowBlur?: number;
@@ -15,6 +16,7 @@ export interface ShadowAtomConfig {
 export class ShadowAtom {
   readonly capability: 'shadow' = 'shadow';
   readonly context: AtomContext;
+  readonly id: string;
   readonly element: HTMLElement;
   x: number;
   y: number;
@@ -28,6 +30,7 @@ export class ShadowAtom {
 
   constructor(context: AtomContext, container: HTMLElement, config: ShadowAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.x = config.x ?? 0;
     this.y = config.y ?? 0;
     this.shadowBlur = config.shadowBlur;

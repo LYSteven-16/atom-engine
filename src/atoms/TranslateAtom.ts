@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface TranslateAtomConfig {
+  id: string;
   trigger: 'drag';
   keepOnRelease?: boolean;
 }
@@ -8,6 +9,7 @@ export interface TranslateAtomConfig {
 export class TranslateAtom {
   readonly capability: 'translate' = 'translate';
   readonly context: AtomContext;
+  readonly id: string;
   private element: HTMLElement;
   private config: TranslateAtomConfig;
   private originX: number = 0;
@@ -20,6 +22,7 @@ export class TranslateAtom {
 
   constructor(context: AtomContext, element: HTMLElement, config: TranslateAtomConfig, originPosition: { x: number; y: number }) {
     this.context = context;
+    this.id = config.id;
     this.element = element;
     this.config = {
       keepOnRelease: false,

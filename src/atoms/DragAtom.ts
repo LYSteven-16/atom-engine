@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface DragInputCallbacks {
+  id: string;
   onDragStart?: (mouse: { clientX: number; clientY: number }) => void;
   onDragMove?: (mouse: { clientX: number; clientY: number }) => void;
   onDragEnd?: () => void;
@@ -13,12 +14,14 @@ export interface DragAtomConfig {
 export class DragAtom {
   readonly capability: 'drag' = 'drag';
   readonly context: AtomContext;
+  readonly id: string;
   private element: HTMLElement;
   private config: DragAtomConfig;
   private callbacks: DragInputCallbacks;
 
   constructor(context: AtomContext, element: HTMLElement, config: DragAtomConfig, callbacks: DragInputCallbacks) {
     this.context = context;
+    this.id = callbacks.id;
     this.element = element;
     this.config = config;
     this.callbacks = callbacks;

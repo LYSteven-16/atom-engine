@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface OpacityAtomConfig {
+  id: string;
   value: number;
   trigger: 'hover' | 'click' | 'doubleclick';
   defaultValue?: number;
@@ -12,6 +13,7 @@ export interface OpacityAtomConfig {
 export class OpacityAtom {
   readonly capability: 'opacity' = 'opacity';
   readonly context: AtomContext;
+  readonly id: string;
   private element: HTMLElement;
   private config: OpacityAtomConfig;
   private currentOpacity: number = 1;
@@ -23,6 +25,7 @@ export class OpacityAtom {
 
   constructor(context: AtomContext, element: HTMLElement, config: OpacityAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.element = element;
     this.config = {
       defaultValue: 1,

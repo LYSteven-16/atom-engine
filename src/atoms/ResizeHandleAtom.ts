@@ -1,44 +1,13 @@
 import type { AtomContext } from '../atoms';
 
-/**
- * 调整尺寸手柄原子
- * 功能：在分子容器角落创建调整尺寸的手柄
- * DOM：✅ 有DOM - 创建一个div元素作为调整手柄
- * 
- * 特点：
- * - 在容器指定角落创建可见的调整手柄
- * - 支持四角手柄：nw（左上）、ne（右上）、sw（左下）、se（右下）
- * - 每个手柄有对应的鼠标指针样式
- * - 支持自定义手柄大小和颜色
- * - 通常配合ResizeAtom使用
- * 
- * 手柄位置：
- * - nw（左上角）：向左上方拖动调整尺寸
- * - ne（右上角）：向右上方拖动调整尺寸
- * - sw（左下角）：向左下方拖动调整尺寸
- * - se（右下角）：向右下方拖动调整尺寸（默认）
- * 
- * 鼠标指针样式：
- * - nw-resize：对角线反向箭头
- * - ne-resize：对角线反向箭头
- * - sw-resize：对角线反向箭头
- * - se-resize：对角线反向箭头
- * 
- * 使用场景：
- * - 可调整大小的对话框/面板
- * - 拖拽调整卡片大小
- * - 缩放控制点
- * 
- * @example
- * {
- *   capability: 'resize-handle',
- *   context: { bakerId: 'baker-0', bakerIndex: 0, atomIndex: 0 },
- *   edge: 'se',
- *   handleSize: 12,
- *   handleColor: [100, 100, 100]
- * }
- */
+export interface ResizeHandleInputCallbacks {
+  onResizeStart?: (size: { width: number; height: number }) => void;
+  onResize?: (size: { width: number; height: number }) => void;
+  onResizeEnd?: (size: { width: number; height: number }) => void;
+}
+
 export interface ResizeHandleAtomConfig {
+  id: string;
   edge?: 'nw' | 'ne' | 'sw' | 'se';
   minWidth?: number;
   minHeight?: number;
@@ -50,27 +19,36 @@ export interface ResizeHandleAtomConfig {
 export class ResizeHandleAtom {
   readonly capability: 'resize-handle' = 'resize-handle';
   readonly context: AtomContext;
+  readonly id: string;
+  private element: HTMLElement;
+  private config: ResizeHandleAtomConfig;
+  private callbacks: ResizeHandleInputCallbacks;
 
-  constructor(context: AtomContext, baker: any, config?: ResizeHandleAtomConfig) {
-    this.apply(baker, config);
+  constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig, callbacks: ResizeHandleInputCallbacks) {
+    this.context = context;
+    this.id = config.id;
+    this.element = element;
+    this.config = config;
+    this.callbacks = callbacks;
+    this.apply();
   }
 
-  private apply(baker: any, config?: ResizeHandleAtomConfig): void {
+  private apply(): void {
     try {
-      const container = baker.element;
+      const container = this.element;
       if (!container) return;
 
       const handle = document.createElement('div');
-      const size = config?.handleSize ?? 10;
+      const size = this.config.handleSize ?? 10;
       handle.style.cssText = `
         position: absolute;
         width: ${size}px;
         height: ${size}px;
-        background: rgb(${config?.handleColor?.[0] ?? 200}, ${config?.handleColor?.[1] ?? 200}, ${config?.handleColor?.[2] ?? 200});
-        cursor: ${this.getCursor(config?.edge)};
+        background: rgb(${this.config.handleColor?.[0] ?? 200}, ${this.config.handleColor?.[1] ?? 200}, ${this.config.handleColor?.[2] ?? 200});
+        cursor: ${this.getCursor(this.config.edge)};
       `;
 
-      switch (config?.edge) {
+      switch (this.config.edge) {
         case 'se':
           handle.style.right = '0';
           handle.style.bottom = '0';
@@ -89,34 +67,36 @@ export class ResizeHandleAtom {
           break;
         default:
           handle.style.right = '0';
-          handle.bottom = '0';
+          handle.style.bottom = '0';
       }
 
       container.appendChild(handle);
-      this.setupResize(handle, baker, config);
+      this.setupResize(handle);
       console.log(`[Atom] ${this.context.bakerId} - ResizeHandleAtom应用成功`);
     } catch (error) {
       console.error(`[Atom Error] ${this.context.bakerId} - ResizeHandleAtom应用失败:`, error);
     }
   }
 
-  private setupResize(handle: HTMLElement, baker: any, config?: ResizeHandleAtomConfig): void {
+  private setupResize(handle: HTMLElement): void {
     let isResizing = false;
     let startX = 0;
     let startY = 0;
     let startWidth = 0;
     let startHeight = 0;
-    const minWidth = config?.minWidth ?? 50;
-    const minHeight = config?.minHeight ?? 50;
+    const minWidth = this.config.minWidth ?? 50;
+    const minHeight = this.config.minHeight ?? 50;
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
       e.preventDefault();
+      e.stopPropagation();
       isResizing = true;
       startX = e.clientX;
       startY = e.clientY;
-      startWidth = baker.state.width ?? 100;
-      startHeight = baker.state.height ?? 100;
+      startWidth = this.element.style.width ? parseFloat(this.element.style.width) : 100;
+      startHeight = this.element.style.height ? parseFloat(this.element.style.height) : 100;
+      this.callbacks.onResizeStart?.({ width: startWidth, height: startHeight });
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -124,11 +104,10 @@ export class ResizeHandleAtom {
 
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
-
       let newWidth = startWidth;
       let newHeight = startHeight;
 
-      switch (config?.edge) {
+      switch (this.config.edge) {
         case 'se':
           newWidth = Math.max(minWidth, startWidth + dx);
           newHeight = Math.max(minHeight, startHeight + dy);
@@ -150,14 +129,15 @@ export class ResizeHandleAtom {
           newHeight = Math.max(minHeight, startHeight + dy);
       }
 
-      baker.state.width = newWidth;
-      baker.state.height = newHeight;
-      baker.updateState({ width: newWidth, height: newHeight });
+      this.callbacks.onResize?.({ width: newWidth, height: newHeight });
     };
 
     const onMouseUp = () => {
+      if (!isResizing) return;
       isResizing = false;
-      baker.updateState({ isResizing: false });
+      const finalWidth = this.element.style.width ? parseFloat(this.element.style.width) : startWidth;
+      const finalHeight = this.element.style.height ? parseFloat(this.element.style.height) : startHeight;
+      this.callbacks.onResizeEnd?.({ width: finalWidth, height: finalHeight });
     };
 
     handle.addEventListener('mousedown', onMouseDown);

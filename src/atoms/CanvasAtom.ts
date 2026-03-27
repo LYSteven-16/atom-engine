@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface CanvasAtomConfig {
+  id: string;
   width: number;
   height: number;
   position?: { x: number; y: number; z?: number };
@@ -30,6 +31,7 @@ export interface Stroke {
 export class CanvasAtom {
   readonly capability: 'canvas' = 'canvas';
   readonly context: AtomContext;
+  readonly id: string;
   private blackboardStyle = false;
   private canvas?: HTMLCanvasElement;
   private ctx?: CanvasRenderingContext2D;
@@ -44,6 +46,7 @@ export class CanvasAtom {
 
   constructor(context: AtomContext, container: HTMLElement, config: CanvasAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.canvasWidth = config.width ?? 400;
     this.canvasHeight = config.height ?? 300;
     this.blackboardStyle = config.blackboardStyle ?? false;

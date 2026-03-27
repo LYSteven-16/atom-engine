@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface ImageAtomConfig {
+  id: string;
   src: string;
   width: number;
   height: number;
@@ -14,6 +15,7 @@ export interface ImageAtomConfig {
 export class ImageAtom {
   readonly capability: 'image' = 'image';
   readonly context: AtomContext;
+  readonly id: string;
 
   private imageElement?: HTMLImageElement;
   private containerWidth = 0;
@@ -28,6 +30,7 @@ export class ImageAtom {
 
   constructor(context: AtomContext, container: HTMLElement, config: ImageAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.render(container, config);
   }
 

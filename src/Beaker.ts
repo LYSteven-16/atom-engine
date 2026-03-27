@@ -196,6 +196,7 @@ export class Beaker {
         switch (config.capability) {
           case 'background':
             this.decorationAtoms.background = new Atoms.BackgroundAtom(context, this.element, {
+              id: config.id,
               color: config.color,
               position: config.position,
               width: config.width ?? moleculeWidth,
@@ -205,6 +206,7 @@ export class Beaker {
             break;
           case 'border':
             this.decorationAtoms.border = new Atoms.BorderAtom(context, this.element, {
+              id: config.id,
               borderWidth: config.borderWidth,
               color: config.color,
               position: config.position,
@@ -215,6 +217,7 @@ export class Beaker {
             break;
           case 'shadow':
             this.decorationAtoms.shadow = new Atoms.ShadowAtom(context, this.element, {
+              id: config.id,
               x: config.x,
               y: config.y,
               shadowBlur: config.shadowBlur,
@@ -241,6 +244,7 @@ export class Beaker {
         switch (atomConfig.capability) {
           case 'text':
             this.contentAtoms.push(new Atoms.TextAtom(context, this.element, {
+              id: atomConfig.id,
               text: atomConfig.text,
               size: atomConfig.size,
               color: atomConfig.color,
@@ -249,6 +253,7 @@ export class Beaker {
             break;
           case 'image':
             this.contentAtoms.push(new Atoms.ImageAtom(context, this.element, {
+              id: atomConfig.id,
               src: atomConfig.src,
               width: atomConfig.width,
               height: atomConfig.height,
@@ -258,6 +263,7 @@ export class Beaker {
             break;
           case 'video':
             this.contentAtoms.push(new Atoms.VideoAtom(context, this.element, {
+              id: atomConfig.id,
               src: atomConfig.src,
               width: atomConfig.width,
               height: atomConfig.height,
@@ -266,12 +272,14 @@ export class Beaker {
             break;
           case 'audio':
             this.contentAtoms.push(new Atoms.AudioAtom(context, this.element, {
+              id: atomConfig.id,
               src: atomConfig.src,
               position: atomConfig.position
             }));
             break;
           case 'code':
             this.contentAtoms.push(new Atoms.CodeAtom(context, this.element, {
+              id: atomConfig.id,
               code: atomConfig.code,
               language: atomConfig.language,
               position: atomConfig.position,
@@ -283,6 +291,7 @@ export class Beaker {
             break;
           case 'icon':
             this.contentAtoms.push(new Atoms.IconAtom(context, this.element, {
+              id: atomConfig.id,
               icon: atomConfig.icon,
               size: atomConfig.size,
               position: atomConfig.position
@@ -290,6 +299,7 @@ export class Beaker {
             break;
           case 'canvas':
             this.contentAtoms.push(new Atoms.CanvasAtom(context, this.element, {
+              id: atomConfig.id,
               width: atomConfig.width,
               height: atomConfig.height,
               position: atomConfig.position,
@@ -318,6 +328,7 @@ export class Beaker {
         switch (config.capability) {
           case 'scale':
             this.animationAtoms.scale = new Atoms.ScaleAtom(context, this.element, {
+              id: config.id,
               value: config.value,
               trigger: config.trigger,
               defaultValue: config.defaultValue ?? 1,
@@ -328,6 +339,7 @@ export class Beaker {
             break;
           case 'opacity':
             this.animationAtoms.opacity = new Atoms.OpacityAtom(context, this.element, {
+              id: config.id,
               value: config.value,
               trigger: config.trigger,
               defaultValue: config.defaultValue ?? 1,
@@ -338,6 +350,7 @@ export class Beaker {
             break;
           case 'rotate':
             this.animationAtoms.rotate = new Atoms.RotateAtom(context, this.element, {
+              id: config.id,
               value: config.value,
               trigger: config.trigger,
               defaultValue: config.defaultValue ?? 0,
@@ -348,12 +361,14 @@ export class Beaker {
             break;
           case 'translate':
             this.animationAtoms.translate = new Atoms.TranslateAtom(context, this.element, {
+              id: config.id,
               trigger: config.trigger,
               keepOnRelease: config.keepOnRelease
             }, this.state.position);
             break;
           case 'height':
             this.animationAtoms.height = new Atoms.HeightAtom(context, this.element, {
+              id: config.id,
               collapsedValue: config.collapsedValue,
               moleculeHeight: this.molecule.height ?? this.element.offsetHeight,
               trigger: config.trigger,
@@ -364,6 +379,7 @@ export class Beaker {
             break;
           case 'width':
             this.animationAtoms.width = new Atoms.WidthAtom(context, this.element, {
+              id: config.id,
               value: config.value,
               trigger: config.trigger,
               defaultValue: config.defaultValue ?? 1,
@@ -380,6 +396,7 @@ export class Beaker {
               context,
               this.element,
               {
+                id: config.id,
                 group: config.group,
                 expandedValue: config.expandedValue,
                 collapsedValue: config.collapsedValue
@@ -400,6 +417,7 @@ export class Beaker {
       const context = this.createContext();
       try {
         new Atoms.ClickAtom(context, this.element, {
+          id: clickConfig.id,
           onClick: (_e, clickCount) => {
             this.updateClickState(true, clickCount);
           },
@@ -423,6 +441,7 @@ export class Beaker {
         new Atoms.DragAtom(context, this.element, {
           handle: dragConfig.handle
         }, {
+          id: dragConfig.id,
           onDragStart: (mouse) => {
             this.updateDragStart(mouse);
           },
@@ -443,6 +462,7 @@ export class Beaker {
       const context = this.createContext();
       try {
         new Atoms.ResizeAtom(context, this.element, {
+          id: resizeConfig.id,
           minWidth: resizeConfig.minWidth,
           minHeight: resizeConfig.minHeight,
           maxWidth: resizeConfig.maxWidth,
@@ -471,6 +491,7 @@ export class Beaker {
       const context = this.createContext();
       try {
         new Atoms.ScrollAtom(context, this.element, {
+          id: scrollConfig.id,
           direction: scrollConfig.direction,
           maxScrollX: scrollConfig.maxScrollX,
           maxScrollY: scrollConfig.maxScrollY
@@ -490,6 +511,7 @@ export class Beaker {
       const context = this.createContext();
       try {
         new Atoms.HoverAtom(context, this.element, {
+          id: hoverConfig.id,
           onHoverStart: () => {
             this.updateHoverState(true);
           },
@@ -520,6 +542,7 @@ export class Beaker {
       const context = this.createContext();
       try {
         new Atoms.ResizeHandleAtom(context, this.element, {
+          id: config.id,
           edge: config.edge,
           minWidth: config.minWidth,
           minHeight: config.minHeight,

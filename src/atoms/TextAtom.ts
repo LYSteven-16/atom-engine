@@ -20,6 +20,7 @@ import type { AtomContext } from '../atoms';
  * }
  */
 export interface TextAtomConfig {
+  id: string;
   text: string;
   size: number;
   color: [number, number, number];
@@ -35,6 +36,7 @@ export interface RenderResult {
 export class TextAtom {
   readonly capability: 'text' = 'text';
   readonly context: AtomContext;
+  readonly id: string;
   text: string;
   size: number;
   color: [number, number, number];
@@ -42,6 +44,7 @@ export class TextAtom {
 
   constructor(context: AtomContext, container: HTMLElement, config: TextAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.text = config.text;
     this.size = config.size;
     this.color = config.color;

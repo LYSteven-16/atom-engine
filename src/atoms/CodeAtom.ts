@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface CodeAtomConfig {
+  id: string;
   code: string;
   language?: string;
   position?: { x: number; y: number; z?: number };
@@ -30,8 +31,11 @@ const LANGUAGE_KEYWORDS: Record<string, string[]> = {
 export class CodeAtom {
   readonly capability: 'code' = 'code';
   readonly context: AtomContext;
+  readonly id: string;
 
   constructor(context: AtomContext, container: HTMLElement, config: CodeAtomConfig) {
+    this.context = context;
+    this.id = config.id;
     this.render(container, config);
   }
 

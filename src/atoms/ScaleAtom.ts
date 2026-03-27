@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface ScaleAtomConfig {
+  id: string;
   value: number;
   trigger: 'hover' | 'click' | 'doubleclick';
   defaultValue?: number;
@@ -29,6 +30,7 @@ interface OriginalCSS {
 export class ScaleAtom {
   readonly capability: 'scale' = 'scale';
   readonly context: AtomContext;
+  readonly id: string;
   private element: HTMLElement;
   private config: ScaleAtomConfig;
   private currentScale: number = 1;
@@ -41,6 +43,7 @@ export class ScaleAtom {
 
   constructor(context: AtomContext, element: HTMLElement, config: ScaleAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.element = element;
     this.config = {
       defaultValue: 1,

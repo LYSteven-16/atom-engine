@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface BorderAtomConfig {
+  id: string;
   borderWidth: number;
   color: [number, number, number];
   position?: { x: number; y: number; z?: number };
@@ -12,6 +13,7 @@ export interface BorderAtomConfig {
 export class BorderAtom {
   readonly capability: 'border' = 'border';
   readonly context: AtomContext;
+  readonly id: string;
   readonly element: HTMLElement;
   borderWidth: number;
   color: [number, number, number];
@@ -22,6 +24,7 @@ export class BorderAtom {
 
   constructor(context: AtomContext, container: HTMLElement, config: BorderAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.borderWidth = config.borderWidth;
     this.color = config.color;
     this.position = config.position;

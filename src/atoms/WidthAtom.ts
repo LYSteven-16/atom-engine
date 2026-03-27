@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface WidthAtomConfig {
+  id: string;
   value: number;
   trigger: 'hover' | 'click' | 'doubleclick';
   defaultValue?: number;
@@ -29,6 +30,7 @@ interface OriginalCSS {
 export class WidthAtom {
   readonly capability: 'width' = 'width';
   readonly context: AtomContext;
+  readonly id: string;
   private element: HTMLElement;
   private config: WidthAtomConfig;
   private currentScale: number = 1;
@@ -41,6 +43,7 @@ export class WidthAtom {
 
   constructor(context: AtomContext, element: HTMLElement, config: WidthAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.element = element;
     this.config = {
       defaultValue: 1,

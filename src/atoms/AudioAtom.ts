@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface AudioAtomConfig {
+  id: string;
   src: string;
   position?: { x: number; y: number; z?: number };
   /** 宽度（默认300） */
@@ -18,8 +19,11 @@ export interface AudioAtomConfig {
 export class AudioAtom {
   readonly capability: 'audio' = 'audio';
   readonly context: AtomContext;
+  readonly id: string;
 
   constructor(context: AtomContext, container: HTMLElement, config: AudioAtomConfig) {
+    this.context = context;
+    this.id = config.id;
     this.render(container, config);
   }
 

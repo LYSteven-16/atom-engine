@@ -25,6 +25,7 @@ import type { AtomContext } from '../atoms';
  * }
  */
 export interface IconAtomConfig {
+  id: string;
   icon: string;
   size?: number;
   position?: { x: number; y: number; z?: number };
@@ -33,8 +34,11 @@ export interface IconAtomConfig {
 export class IconAtom {
   readonly capability: 'icon' = 'icon';
   readonly context: AtomContext;
+  readonly id: string;
 
   constructor(context: AtomContext, container: HTMLElement, config: IconAtomConfig) {
+    this.context = context;
+    this.id = config.id;
     this.render(container, config);
   }
 

@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface RotateAtomConfig {
+  id: string;
   value: number;
   trigger: 'hover' | 'click' | 'doubleclick';
   defaultValue?: number;
@@ -12,6 +13,7 @@ export interface RotateAtomConfig {
 export class RotateAtom {
   readonly capability: 'rotate' = 'rotate';
   readonly context: AtomContext;
+  readonly id: string;
   private element: HTMLElement;
   private config: RotateAtomConfig;
   private currentRotate: number = 0;
@@ -23,6 +25,7 @@ export class RotateAtom {
 
   constructor(context: AtomContext, element: HTMLElement, config: RotateAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.element = element;
     this.config = {
       defaultValue: 0,

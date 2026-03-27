@@ -1,6 +1,7 @@
 import type { AtomContext } from '../atoms';
 
 export interface BackgroundAtomConfig {
+  id: string;
   color: [number, number, number];
   position?: { x: number; y: number; z?: number };
   width?: number;
@@ -11,6 +12,7 @@ export interface BackgroundAtomConfig {
 export class BackgroundAtom {
   readonly capability: 'background' = 'background';
   readonly context: AtomContext;
+  readonly id: string;
   readonly element: HTMLElement;
   color: [number, number, number];
   position?: { x: number; y: number; z?: number };
@@ -20,6 +22,7 @@ export class BackgroundAtom {
 
   constructor(context: AtomContext, container: HTMLElement, config: BackgroundAtomConfig) {
     this.context = context;
+    this.id = config.id;
     this.color = config.color;
     this.position = config.position;
     this.width = config.width;
