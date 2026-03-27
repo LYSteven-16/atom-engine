@@ -25,6 +25,7 @@ export interface TextAtomConfig {
   size: number;
   color: [number, number, number];
   position?: { x: number; y: number; z?: number };
+  writingMode?: 'horizontal' | 'vertical';
 }
 
 export interface RenderResult {
@@ -41,6 +42,7 @@ export class TextAtom {
   size: number;
   color: [number, number, number];
   position?: { x: number; y: number; z?: number };
+  writingMode: 'horizontal' | 'vertical';
 
   constructor(context: AtomContext, container: HTMLElement, config: TextAtomConfig) {
     this.context = context;
@@ -49,6 +51,7 @@ export class TextAtom {
     this.size = config.size;
     this.color = config.color;
     this.position = config.position;
+    this.writingMode = config.writingMode ?? 'horizontal';
     this.render(container);
   }
 
@@ -56,6 +59,7 @@ export class TextAtom {
     try {
       const element = document.createElement('div');
       element.setAttribute('data-atom-id', this.id);
+      const writingModeCSS = this.writingMode === 'vertical' ? 'writing-mode: vertical-rl;' : '';
       element.style.cssText = `
         position: absolute;
         left: ${this.position?.x ?? 0}px;
@@ -65,6 +69,7 @@ export class TextAtom {
         pointer-events: none;
         user-select: none;
         white-space: nowrap;
+        ${writingModeCSS}
       `;
       element.textContent = this.text;
       container.appendChild(element);

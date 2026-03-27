@@ -248,7 +248,8 @@ export class Beaker {
               text: atomConfig.text,
               size: atomConfig.size,
               color: atomConfig.color,
-              position: atomConfig.position
+              position: atomConfig.position,
+              writingMode: atomConfig.writingMode
             }));
             break;
           case 'image':
