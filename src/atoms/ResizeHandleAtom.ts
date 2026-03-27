@@ -138,6 +138,10 @@ export class ResizeHandleAtom {
   }
 
   private createHandle(): void {
+    // 检查是否已经有把手
+    const existingHandle = this.element.querySelector('[data-atom-id="' + this.id + '"]');
+    if (existingHandle) return;
+    
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
     const color = this.config.handleColor ?? [180, 180, 180];
