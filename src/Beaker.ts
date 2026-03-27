@@ -383,9 +383,11 @@ export class Beaker {
           case 'width':
             this.animationAtoms.width = new Atoms.WidthAtom(context, this.element, {
               id: config.id,
-              value: config.value,
+              collapsedValue: config.collapsedValue,
+              moleculeWidth: this.molecule.width ?? this.element.offsetWidth,
               trigger: config.trigger,
-              defaultValue: config.defaultValue ?? 1,
+              hiddenAtomIds: config.hiddenAtomIds,
+              fixedAtomIds: config.fixedAtomIds,
               keepOnRelease: config.keepOnRelease,
               toggleOnClick: config.toggleOnClick,
               duration: config.duration
