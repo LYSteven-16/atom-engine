@@ -140,19 +140,46 @@ export class ResizeHandleAtom {
   private createHandle(): void {
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
-    const size = this.config.handleSize ?? 10;
-    const color = this.config.handleColor ?? [200, 200, 200];
+    const size = this.config.handleSize ?? 16;
+    const color = this.config.handleColor ?? [150, 150, 150];
     this.handle.style.cssText = `
       position: absolute;
-      right: 0;
-      bottom: 0;
+      right: 2px;
+      bottom: 2px;
       width: ${size}px;
       height: ${size}px;
-      background: rgb(${color[0]}, ${color[1]}, ${color[2]});
       cursor: se-resize;
-      border-radius: 2px;
       z-index: 1000;
+      pointer-events: auto;
     `;
+    
+    // 创建斜向双箭头图标
+    const arrow1 = document.createElement('div');
+    arrow1.style.cssText = `
+      position: absolute;
+      right: 0;
+      bottom: 4px;
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-bottom: 6px solid rgb(${color[0]}, ${color[1]}, ${color[2]});
+    `;
+    
+    const arrow2 = document.createElement('div');
+    arrow2.style.cssText = `
+      position: absolute;
+      right: 4px;
+      bottom: 0;
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-bottom: 6px solid rgb(${color[0]}, ${color[1]}, ${color[2]});
+    `;
+    
+    this.handle.appendChild(arrow1);
+    this.handle.appendChild(arrow2);
     this.element.appendChild(this.handle);
     this.setupDrag();
   }
