@@ -56,7 +56,8 @@ export class HeightAtom {
       duration: config.duration ?? 0.15,
       collapsedValue: config.collapsedValue,
       moleculeHeight: config.moleculeHeight,
-      trigger: config.trigger
+      trigger: config.trigger,
+      hiddenAtomIds: config.hiddenAtomIds
     };
     this.collapsedHeight = this.config.collapsedValue;
     this.expandedHeight = this.config.moleculeHeight;
