@@ -55,6 +55,7 @@ export class TextAtom {
   private render(container: HTMLElement): void {
     try {
       const element = document.createElement('div');
+      element.setAttribute('data-atom-id', this.id);
       element.style.cssText = `
         position: absolute;
         left: ${this.position?.x ?? 0}px;

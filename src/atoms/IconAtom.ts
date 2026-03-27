@@ -45,6 +45,7 @@ export class IconAtom {
   private render(container: HTMLElement, config: IconAtomConfig): void {
     try {
       const element = document.createElement('div');
+      element.setAttribute('data-atom-id', this.id);
       element.textContent = config.icon;
       element.style.cssText = `
         position: absolute;

@@ -30,6 +30,7 @@ export class AudioAtom {
   private render(container: HTMLElement, config: AudioAtomConfig): void {
     try {
       const element = document.createElement('audio');
+      element.setAttribute('data-atom-id', this.id);
       element.src = config.src;
       element.controls = true;
       if (config.autoplay) element.autoplay = true;

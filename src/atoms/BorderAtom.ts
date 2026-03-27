@@ -36,6 +36,7 @@ export class BorderAtom {
 
   private render(container: HTMLElement): HTMLElement {
     const el = document.createElement('div');
+    el.setAttribute('data-atom-id', this.id);
     el.style.cssText = `
       position: absolute;
       left: ${this.position?.x ?? 0}px;

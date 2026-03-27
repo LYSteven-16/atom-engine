@@ -5,6 +5,7 @@ export interface HeightAtomConfig {
   collapsedValue: number;
   moleculeHeight: number;
   trigger: 'hover' | 'click' | 'doubleclick';
+  hiddenAtomIds?: string[];  // 折叠后要隐藏的原子id
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
   duration?: number;
@@ -24,6 +25,7 @@ interface OriginalCSS {
   boxShadowSpread: number;
   boxShadowColor: string;
   isText: boolean;
+  atomId: string;  // 子元素对应的原子id
 }
 
 export class HeightAtom {
@@ -72,6 +74,7 @@ export class HeightAtom {
       const isText = child.tagName === 'DIV' && child.textContent && !child.querySelector('canvas, img, video, audio');
       const { width, style: borderStyle, color: borderColor } = this.parseBorder(style.border);
       const boxShadowParts = this.parseBoxShadow(style.boxShadow);
+      const atomId = child.getAttribute('data-atom-id') || '';
 
       this.originalStyles.set(child, {
         top: parseFloat(style.top) || 0,
@@ -86,7 +89,8 @@ export class HeightAtom {
         boxShadowBlur: boxShadowParts.blur,
         boxShadowSpread: boxShadowParts.spread,
         boxShadowColor: boxShadowParts.color,
-        isText: !!isText
+        isText: !!isText,
+        atomId: atomId
       });
     }
   }
@@ -200,6 +204,7 @@ export class HeightAtom {
 
   private apply(): void {
     const scaleY = this.currentHeight / this.expandedHeight;
+    const hiddenAtomIds = this.config.hiddenAtomIds || [];
     this.element.style.height = `${this.currentHeight}px`;
     this.element.style.borderRadius = `${this.originalBorderRadius * scaleY}px`;
 
@@ -232,6 +237,12 @@ export class HeightAtom {
       const hasBoxShadow = original.boxShadowX !== 0 || original.boxShadowY !== 0 || original.boxShadowBlur !== 0 || original.boxShadowSpread !== 0;
       if (hasBoxShadow) {
         child.style.boxShadow = `${original.boxShadowX * scaleY}px ${original.boxShadowY * scaleY}px ${original.boxShadowBlur * scaleY}px ${original.boxShadowSpread * scaleY}px ${original.boxShadowColor}`;
+      }
+
+      // 隐藏原子：根据scaleY渐隐
+      if (hiddenAtomIds.includes(original.atomId)) {
+        child.style.opacity = `${scaleY}`;
+        child.style.pointerEvents = scaleY < 0.5 ? 'none' : 'auto';
       }
     }
   }

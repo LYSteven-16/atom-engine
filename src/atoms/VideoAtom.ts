@@ -42,6 +42,7 @@ export class VideoAtom {
   private render(container: HTMLElement, config: VideoAtomConfig): void {
     try {
       const element = document.createElement('video');
+      element.setAttribute('data-atom-id', this.id);
       element.src = config.src;
       element.controls = true;
       if (config.width) element.width = config.width;

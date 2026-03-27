@@ -58,6 +58,7 @@ export class CanvasAtom {
   private render(container: HTMLElement, config: CanvasAtomConfig): void {
     try {
       const wrapper = document.createElement('div');
+      wrapper.setAttribute('data-atom-id', this.id);
       wrapper.style.cssText = `
         position: absolute;
         left: ${config.position?.x ?? 0}px;

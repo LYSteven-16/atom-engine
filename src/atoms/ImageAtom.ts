@@ -52,6 +52,7 @@ export class ImageAtom {
 
   private renderStretch(container: HTMLElement, config: ImageAtomConfig): void {
     const element = document.createElement('img');
+    element.setAttribute('data-atom-id', this.id);
     element.src = config.src;
     element.width = config.width;
     element.height = config.height;
@@ -70,6 +71,7 @@ export class ImageAtom {
 
   private renderWithContainer(container: HTMLElement, config: ImageAtomConfig, fitMode: 'scroll' | 'crop'): void {
     const scrollContainer = document.createElement('div');
+    scrollContainer.setAttribute('data-atom-id', this.id);
     const initialOffsetX = config.offsetX ?? 0;
     const initialOffsetY = config.offsetY ?? 0;
 
