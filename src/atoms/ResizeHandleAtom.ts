@@ -127,13 +127,12 @@ export class ResizeHandleAtom {
     
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
-    const color = this.config.handleColor ?? [180, 180, 180];
     this.handle.style.cssText = `
       position: absolute;
       right: 0;
       bottom: 0;
-      width: ${this.config.handleSize}px;
-      height: ${this.config.handleSize}px;
+      width: 20px;
+      height: 20px;
       cursor: se-resize;
       z-index: 1000;
       pointer-events: auto;
@@ -141,14 +140,14 @@ export class ResizeHandleAtom {
       overflow: hidden;
     `;
     
-    // 创建斜向点阵
+    // 创建斜向点阵 - 更明显的深灰色点
     const dots = [
-      { x: 8, y: 8 },
-      { x: 4, y: 8 },
-      { x: 8, y: 4 },
-      { x: 0, y: 8 },
-      { x: 4, y: 4 },
-      { x: 8, y: 0 },
+      { x: 14, y: 14 },
+      { x: 10, y: 14 },
+      { x: 14, y: 10 },
+      { x: 6, y: 14 },
+      { x: 10, y: 10 },
+      { x: 14, y: 6 },
     ];
     
     dots.forEach(pos => {
@@ -157,9 +156,9 @@ export class ResizeHandleAtom {
         position: absolute;
         left: ${pos.x}px;
         top: ${pos.y}px;
-        width: 2px;
-        height: 2px;
-        background: rgb(${color[0]}, ${color[1]}, ${color[2]});
+        width: 3px;
+        height: 3px;
+        background: #888;
         border-radius: 50%;
       `;
       this.handle.appendChild(dot);
