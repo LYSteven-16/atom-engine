@@ -6,6 +6,7 @@ export interface HeightAtomConfig {
   moleculeHeight: number;
   trigger: 'hover' | 'click' | 'doubleclick';
   hiddenAtomIds?: string[];  // 折叠后要隐藏的原子id
+  fixedAtomIds?: string[];   // 不会被缩放和隐藏的原子id
   keepOnRelease?: boolean;
   toggleOnClick?: boolean;
   duration?: number;
@@ -57,7 +58,8 @@ export class HeightAtom {
       collapsedValue: config.collapsedValue,
       moleculeHeight: config.moleculeHeight,
       trigger: config.trigger,
-      hiddenAtomIds: config.hiddenAtomIds
+      hiddenAtomIds: config.hiddenAtomIds,
+      fixedAtomIds: config.fixedAtomIds
     };
     this.collapsedHeight = this.config.collapsedValue;
     this.expandedHeight = this.config.moleculeHeight;
@@ -206,6 +208,7 @@ export class HeightAtom {
   private apply(): void {
     const scaleY = this.currentHeight / this.expandedHeight;
     const hiddenAtomIds = this.config.hiddenAtomIds || [];
+    const fixedAtomIds = this.config.fixedAtomIds || [];
     this.element.style.height = `${this.currentHeight}px`;
     this.element.style.borderRadius = `${this.originalBorderRadius * scaleY}px`;
 
@@ -214,6 +217,11 @@ export class HeightAtom {
       const child = children[i] as HTMLElement;
       const original = this.originalStyles.get(child);
       if (!original) continue;
+
+      // fixed原子：不缩放、不隐藏
+      if (fixedAtomIds.includes(original.atomId)) {
+        continue;
+      }
 
       // 所有元素都改变高度和位置
       child.style.top = `${original.top * scaleY}px`;

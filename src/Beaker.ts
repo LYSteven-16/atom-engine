@@ -373,6 +373,7 @@ export class Beaker {
               moleculeHeight: this.molecule.height ?? this.element.offsetHeight,
               trigger: config.trigger,
               hiddenAtomIds: config.hiddenAtomIds,
+              fixedAtomIds: config.fixedAtomIds,
               keepOnRelease: config.keepOnRelease,
               toggleOnClick: config.toggleOnClick,
               duration: config.duration
