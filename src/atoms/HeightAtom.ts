@@ -242,8 +242,9 @@ export class HeightAtom {
 
       // 隐藏原子：先缩小，再渐隐
       if (hiddenAtomIds.includes(original.atomId)) {
-        // scaleY > 0.5 时完全显示，< 0.5 时渐隐
-        const opacity = scaleY > 0.5 ? 1 : scaleY * 2;
+        // 计算渐隐进度：从展开到折叠的过程中，opacity 从 1 变到 0
+        const progress = (this.currentHeight - this.collapsedHeight) / (this.expandedHeight - this.collapsedHeight);
+        const opacity = Math.max(0, Math.min(1, progress));
         child.style.opacity = `${opacity}`;
         child.style.pointerEvents = opacity < 0.3 ? 'none' : 'auto';
       }
