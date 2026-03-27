@@ -2,12 +2,6 @@ import type { AtomContext } from '../atoms';
 
 export interface ResizeHandleAtomConfig {
   id: string;
-  value: number;
-  trigger: 'hover' | 'click' | 'doubleclick';
-  defaultValue?: number;
-  keepOnRelease?: boolean;
-  toggleOnClick?: boolean;
-  duration?: number;
   handleSize?: number;
   handleColor?: [number, number, number];
   minWidth?: number;
@@ -38,12 +32,7 @@ export class ResizeHandleAtom {
   private element: HTMLElement;
   private config: ResizeHandleAtomConfig;
   private currentScale: number = 1;
-  private targetScale: number = 1;
-  private startScale: number = 1;
-  private animationId: number = 0;
-  private animationStartTime: number = 0;
   private originalStyles: Map<HTMLElement, OriginalCSS> = new Map();
-  private isActive: boolean = false;
   private handle: HTMLElement | null = null;
   private originalWidth: number = 0;
   private originalHeight: number = 0;
@@ -53,12 +42,8 @@ export class ResizeHandleAtom {
     this.id = config.id;
     this.element = element;
     this.config = {
-      defaultValue: 1,
-      keepOnRelease: false,
-      toggleOnClick: true,
-      duration: 0.15,
-      handleSize: 10,
-      handleColor: [200, 200, 200],
+      handleSize: 12,
+      handleColor: [180, 180, 180],
       minWidth: 50,
       minHeight: 50,
       ...config
@@ -67,7 +52,6 @@ export class ResizeHandleAtom {
     this.originalHeight = element.offsetHeight;
     this.saveOriginalStyles();
     this.createHandle();
-    this.apply();
   }
 
   private saveOriginalStyles(): void {
@@ -138,7 +122,6 @@ export class ResizeHandleAtom {
   }
 
   private createHandle(): void {
-    // 检查是否已经有把手
     const existingHandle = this.element.querySelector('[data-atom-id="' + this.id + '"]');
     if (existingHandle) return;
     
@@ -149,8 +132,8 @@ export class ResizeHandleAtom {
       position: absolute;
       right: 0;
       bottom: 0;
-      width: 16px;
-      height: 16px;
+      width: ${this.config.handleSize}px;
+      height: ${this.config.handleSize}px;
       cursor: se-resize;
       z-index: 1000;
       pointer-events: auto;
@@ -158,15 +141,14 @@ export class ResizeHandleAtom {
       overflow: hidden;
     `;
     
-    // 创建斜向点阵（类似macOS/Windows的缩放把手）
-    // 3x3网格，只显示右下角的6个点
+    // 创建斜向点阵
     const dots = [
-      { x: 10, y: 10 }, // 右下角
-      { x: 6, y: 10 },  // 中下
-      { x: 10, y: 6 },  // 右中
-      { x: 2, y: 10 },  // 左下
-      { x: 6, y: 6 },   // 中心
-      { x: 10, y: 2 },  // 右上
+      { x: 8, y: 8 },
+      { x: 4, y: 8 },
+      { x: 8, y: 4 },
+      { x: 0, y: 8 },
+      { x: 4, y: 4 },
+      { x: 8, y: 0 },
     ];
     
     dots.forEach(pos => {
@@ -229,103 +211,6 @@ export class ResizeHandleAtom {
     document.addEventListener('mouseup', onMouseUp);
   }
 
-  onHoverChange(isHovered: boolean): void {
-    if (this.config.trigger !== 'hover') return;
-    if (isHovered) {
-      this.isActive = true;
-      this.animateToScale(this.config.value);
-    } else if (!this.config.keepOnRelease) {
-      this.isActive = false;
-      this.animateToScale(this.config.defaultValue ?? 1);
-    }
-  }
-
-  onClickChange(isClicked: boolean, clickCount: number): void {
-    if (this.config.trigger !== 'click') return;
-
-    if (this.config.toggleOnClick) {
-      if (!isClicked) return;
-      const isOddClick = clickCount % 2 === 1;
-      if (isOddClick) {
-        this.isActive = true;
-        this.animateToScale(this.config.value);
-      } else {
-        this.isActive = false;
-        this.animateToScale(this.config.defaultValue ?? 1);
-      }
-    } else {
-      if (isClicked) {
-        this.isActive = true;
-        this.animateToScale(this.config.value);
-      } else if (!this.config.keepOnRelease) {
-        this.isActive = false;
-        this.animateToScale(this.config.defaultValue ?? 1);
-      }
-    }
-  }
-
-  private doubleClickCount: number = 0;
-
-  onDoubleClick(): void {
-    if (this.config.trigger !== 'doubleclick') return;
-    this.doubleClickCount++;
-    if (this.config.toggleOnClick) {
-      const isOddClick = this.doubleClickCount % 2 === 1;
-      if (isOddClick) {
-        this.isActive = true;
-        this.animateToScale(this.config.value);
-      } else {
-        this.isActive = false;
-        this.animateToScale(this.config.defaultValue ?? 1);
-      }
-    } else {
-      this.isActive = true;
-      this.animateToScale(this.config.value);
-    }
-  }
-
-  private animateToScale(targetScale: number): void {
-    if (this.animationId !== 0) {
-      cancelAnimationFrame(this.animationId);
-    }
-    this.startScale = this.currentScale;
-    this.targetScale = targetScale;
-    this.animationStartTime = performance.now();
-    const duration = (this.config.duration ?? 0.15) * 1000;
-    
-    const animate = (currentTime: number) => {
-      const elapsed = currentTime - this.animationStartTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = progress * (2 - progress);
-      this.currentScale = this.startScale + (this.targetScale - this.startScale) * eased;
-      this.element.style.width = `${this.originalWidth * this.currentScale}px`;
-      this.element.style.height = `${this.originalHeight * this.currentScale}px`;
-      this.apply();
-      
-      if (progress < 1) {
-        this.animationId = requestAnimationFrame(animate);
-      } else {
-        this.animationId = 0;
-        this.currentScale = this.targetScale;
-        this.apply();
-      }
-    };
-    
-    this.animationId = requestAnimationFrame(animate);
-  }
-
-  reset(): void {
-    if (this.animationId !== 0) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = 0;
-    }
-    this.currentScale = this.config.defaultValue ?? 1;
-    this.isActive = false;
-    this.element.style.width = `${this.originalWidth * this.currentScale}px`;
-    this.element.style.height = `${this.originalHeight * this.currentScale}px`;
-    this.apply();
-  }
-
   private apply(): void {
     const scale = this.currentScale;
     const containerCenterX = this.originalWidth / 2;
@@ -363,9 +248,5 @@ export class ResizeHandleAtom {
 
   getValue(): number {
     return this.currentScale;
-  }
-
-  getIsActive(): boolean {
-    return this.isActive;
   }
 }

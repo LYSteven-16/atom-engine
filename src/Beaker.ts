@@ -550,12 +550,10 @@ export class Beaker {
       try {
         this.animationAtoms.resizeHandle = new Atoms.ResizeHandleAtom(context, this.element, {
           id: config.id,
-          value: config.value,
-          trigger: config.trigger,
-          defaultValue: config.defaultValue ?? 1,
-          keepOnRelease: config.keepOnRelease,
-          toggleOnClick: config.toggleOnClick,
-          duration: config.duration
+          handleSize: config.handleSize,
+          handleColor: config.handleColor,
+          minWidth: config.minWidth,
+          minHeight: config.minHeight
         });
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
@@ -569,7 +567,6 @@ export class Beaker {
     this.animationAtoms.rotate?.onHoverChange(isHovered);
     this.animationAtoms.height?.onHoverChange(isHovered);
     this.animationAtoms.width?.onHoverChange(isHovered);
-    this.animationAtoms.resizeHandle?.onHoverChange(isHovered);
   }
 
   private notifyClickChange(isClicked: boolean, clickCount: number): void {
@@ -578,7 +575,6 @@ export class Beaker {
     this.animationAtoms.rotate?.onClickChange(isClicked, clickCount);
     this.animationAtoms.height?.onClickChange(isClicked, clickCount);
     this.animationAtoms.width?.onClickChange(isClicked, clickCount);
-    this.animationAtoms.resizeHandle?.onClickChange(isClicked, clickCount);
   }
 
   private notifyDoubleClick(): void {
@@ -587,7 +583,6 @@ export class Beaker {
     this.animationAtoms.rotate?.onDoubleClick();
     this.animationAtoms.height?.onDoubleClick();
     this.animationAtoms.width?.onDoubleClick();
-    this.animationAtoms.resizeHandle?.onDoubleClick();
   }
 
   private emitStateChange(partialState: Partial<BakerState>): void {
