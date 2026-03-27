@@ -233,10 +233,6 @@ export class ResizeHandleAtom {
     const containerCenterY = this.originalHeight / 2;
     const children = this.element.children;
     
-    // 更新容器尺寸
-    this.element.style.width = `${this.originalWidth * scale}px`;
-    this.element.style.height = `${this.originalHeight * scale}px`;
-    
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       if (child === this.handle) continue;
