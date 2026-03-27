@@ -63,7 +63,8 @@ export class HeightAtom {
     };
     this.collapsedHeight = this.config.collapsedValue;
     this.expandedHeight = this.config.moleculeHeight;
-    this.currentHeight = this.collapsedHeight;
+    this.currentHeight = this.expandedHeight;  // 初始状态为展开
+    this.isExpanded = true;
     this.originalBorderRadius = parseFloat(element.style.borderRadius) || 0;
     this.saveOriginalStyles();
     this.apply();
