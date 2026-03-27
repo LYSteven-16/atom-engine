@@ -60,8 +60,6 @@ export interface RotateAtom {
 export interface TranslateAtom {
   capability: 'translate';
   context: AtomContext;
-  x: number;
-  y: number;
   trigger: 'drag';
   duration?: number;
 }
