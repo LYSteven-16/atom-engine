@@ -42,7 +42,7 @@ export class ResizeHandleAtom {
     this.id = config.id;
     this.element = element;
     this.config = {
-      handleSize: 12,
+      handleSize: 20,
       handleColor: [180, 180, 180],
       minWidth: 50,
       minHeight: 50,
@@ -140,7 +140,7 @@ export class ResizeHandleAtom {
       overflow: hidden;
     `;
     
-    // 创建斜向点阵 - 更明显的深灰色点
+    // 创建斜向点阵
     const dots = [
       { x: 14, y: 14 },
       { x: 10, y: 14 },
@@ -173,7 +173,7 @@ export class ResizeHandleAtom {
     let isDragging = false;
     let startX = 0;
     let startY = 0;
-    let startScale = 1;
+    let targetScale = 1;
     const minWidth = this.config.minWidth ?? 50;
     const minHeight = this.config.minHeight ?? 50;
 
@@ -184,7 +184,10 @@ export class ResizeHandleAtom {
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
-      startScale = this.currentScale;
+      targetScale = this.currentScale;
+      
+      // 添加虚线边框提示
+      this.element.style.outline = '2px dashed rgba(0, 150, 255, 0.5)';
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -192,17 +195,31 @@ export class ResizeHandleAtom {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       const delta = Math.max(dx, dy);
-      const newWidth = Math.max(minWidth, this.originalWidth * startScale + delta);
-      const newHeight = Math.max(minHeight, this.originalHeight * startScale + delta);
-      this.currentScale = Math.min(newWidth / this.originalWidth, newHeight / this.originalHeight);
-      this.element.style.width = `${this.originalWidth * this.currentScale}px`;
-      this.element.style.height = `${this.originalHeight * this.currentScale}px`;
-      this.apply();
+      const newWidth = Math.max(minWidth, this.originalWidth * targetScale + delta);
+      const newHeight = Math.max(minHeight, this.originalHeight * targetScale + delta);
+      
+      // 实时更新容器尺寸预览
+      this.element.style.width = `${newWidth}px`;
+      this.element.style.height = `${newHeight}px`;
     };
 
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
       if (!isDragging) return;
       isDragging = false;
+      
+      // 移除虚线边框
+      this.element.style.outline = '';
+      
+      // 计算最终scale
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const delta = Math.max(dx, dy);
+      const newWidth = Math.max(minWidth, this.originalWidth * targetScale + delta);
+      const newHeight = Math.max(minHeight, this.originalHeight * targetScale + delta);
+      this.currentScale = Math.min(newWidth / this.originalWidth, newHeight / this.originalHeight);
+      
+      // 松手后应用缩放
+      this.apply();
     };
 
     this.handle.addEventListener('mousedown', onMouseDown);
@@ -215,6 +232,10 @@ export class ResizeHandleAtom {
     const containerCenterX = this.originalWidth / 2;
     const containerCenterY = this.originalHeight / 2;
     const children = this.element.children;
+    
+    // 更新容器尺寸
+    this.element.style.width = `${this.originalWidth * scale}px`;
+    this.element.style.height = `${this.originalHeight * scale}px`;
     
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
