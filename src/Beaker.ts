@@ -555,7 +555,8 @@ export class Beaker {
           initialWidth: this.molecule.width,
           initialHeight: this.molecule.height,
           minWidth: config.minWidth,
-          minHeight: config.minHeight
+          minHeight: config.minHeight,
+          handleColor: config.handleColor
         });
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);

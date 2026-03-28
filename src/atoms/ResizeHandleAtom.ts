@@ -8,6 +8,7 @@ export interface ResizeHandleAtomConfig {
   initialHeight?: number;    // 初始高度
   minWidth?: number;         // 最小宽度
   minHeight?: number;        // 最小高度
+  handleColor?: [number, number, number];  // 把手颜色
 }
 
 interface OriginalStyle {
@@ -31,6 +32,7 @@ export class ResizeHandleAtom {
   private originalHeight: number = 0;
   private minWidth: number = 50;
   private minHeight: number = 50;
+  private handleColor: [number, number, number] = [200, 200, 200];
 
   constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig) {
     this.context = context;
@@ -40,6 +42,7 @@ export class ResizeHandleAtom {
     this.originalHeight = config.initialHeight || element.offsetHeight || 300;
     this.minWidth = config.minWidth || 50;
     this.minHeight = config.minHeight || 50;
+    this.handleColor = config.handleColor || [200, 200, 200];
     this.fixedElementIds = config.fixedAtomIds || [];
     this.findTargets(config.targetAtomIds || []);
     this.saveOriginalStyles();
@@ -75,64 +78,18 @@ export class ResizeHandleAtom {
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
     
-    // 获取分子容器的圆角
-    const containerRadius = parseInt(this.element.style.borderRadius) || 12;
-    
+    const color = this.handleColor;
     this.handle.style.cssText = `
       position: absolute;
       right: 0;
       bottom: 0;
       width: 20px;
       height: 20px;
+      background: rgb(${color[0]}, ${color[1]}, ${color[2]});
       cursor: se-resize;
       z-index: 1000;
       pointer-events: auto;
-      background: transparent;
-      overflow: hidden;
     `;
-
-    const dots: {x: number, y: number}[] = [];
-    const r = Math.min(containerRadius, 20); // 圆角半径，最大20
-    const cx = 20 - r; // 圆心x
-    const cy = 20 - r; // 圆心y
-    
-    // 沿弧线排列圆点
-    const numArcDots = 8;
-    for (let i = 0; i <= numArcDots; i++) {
-      const angle = (Math.PI / 2) * (i / numArcDots);
-      const x = cx + r * Math.cos(angle);
-      const y = cy + r * Math.sin(angle);
-      dots.push({ x: Math.round(x), y: Math.round(y) });
-    }
-    
-    // 往内填充更多圆点
-    for (let i = 0; i < 3; i++) {
-      const innerR = r - (i + 1) * 4;
-      if (innerR > 0) {
-        const innerCx = 20 - innerR;
-        const innerCy = 20 - innerR;
-        for (let j = 0; j <= numArcDots; j++) {
-          const angle = (Math.PI / 2) * (j / numArcDots);
-          const x = innerCx + innerR * Math.cos(angle);
-          const y = innerCy + innerR * Math.sin(angle);
-          dots.push({ x: Math.round(x), y: Math.round(y) });
-        }
-      }
-    }
-
-    dots.forEach(pos => {
-      const dot = document.createElement('div');
-      dot.style.cssText = `
-        position: absolute;
-        left: ${pos.x}px;
-        top: ${pos.y}px;
-        width: 2px;
-        height: 2px;
-        background: #888;
-        border-radius: 50%;
-      `;
-      this.handle.appendChild(dot);
-    });
 
     this.element.appendChild(this.handle);
     this.setupDrag();
