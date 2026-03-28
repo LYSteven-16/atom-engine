@@ -77,7 +77,7 @@ export class ResizeHandleAtom {
     
     // 获取容器圆角
     const containerRadius = parseInt(getComputedStyle(this.element).borderRadius) || 0;
-    const offset = Math.min(containerRadius * 0.3, 6); // 圆角偏移量
+    const offset = Math.min(containerRadius * 0.5, 10); // 圆角偏移量
     
     this.handle.style.cssText = `
       position: absolute;
