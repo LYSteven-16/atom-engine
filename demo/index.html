@@ -613,7 +613,88 @@
       }
     ]);
 
-    console.log('🎯 AtomEngine - 21个原子能力完整展示已加载');
+    // 22. 表单输入原子
+    new SubstanceManager([
+      {
+        id: 'atom-form',
+        position: { x: 0, y: 6820 },
+        width: 400,
+        height: 400,
+        atoms: [
+          { id: 'bg-form-main', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-form-main', capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
+          { id: 'text-form-title', capability: 'text', position: { x: 20, y: 30 }, text: '22. 表单输入原子', size: 22, color: [50, 100, 200] },
+          { id: 'input-name', capability: 'input', position: { x: 20, y: 100 }, width: 160, placeholder: '姓名', size: 14 },
+          { id: 'input-email', capability: 'input', position: { x: 220, y: 100 }, width: 160, placeholder: '邮箱', size: 14 },
+          { id: 'textarea-desc', capability: 'textarea', position: { x: 20, y: 150 }, width: 360, height: 80, placeholder: '描述...', size: 14 },
+          { id: 'select-role', capability: 'select', position: { x: 20, y: 250 }, width: 160, options: [{ label: '管理员', value: 'admin' }, { label: '用户', value: 'user' }] },
+          { id: 'checkbox-terms', capability: 'checkbox', position: { x: 220, y: 250 }, label: '同意条款', size: 14 },
+          { id: 'shadow-form-main', capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
+        ]
+      }
+    ]);
+
+    // 23. 渐变背景
+    new SubstanceManager([
+      {
+        id: 'atom-gradient',
+        position: { x: 0, y: 7240 },
+        width: 400,
+        height: 300,
+        atoms: [
+          { id: 'bg-gradient-main', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-gradient-main', capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
+          { id: 'text-gradient-title', capability: 'text', position: { x: 20, y: 30 }, text: '23. 渐变背景', size: 22, color: [50, 100, 200] },
+          { id: 'gradient-linear', capability: 'background', position: { x: 20, y: 100 }, width: 170, height: 150, radius: 8, gradient: { type: 'linear', colors: [[255, 0, 0], [0, 0, 255]], direction: 'to right' } },
+          { id: 'gradient-radial', capability: 'background', position: { x: 210, y: 100 }, width: 170, height: 150, radius: 8, gradient: { type: 'radial', colors: [[255, 255, 0], [255, 0, 255]] } },
+          { id: 'text-linear', capability: 'text', position: { x: 60, y: 165 }, text: '线性渐变', size: 14, color: [255, 255, 255] },
+          { id: 'text-radial', capability: 'text', position: { x: 250, y: 165 }, text: '径向渐变', size: 14, color: [255, 255, 255] },
+          { id: 'shadow-gradient-main', capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
+        ]
+      }
+    ]);
+
+    // 24. 文本样式
+    new SubstanceManager([
+      {
+        id: 'atom-text-style',
+        position: { x: 0, y: 7560 },
+        width: 400,
+        height: 300,
+        atoms: [
+          { id: 'bg-text-main', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-text-main', capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
+          { id: 'text-style-title', capability: 'text', position: { x: 20, y: 30 }, text: '24. 文本样式', size: 22, color: [50, 100, 200] },
+          { id: 'text-bold', capability: 'text', position: { x: 20, y: 100 }, text: '粗体文本', size: 16, color: [0, 0, 0], fontWeight: 'bold' },
+          { id: 'text-italic', capability: 'text', position: { x: 120, y: 100 }, text: '斜体文本', size: 16, color: [0, 0, 0], fontStyle: 'italic' },
+          { id: 'text-center', capability: 'text', position: { x: 20, y: 140 }, text: '居中文本', size: 16, color: [0, 0, 0], textAlign: 'center', maxWidth: 360 },
+          { id: 'text-ellipsis', capability: 'text', position: { x: 20, y: 180 }, text: '这是一段很长的文本会被截断并显示省略号...', size: 14, color: [80, 80, 80], overflow: 'ellipsis', maxWidth: 360 },
+          { id: 'text-lineheight', capability: 'text', position: { x: 20, y: 220 }, text: '高行高文本', size: 14, color: [0, 0, 0], lineHeight: 2 },
+          { id: 'shadow-text-main', capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
+        ]
+      }
+    ]);
+
+    // 25. SVG 图标
+    new SubstanceManager([
+      {
+        id: 'atom-icon-svg',
+        position: { x: 0, y: 7880 },
+        width: 400,
+        height: 200,
+        atoms: [
+          { id: 'bg-icon-main', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-icon-main', capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
+          { id: 'text-icon-title', capability: 'text', position: { x: 20, y: 30 }, text: '25. SVG 图标', size: 22, color: [50, 100, 200] },
+          { id: 'icon-emoji', capability: 'icon', position: { x: 20, y: 100 }, icon: '🎯', size: 48 },
+          { id: 'icon-svg', capability: 'icon', position: { x: 80, y: 100 }, svg: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>', size: 48, color: [50, 100, 200] },
+          { id: 'icon-rocket', capability: 'icon', position: { x: 140, y: 100 }, icon: '🚀', size: 48 },
+          { id: 'shadow-icon-main', capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
+        ]
+      }
+    ]);
+
+    console.log('🎯 AtomEngine - 25个原子能力完整展示已加载');
     console.log('所有卡片尺寸统一为 400x300, 间距 20px');
   </script>
 </body>
