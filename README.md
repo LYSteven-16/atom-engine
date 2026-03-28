@@ -479,29 +479,75 @@ const resizeAtom = {
 - `onResize?: (size: { width: number; height: number }) => void` - 调整中
 - `onResizeEnd?: (size: { width: number; height: number }) => void` - 调整结束
 
-#### ResizeHandleAtom - 调整把手
+#### ResizeHandleAtom - 调整大小把手
 
-为元素添加可视化的调整大小把手：
+为元素添加可视化的调整大小把手，拖动把手可调整容器和指定原子的尺寸：
 
 ```javascript
 const resizeHandleAtom = {
+  id: 'resize-handle',
   capability: 'resize-handle',
-  handleSize: 10,
-  handleColor: [24, 144, 255],
-  edge: 'se',
-  minWidth: 100,
-  minHeight: 80
+  targetAtomIds: ['bg-main', 'border-main', 'shadow-main'],  // 只更新尺寸的原子
+  fixedAtomIds: ['text-title', 'text-subtitle'],             // 不做任何修改的原子
+  minWidth: 200,                                              // 最小宽度
+  minHeight: 150,                                             // 最小高度
+  handleColor: [220, 220, 220]                                // 把手颜色（默认浅灰色）
 };
 ```
 
 **配置属性**：
+- `id: string` - 原子唯一标识符（必需）
 - `capability: 'resize-handle'` - 原子类型标识
-- `handleSize?: number` - 把手大小
-- `handleColor?: [number, number, number]` - 把手颜色
-- `edge?: 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w' | 'nw'` - 把手位置
-- `minWidth?: number` - 最小宽度
-- `minHeight?: number` - 最小高度
-- `scaleMode?: 'corner' | 'edge'` - 缩放模式
+- `targetAtomIds?: string[]` - 只更新尺寸的原子id数组
+- `fixedAtomIds?: string[]` - 不做任何修改的原子id数组
+- `minWidth?: number` - 最小宽度（默认50）
+- `minHeight?: number` - 最小高度（默认50）
+- `handleColor?: [number, number, number]` - 把手颜色（默认[220, 220, 220]）
+
+**三种处理方式**：
+1. **targetAtomIds**：只更新 width/height，不改变位置和其他样式
+2. **fixedAtomIds**：不做任何修改，保持原样
+3. **其他原子**：等比缩放（位置、大小、文字字号）
+
+**把手样式**：
+- 三角形，填满右下角
+- 圆角跟容器同步
+- 颜色可配置，默认浅灰色
+
+**使用示例**：
+```javascript
+// 基本用法
+{
+  id: 'resize-handle',
+  capability: 'resize-handle'
+}
+
+// 指定需要调整的原子
+{
+  id: 'resize-handle',
+  capability: 'resize-handle',
+  targetAtomIds: ['bg-main', 'border-main', 'shadow-main']
+}
+
+// 指定不需要修改的原子
+{
+  id: 'resize-handle',
+  capability: 'resize-handle',
+  targetAtomIds: ['bg-main', 'border-main', 'shadow-main'],
+  fixedAtomIds: ['text-title', 'text-subtitle']
+}
+
+// 自定义最小尺寸和颜色
+{
+  id: 'resize-handle',
+  capability: 'resize-handle',
+  targetAtomIds: ['bg-main', 'border-main', 'shadow-main'],
+  fixedAtomIds: ['text-title', 'text-subtitle'],
+  minWidth: 200,
+  minHeight: 150,
+  handleColor: [100, 150, 255]
+}
+```
 
 #### ScrollAtom - 滚动交互
 
@@ -1016,20 +1062,15 @@ const molecules = [
         color: [232, 232, 232],
         radius: 4
       },
-      // 调整大小交互
-      {
-        capability: 'resize',
-        minWidth: 200,
-        maxWidth: 800,
-        minHeight: 150,
-        maxHeight: 600
-      },
       // 调整把手
       {
+        id: 'resize-handle',
         capability: 'resize-handle',
-        handleSize: 8,
-        handleColor: [24, 144, 255],
-        edge: 'se'
+        targetAtomIds: ['bg-main', 'border-main', 'shadow-main'],
+        fixedAtomIds: ['text-title', 'text-subtitle'],
+        minWidth: 200,
+        minHeight: 150,
+        handleColor: [100, 150, 255]
       }
     ]
   }
@@ -1336,6 +1377,79 @@ const molecule = {
 - Firefox 75+
 - Safari 13+
 - Edge 80+
+
+## ResizeHandleAtom 完整示例
+
+以下是一个完整的可调整大小卡片示例：
+
+```javascript
+const molecules = [
+  {
+    id: 'resizable-card',
+    position: { x: 100, y: 100 },
+    width: 400,
+    height: 300,
+    atoms: [
+      // 背景
+      {
+        id: 'bg-card',
+        capability: 'background',
+        color: [255, 255, 255]
+      },
+      // 边框
+      {
+        id: 'border-card',
+        capability: 'border',
+        borderWidth: 1,
+        color: [220, 220, 220],
+        radius: 12
+      },
+      // 阴影
+      {
+        id: 'shadow-card',
+        capability: 'shadow',
+        x: 3,
+        y: 3,
+        shadowBlur: 10,
+        shadowWidth: 5,
+        color: [0, 0, 0]
+      },
+      // 标题
+      {
+        id: 'text-title',
+        capability: 'text',
+        position: { x: 20, y: 30 },
+        text: '可调整大小的卡片',
+        size: 22,
+        color: [50, 100, 200]
+      },
+      // 描述
+      {
+        id: 'text-desc',
+        capability: 'text',
+        position: { x: 20, y: 60 },
+        text: '拖拽右下角调整大小',
+        size: 14,
+        color: [150, 150, 150]
+      },
+      // 调整把手
+      {
+        id: 'resize-handle',
+        capability: 'resize-handle',
+        targetAtomIds: ['bg-card', 'border-card', 'shadow-card'],
+        fixedAtomIds: ['text-title', 'text-desc'],
+        minWidth: 200,
+        minHeight: 150,
+        handleColor: [220, 220, 220]
+      }
+    ]
+  }
+];
+
+const manager = new SubstanceManager(molecules);
+const baker = manager.getBakerManager().getBaker('baker-0');
+document.getElementById('app').appendChild(baker.element);
+```
 
 ## 更新日志
 

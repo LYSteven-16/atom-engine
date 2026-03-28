@@ -832,17 +832,15 @@ private createResizeHandles(configs: any[]): void {
   configs.forEach(config => {
     const context = this.createContext();
     try {
-      new Atoms.ResizeHandleAtom(context, this.element, {
-        edge: config.edge,
+      this.animationAtoms.resizeHandle = new Atoms.ResizeHandleAtom(context, this.element, {
+        id: config.id,
+        targetAtomIds: config.targetAtomIds,
+        fixedAtomIds: config.fixedAtomIds,
+        initialWidth: this.molecule.width,
+        initialHeight: this.molecule.height,
         minWidth: config.minWidth,
         minHeight: config.minHeight,
-        handleSize: config.handleSize,
-        handleColor: config.handleColor,
-        scaleMode: config.scaleMode
-      }, {
-        onResizeStart: (size) => this.updateResizeStart(size),
-        onResize: (size) => this.updateResizeMove(size),
-        onResizeEnd: (size) => this.updateResizeEnd(size)
+        handleColor: config.handleColor
       });
     } catch (error) {
       console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
@@ -1249,7 +1247,7 @@ BeakerManager 重新创建
 | DragAtom | `/src/atoms/DragAtom.ts` | 拖拽功能 |
 | HoverAtom | `/src/atoms/HoverAtom.ts` | 悬停事件 |
 | ResizeAtom | `/src/atoms/ResizeAtom.ts` | 调整大小 |
-| ResizeHandleAtom | `/src/atoms/ResizeHandleAtom.ts` | 调整把手 |
+| ResizeHandleAtom | `/src/atoms/ResizeHandleAtom.ts` | 调整大小把手（三角形，支持等比缩放） |
 | ScrollAtom | `/src/atoms/ScrollAtom.ts` | 滚动事件 |
 
 #### 3. 装饰原子 (Decoration Atom)
@@ -1845,6 +1843,93 @@ describe('SubstanceManager', () => {
 ### 4. 懒加载原子
 
 支持原子按需加载，减少初始包体积。
+
+## ResizeHandleAtom 详细架构
+
+### 概述
+
+ResizeHandleAtom 是一个特殊的输入原子，用于创建可视化的调整大小把手。它允许用户通过拖拽来调整容器和指定原子的尺寸。
+
+### 核心功能
+
+1. **三种处理方式**：
+   - `targetAtomIds`：只更新 width/height
+   - `fixedAtomIds`：不做任何修改
+   - 其他原子：等比缩放（位置、大小、文字字号）
+
+2. **把手样式**：
+   - 三角形，填满右下角
+   - 圆角跟容器同步
+   - 颜色可配置，默认浅灰色
+
+3. **尺寸限制**：
+   - 支持 minWidth/minHeight 配置
+   - 拖拽时不会小于最小尺寸
+
+### 配置接口
+
+```typescript
+interface ResizeHandleAtomConfig {
+  id: string;                      // 原子唯一标识符
+  targetAtomIds?: string[];        // 只更新尺寸的原子id
+  fixedAtomIds?: string[];         // 不做任何修改的原子id
+  initialWidth?: number;           // 初始宽度
+  initialHeight?: number;          // 初始高度
+  minWidth?: number;               // 最小宽度
+  minHeight?: number;              // 最小高度
+  handleColor?: [number, number, number];  // 把手颜色
+}
+```
+
+### 数据流
+
+```
+用户拖拽把手 → onMouseMove → 计算新尺寸
+                    ↓
+        更新容器尺寸 (this.element.style.width/height)
+                    ↓
+        更新target原子尺寸 (el.style.width/height)
+                    ↓
+        更新其他原子 (等比缩放)
+```
+
+### Beaker 创建流程
+
+```typescript
+private createResizeHandles(configs: any[]): void {
+  configs.forEach(config => {
+    const context = this.createContext();
+    try {
+      this.animationAtoms.resizeHandle = new Atoms.ResizeHandleAtom(context, this.element, {
+        id: config.id,
+        targetAtomIds: config.targetAtomIds,
+        fixedAtomIds: config.fixedAtomIds,
+        initialWidth: this.molecule.width,
+        initialHeight: this.molecule.height,
+        minWidth: config.minWidth,
+        minHeight: config.minHeight,
+        handleColor: config.handleColor
+      });
+    } catch (error) {
+      console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
+    }
+  });
+}
+```
+
+### 使用示例
+
+```javascript
+{
+  id: 'resize-handle',
+  capability: 'resize-handle',
+  targetAtomIds: ['bg-main', 'border-main', 'shadow-main'],
+  fixedAtomIds: ['text-title', 'text-subtitle'],
+  minWidth: 200,
+  minHeight: 150,
+  handleColor: [100, 150, 255]
+}
+```
 
 ## 附录
 
