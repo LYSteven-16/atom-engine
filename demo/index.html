@@ -588,7 +588,10 @@
             atoms: [
               { id: 'bg-child-1', capability: 'background', color: [100, 200, 255], radius: 8 },
               { id: 'border-child-1', capability: 'border', borderWidth: 1, color: [80, 180, 240], radius: 8 },
-              { id: 'text-child-1', capability: 'text', position: { x: 20, y: 40 }, text: '子分子 1', size: 14, color: [255, 255, 255] }
+              { id: 'text-child-1', capability: 'text', position: { x: 20, y: 40 }, text: '拖拽我', size: 14, color: [255, 255, 255] },
+              { id: 'drag-child-1', capability: 'drag' },
+              { id: 'translate-child-1', capability: 'translate', trigger: 'drag' },
+              { id: 'shadow-child-1', capability: 'shadow', x: 2, y: 2, shadowBlur: 8, shadowWidth: 3, color: [0, 0, 0] }
             ]
           },
           {
@@ -599,8 +602,11 @@
             atoms: [
               { id: 'bg-child-2', capability: 'background', color: [255, 200, 100], radius: 8 },
               { id: 'border-child-2', capability: 'border', borderWidth: 1, color: [240, 180, 80], radius: 8 },
-              { id: 'text-child-2', capability: 'text', position: { x: 20, y: 30 }, text: '子分子 2', size: 14, color: [255, 255, 255] },
-              { id: 'text-child-2-desc', capability: 'text', position: { x: 20, y: 55 }, text: '包含孙分子', size: 12, color: [255, 255, 255] }
+              { id: 'text-child-2', capability: 'text', position: { x: 20, y: 30 }, text: '悬停缩放', size: 14, color: [255, 255, 255] },
+              { id: 'text-child-2-desc', capability: 'text', position: { x: 20, y: 55 }, text: '1.2x', size: 12, color: [255, 255, 255] },
+              { id: 'hover-child-2', capability: 'hover' },
+              { id: 'scale-child-2', capability: 'scale', value: 1.2, trigger: 'hover' },
+              { id: 'shadow-child-2', capability: 'shadow', x: 2, y: 2, shadowBlur: 8, shadowWidth: 3, color: [0, 0, 0] }
             ],
             molecules: [
               {
