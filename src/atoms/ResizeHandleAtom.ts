@@ -78,16 +78,20 @@ export class ResizeHandleAtom {
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
     
+    // 获取容器圆角
+    const containerRadius = parseInt(this.element.style.borderRadius) || 12;
     const color = this.handleColor;
+    
+    // 创建三角形把手，圆角跟容器同步
     this.handle.style.cssText = `
       position: absolute;
       right: 0;
       bottom: 0;
-      width: 0;
-      height: 0;
-      border-style: solid;
-      border-width: 0 0 20px 20px;
-      border-color: transparent transparent rgb(${color[0]}, ${color[1]}, ${color[2]}) transparent;
+      width: 20px;
+      height: 20px;
+      background: rgb(${color[0]}, ${color[1]}, ${color[2]});
+      border-radius: 0 0 ${containerRadius}px 0;
+      clip-path: polygon(100% 0, 100% 100%, 0 100%);
       cursor: se-resize;
       z-index: 1000;
       pointer-events: auto;
