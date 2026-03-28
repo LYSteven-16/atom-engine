@@ -148,8 +148,6 @@ export class ResizeHandleAtom {
       const scaleX = newWidth / this.originalWidth;
       const scaleY = newHeight / this.originalHeight;
       console.log('scaleX:', scaleX, 'scaleY:', scaleY, 'newWidth:', newWidth, 'newHeight:', newHeight, 'originalWidth:', this.originalWidth, 'originalHeight:', this.originalHeight);
-      const containerCenterX = this.originalWidth / 2;
-      const containerCenterY = this.originalHeight / 2;
       
       const children = this.element.children;
       for (let i = 0; i < children.length; i++) {
@@ -165,14 +163,9 @@ export class ResizeHandleAtom {
         const original = this.originalStyles.get(child);
         if (!original) continue;
         
-        // 等比缩放
-        const childCenterX = original.left + original.width / 2;
-        const childCenterY = original.top + original.height / 2;
-        const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scaleX;
-        const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scaleY;
-        
-        child.style.left = `${newChildCenterX - original.width * scaleX / 2}px`;
-        child.style.top = `${newChildCenterY - original.height * scaleY / 2}px`;
+        // 等比缩放（相对于左上角）
+        child.style.left = `${original.left * scaleX}px`;
+        child.style.top = `${original.top * scaleY}px`;
         child.style.width = `${original.width * scaleX}px`;
         child.style.height = `${original.height * scaleY}px`;
         child.style.fontSize = `${original.fontSize * Math.min(scaleX, scaleY)}px`;
