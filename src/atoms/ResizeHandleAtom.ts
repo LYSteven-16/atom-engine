@@ -2,12 +2,6 @@ import type { AtomContext } from '../atoms';
 
 export interface ResizeHandleAtomConfig {
   id: string;
-  value: number;
-  trigger: 'hover' | 'click' | 'doubleclick';
-  defaultValue?: number;
-  keepOnRelease?: boolean;
-  toggleOnClick?: boolean;
-  duration?: number;
 }
 
 export class ResizeHandleAtom {
@@ -15,7 +9,6 @@ export class ResizeHandleAtom {
   readonly context: AtomContext;
   readonly id: string;
   private element: HTMLElement;
-  private config: ResizeHandleAtomConfig;
   private handle: HTMLElement | null = null;
   private decorationElements: HTMLElement[] = [];
 
@@ -23,13 +16,6 @@ export class ResizeHandleAtom {
     this.context = context;
     this.id = config.id;
     this.element = element;
-    this.config = {
-      defaultValue: 1,
-      keepOnRelease: false,
-      toggleOnClick: true,
-      duration: 0.15,
-      ...config
-    };
     this.findDecorations();
     this.createHandle();
   }
@@ -46,9 +32,6 @@ export class ResizeHandleAtom {
   }
 
   private createHandle(): void {
-    const existingHandle = this.element.querySelector('[data-atom-id="' + this.id + '"]');
-    if (existingHandle) return;
-    
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
     this.handle.style.cssText = `
@@ -63,7 +46,7 @@ export class ResizeHandleAtom {
       background: transparent;
       overflow: hidden;
     `;
-    
+
     const dots = [
       { x: 14, y: 14 },
       { x: 10, y: 14 },
@@ -72,7 +55,7 @@ export class ResizeHandleAtom {
       { x: 10, y: 10 },
       { x: 14, y: 6 },
     ];
-    
+
     dots.forEach(pos => {
       const dot = document.createElement('div');
       dot.style.cssText = `
@@ -86,7 +69,7 @@ export class ResizeHandleAtom {
       `;
       this.handle.appendChild(dot);
     });
-    
+
     this.element.appendChild(this.handle);
     this.setupDrag();
   }
@@ -102,29 +85,21 @@ export class ResizeHandleAtom {
       e.preventDefault();
       e.stopPropagation();
       isDragging = true;
-      // 记录容器初始位置
       const rect = this.element.getBoundingClientRect();
       startLeft = rect.left;
       startTop = rect.top;
-      // 固定容器位置
       this.element.style.left = `${rect.left}px`;
       this.element.style.top = `${rect.top}px`;
     };
 
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
-      
-      // 计算新尺寸
       const newWidth = e.clientX - startLeft;
       const newHeight = e.clientY - startTop;
-      
-      // 更新所有装饰原子尺寸
       this.decorationElements.forEach(el => {
         el.style.width = `${newWidth}px`;
         el.style.height = `${newHeight}px`;
       });
-      
-      // 更新容器尺寸
       this.element.style.width = `${newWidth}px`;
       this.element.style.height = `${newHeight}px`;
     };
@@ -138,9 +113,4 @@ export class ResizeHandleAtom {
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
   }
-
-  onHoverChange(isHovered: boolean): void {}
-  onClickChange(isClicked: boolean, clickCount: number): void {}
-  onDoubleClick(): void {}
-  getValue(): number { return 1; }
 }

@@ -549,13 +549,7 @@ export class Beaker {
       const context = this.createContext();
       try {
         this.animationAtoms.resizeHandle = new Atoms.ResizeHandleAtom(context, this.element, {
-          id: config.id,
-          value: config.value,
-          trigger: config.trigger,
-          defaultValue: config.defaultValue ?? 1,
-          keepOnRelease: config.keepOnRelease,
-          toggleOnClick: config.toggleOnClick,
-          duration: config.duration
+          id: config.id
         });
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
