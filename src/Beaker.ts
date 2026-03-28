@@ -57,6 +57,7 @@ export class Beaker {
 
   private subBeakers: Map<string, Beaker> = new Map();
   private originalSubBeakerStyles: Map<HTMLElement, { left: number; top: number; width: number; height: number }> = new Map();
+  private originalChildStyles: Map<HTMLElement, { left: number; top: number; width: number; height: number; fontSize: number }> = new Map();
 
   constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback) {
     this.id = id;
@@ -161,9 +162,28 @@ export class Beaker {
         height: molecule.height ?? 100
       });
       
+      // 保存子Beaker内部所有元素的原始样式
+      this.saveChildStyles(subBeaker.element);
+      
       this.subBeakers.set(subBakerId, subBeaker);
       this.element.appendChild(subBeaker.element);
     });
+  }
+
+  private saveChildStyles(element: HTMLElement): void {
+    const children = element.children;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement;
+      const style = child.style;
+      
+      this.originalChildStyles.set(child, {
+        left: parseFloat(style.left) || 0,
+        top: parseFloat(style.top) || 0,
+        width: parseFloat(style.width) || child.offsetWidth || 0,
+        height: parseFloat(style.height) || child.offsetHeight || 0,
+        fontSize: parseFloat(style.fontSize) || parseFloat(getComputedStyle(child).fontSize) || 0
+      });
+    }
   }
 
   public applyScale(scale: number): void {
@@ -183,11 +203,37 @@ export class Beaker {
         subBeaker.element.style.top = `${newChildCenterY - original.height * scale / 2}px`;
         subBeaker.element.style.width = `${original.width * scale}px`;
         subBeaker.element.style.height = `${original.height * scale}px`;
+        
+        // 缩放子Beaker内部的元素
+        this.scaleChildren(subBeaker.element, scale);
       }
       
       // 递归应用scale到孙Beaker
       subBeaker.applyScale(scale);
     });
+  }
+
+  private scaleChildren(element: HTMLElement, scale: number): void {
+    const containerCenterX = element.offsetWidth / 2;
+    const containerCenterY = element.offsetHeight / 2;
+    const children = element.children;
+    
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement;
+      const original = this.originalChildStyles.get(child);
+      if (!original) continue;
+
+      const childCenterX = original.left + original.width / 2;
+      const childCenterY = original.top + original.height / 2;
+      const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scale;
+      const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scale;
+
+      child.style.left = `${newChildCenterX - original.width * scale / 2}px`;
+      child.style.top = `${newChildCenterY - original.height * scale / 2}px`;
+      child.style.width = `${original.width * scale}px`;
+      child.style.height = `${original.height * scale}px`;
+      child.style.fontSize = `${original.fontSize * scale}px`;
+    }
   }
 
   private createContext(): { bakerId: string; bakerIndex: number; atomIndex: number } {
