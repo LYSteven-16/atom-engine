@@ -42,7 +42,7 @@ export class ResizeHandleAtom {
     this.originalHeight = config.initialHeight || element.offsetHeight || 300;
     this.minWidth = config.minWidth || 50;
     this.minHeight = config.minHeight || 50;
-    this.handleColor = config.handleColor || [200, 200, 200];
+    this.handleColor = config.handleColor || [220, 220, 220]; // 浅灰色
     this.fixedElementIds = config.fixedAtomIds || [];
     this.findTargets(config.targetAtomIds || []);
     this.saveOriginalStyles();
