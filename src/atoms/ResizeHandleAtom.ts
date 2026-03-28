@@ -2,6 +2,7 @@ import type { AtomContext } from '../atoms';
 
 export interface ResizeHandleAtomConfig {
   id: string;
+  targetAtomIds: string[];  // 需要调整尺寸的原子id
 }
 
 export class ResizeHandleAtom {
@@ -10,23 +11,23 @@ export class ResizeHandleAtom {
   readonly id: string;
   private element: HTMLElement;
   private handle: HTMLElement | null = null;
-  private decorationElements: HTMLElement[] = [];
+  private targetElements: HTMLElement[] = [];
 
   constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig) {
     this.context = context;
     this.id = config.id;
     this.element = element;
-    this.findDecorations();
+    this.findTargets(config.targetAtomIds);
     this.createHandle();
   }
 
-  private findDecorations(): void {
+  private findTargets(targetAtomIds: string[]): void {
     const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       const atomId = child.getAttribute('data-atom-id');
-      if (atomId && (atomId.startsWith('bg-') || atomId.startsWith('border-') || atomId.startsWith('shadow-'))) {
-        this.decorationElements.push(child);
+      if (atomId && targetAtomIds.includes(atomId)) {
+        this.targetElements.push(child);
       }
     }
   }
@@ -100,7 +101,7 @@ export class ResizeHandleAtom {
       const newWidth = Math.max(50, startWidth + dx);
       const newHeight = Math.max(50, startHeight + dy);
       
-      this.decorationElements.forEach(el => {
+      this.targetElements.forEach((el: HTMLElement) => {
         el.style.width = `${newWidth}px`;
         el.style.height = `${newHeight}px`;
       });
