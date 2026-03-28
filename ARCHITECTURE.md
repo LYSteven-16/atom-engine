@@ -1236,13 +1236,14 @@ BeakerManager 重新创建
 
 | 原子类型 | 文件位置 | 功能描述 |
 |---------|---------|---------|
-| TextAtom | `/src/atoms/TextAtom.ts` | 显示文本内容 |
+| TextAtom | `/src/atoms/TextAtom.ts` | 显示文本内容（支持 fontWeight/fontStyle/textAlign/overflow） |
 | ImageAtom | `/src/atoms/ImageAtom.ts` | 显示图片 |
 | VideoAtom | `/src/atoms/VideoAtom.ts` | 播放视频 |
 | AudioAtom | `/src/atoms/AudioAtom.ts` | 播放音频 |
 | CodeAtom | `/src/atoms/CodeAtom.ts` | 显示代码（内联语法高亮/自动格式化/语言识别） |
-| IconAtom | `/src/atoms/IconAtom.ts` | 显示图标 |
+| IconAtom | `/src/atoms/IconAtom.ts` | 显示图标（支持 SVG、emoji、文本） |
 | CanvasAtom | `/src/atoms/CanvasAtom.ts` | 绘图画布（支持工具栏/黑板模式/可调整大小） |
+| EditableTextAtom | `/src/atoms/EditableTextAtom.ts` | 可编辑文本（双击进入编辑模式） |
 
 #### 2. 输入原子 (Input Atom)
 
@@ -1256,6 +1257,10 @@ BeakerManager 重新创建
 | ResizeAtom | `/src/atoms/ResizeAtom.ts` | 调整大小 |
 | ResizeHandleAtom | `/src/atoms/ResizeHandleAtom.ts` | 调整大小把手（三角形，支持等比缩放） |
 | ScrollAtom | `/src/atoms/ScrollAtom.ts` | 滚动事件 |
+| InputAtom | `/src/atoms/InputAtom.ts` | 单行文本输入 |
+| TextareaAtom | `/src/atoms/TextareaAtom.ts` | 多行文本输入 |
+| SelectAtom | `/src/atoms/SelectAtom.ts` | 下拉选择 |
+| CheckboxAtom | `/src/atoms/CheckboxAtom.ts` | 复选框 |
 
 #### 3. 装饰原子 (Decoration Atom)
 
@@ -1263,13 +1268,22 @@ BeakerManager 重新创建
 
 | 原子类型 | capability | 功能描述 |
 |---------|---------|---------|
-| BackgroundAtom | `background` | 背景装饰（独立DOM，position/width/height/radius） |
+| BackgroundAtom | `background` | 背景装饰（支持渐变、透明度） |
 | BorderAtom | `border` | 边框装饰（独立DOM，borderWidth/width/height/radius） |
 | ShadowAtom | `shadow` | 阴影装饰（独立DOM，x/y/shadowBlur/shadowWidth/width/height/radius） |
 
 注意：装饰原子各自创建独立DOM元素，绝对定位；最先渲染（底层），内容原子后渲染（上层）；分子容器完全透明，不承载样式。
 
-#### 4. 动画原子 (Animation Atom)
+#### 4. 布局原子 (Layout Atom)
+
+负责布局，包括：
+
+| 原子类型 | capability | 功能描述 |
+|---------|---------|---------|
+| FlexAtom | `flex` | Flexbox 布局容器 |
+| ScrollContainerAtom | `scroll-container` | 滚动容器 |
+
+#### 5. 动画原子 (Animation Atom)
 
 负责动画效果，包括：
 
@@ -1964,9 +1978,18 @@ export interface Molecule {
   verticalGap?: number;
   horizontalGap?: number;
   atoms: any[];
+  molecules?: Molecule[];  // 子分子数组（不支持嵌套）
   width?: number;
   height?: number;
   radius?: number;
+  visible?: boolean;        // 初始可见性
+  disabled?: boolean;       // 初始禁用状态
+  selected?: boolean;       // 初始选中状态
+  zIndex?: number;          // 初始层级
+  className?: string;       // 自定义 CSS 类名
+  data?: Record<string, any>;  // 自定义数据
+  onMount?: (element: HTMLElement) => void;   // 挂载回调
+  onDestroy?: () => void;   // 销毁回调
 }
 
 export interface BakerState {
@@ -1982,6 +2005,12 @@ export interface BakerState {
   scrollX?: number;
   scrollY?: number;
   collapsedGroups: Set<string>;
+  zIndex?: number;           // 层级
+  visible?: boolean;         // 可见性
+  disabled?: boolean;        // 禁用状态
+  selected?: boolean;        // 选中状态
+  opacity?: number;          // 透明度
+  scale?: number;            // 缩放比例
 }
 ```
 
