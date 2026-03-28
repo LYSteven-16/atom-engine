@@ -4,13 +4,25 @@ import type { Molecule } from './molecules';
 export class SubstanceManager {
   private _beakerManager: BeakerManager;
 
-  constructor(molecules: Molecule[]) {
+  constructor(molecules: Molecule[], container?: HTMLElement) {
     const processedMolecules = this.process(molecules);
-    this._beakerManager = new BeakerManager(processedMolecules);
+    this._beakerManager = new BeakerManager(processedMolecules, container);
   }
 
   public getBakerManager(): BeakerManager {
     return this._beakerManager;
+  }
+
+  public addMolecule(molecule: Molecule, container?: HTMLElement) {
+    return this._beakerManager.addMolecule(molecule, container);
+  }
+
+  public removeMolecule(bakerId: string) {
+    this._beakerManager.removeMolecule(bakerId);
+  }
+
+  public destroy() {
+    this._beakerManager.destroy();
   }
 
   private process(molecules: Molecule[], cellWidth: number = 100, cellHeight: number = 100): Molecule[] {

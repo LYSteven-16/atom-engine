@@ -15,48 +15,65 @@ export class DragAtom {
   readonly capability: 'drag' = 'drag';
   readonly context: AtomContext;
   readonly id: string;
-  private element: HTMLElement;
-  private config: DragAtomConfig;
   private callbacks: DragInputCallbacks;
+  private handle: HTMLElement;
+  private onMouseDownHandler: ((e: Event) => void) | null = null;
+  private onMouseMoveHandler: ((e: Event) => void) | null = null;
+  private onMouseUpHandler: (() => void) | null = null;
+  private isDragging: boolean = false;
 
-  constructor(context: AtomContext, element: HTMLElement, config: DragAtomConfig, callbacks: DragInputCallbacks) {
+  constructor(context: AtomContext, _element: HTMLElement, config: DragAtomConfig, callbacks: DragInputCallbacks) {
     this.context = context;
     this.id = callbacks.id;
-    this.element = element;
-    this.config = config;
     this.callbacks = callbacks;
+    this.handle = config.handle ?? _element;
     this.apply();
   }
 
   private apply(): void {
     try {
-      const handle = this.config.handle ?? this.element;
-      let isDragging = false;
-
-      const onMouseDown = (e: MouseEvent) => {
-        if (e.button !== 0) return;
-        e.preventDefault();
-        isDragging = true;
-        this.callbacks.onDragStart?.({ clientX: e.clientX, clientY: e.clientY });
+      this.onMouseDownHandler = (e: Event) => {
+        const mouseEvent = e as MouseEvent;
+        if (mouseEvent.button !== 0) return;
+        mouseEvent.preventDefault();
+        this.isDragging = true;
+        this.callbacks.onDragStart?.({ clientX: mouseEvent.clientX, clientY: mouseEvent.clientY });
       };
 
-      const onMouseMove = (e: MouseEvent) => {
-        if (!isDragging) return;
-        this.callbacks.onDragMove?.({ clientX: e.clientX, clientY: e.clientY });
+      this.onMouseMoveHandler = (e: Event) => {
+        if (!this.isDragging) return;
+        const mouseEvent = e as MouseEvent;
+        this.callbacks.onDragMove?.({ clientX: mouseEvent.clientX, clientY: mouseEvent.clientY });
       };
 
-      const onMouseUp = () => {
-        if (!isDragging) return;
-        isDragging = false;
+      this.onMouseUpHandler = () => {
+        if (!this.isDragging) return;
+        this.isDragging = false;
         this.callbacks.onDragEnd?.();
       };
 
-      handle.addEventListener('mousedown', onMouseDown);
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
+      this.handle.addEventListener('mousedown', this.onMouseDownHandler);
+      document.addEventListener('mousemove', this.onMouseMoveHandler);
+      document.addEventListener('mouseup', this.onMouseUpHandler);
       console.log(`[Atom] ${this.context.bakerId} - DragAtom应用成功`);
     } catch (error) {
       console.error(`[Atom Error] ${this.context.bakerId} - DragAtom应用失败:`, error);
     }
+  }
+
+  destroy(): void {
+    if (this.onMouseDownHandler) {
+      this.handle.removeEventListener('mousedown', this.onMouseDownHandler);
+    }
+    if (this.onMouseMoveHandler) {
+      document.removeEventListener('mousemove', this.onMouseMoveHandler);
+    }
+    if (this.onMouseUpHandler) {
+      document.removeEventListener('mouseup', this.onMouseUpHandler);
+    }
+    this.onMouseDownHandler = null;
+    this.onMouseMoveHandler = null;
+    this.onMouseUpHandler = null;
+    console.log(`[Atom] ${this.context.bakerId} - DragAtom已销毁`);
   }
 }

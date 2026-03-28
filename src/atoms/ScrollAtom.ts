@@ -20,6 +20,7 @@ export class ScrollAtom {
   private callbacks: ScrollInputCallbacks;
   private scrollX: number = 0;
   private scrollY: number = 0;
+  private onWheelHandler: ((e: WheelEvent) => void) | null = null;
 
   constructor(context: AtomContext, element: HTMLElement, config: ScrollAtomConfig, callbacks: ScrollInputCallbacks) {
     this.context = context;
@@ -37,7 +38,7 @@ export class ScrollAtom {
       const maxScrollX = this.config.maxScrollX ?? Infinity;
       const maxScrollY = this.config.maxScrollY ?? Infinity;
 
-      const onWheel = (e: WheelEvent) => {
+      this.onWheelHandler = (e: WheelEvent) => {
         e.preventDefault();
 
         if (this.config.direction === 'horizontal' || this.config.direction === 'both') {
@@ -51,10 +52,18 @@ export class ScrollAtom {
         this.callbacks.onScroll?.({ scrollX: this.scrollX, scrollY: this.scrollY });
       };
 
-      this.element.addEventListener('wheel', onWheel, { passive: false });
+      this.element.addEventListener('wheel', this.onWheelHandler, { passive: false });
       console.log(`[Atom] ${this.context.bakerId} - ScrollAtom应用成功`);
     } catch (error) {
       console.error(`[Atom Error] ${this.context.bakerId} - ScrollAtom应用失败:`, error);
     }
+  }
+
+  destroy(): void {
+    if (this.onWheelHandler) {
+      this.element.removeEventListener('wheel', this.onWheelHandler);
+    }
+    this.onWheelHandler = null;
+    console.log(`[Atom] ${this.context.bakerId} - ScrollAtom已销毁`);
   }
 }

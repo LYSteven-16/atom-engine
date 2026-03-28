@@ -13,8 +13,7 @@
     }
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "build": "tsup src/SubstanceManager.ts --format cjs,esm --dts",

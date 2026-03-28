@@ -8,7 +8,7 @@ export { CanvasAtom, type CanvasAtomConfig, type StrokePoint, type Stroke } from
 export { BackgroundAtom, type BackgroundAtomConfig } from './BackgroundAtom';
 export { BorderAtom, type BorderAtomConfig } from './BorderAtom';
 export { ShadowAtom, type ShadowAtomConfig } from './ShadowAtom';
-export { ResizeHandleAtom, type ResizeHandleAtomConfig, type ResizeHandleInputCallbacks } from './ResizeHandleAtom';
+export { ResizeHandleAtom, type ResizeHandleAtomConfig } from './ResizeHandleAtom';
 export { DragAtom, type DragAtomConfig, type DragInputCallbacks } from './DragAtom';
 export { ResizeAtom, type ResizeAtomConfig, type ResizeInputCallbacks } from './ResizeAtom';
 export { ScrollAtom, type ScrollAtomConfig, type ScrollInputCallbacks } from './ScrollAtom';
@@ -21,3 +21,6 @@ export { TranslateAtom, type TranslateAtomConfig } from './TranslateAtom';
 export { HeightAtom, type HeightAtomConfig } from './HeightAtom';
 export { WidthAtom, type WidthAtomConfig } from './WidthAtom';
 export { CollapseAtom, type CollapseAtomConfig } from './CollapseAtom';
+export { InputAtom, type InputAtomConfig } from './InputAtom';
+export { SelectAtom, type SelectAtomConfig, type SelectOption } from './SelectAtom';
+export { CheckboxAtom, type CheckboxAtomConfig } from './CheckboxAtom';

@@ -455,6 +455,44 @@ export class Beaker {
               minHeight: atomConfig.minHeight
             }));
             break;
+          case 'input':
+            this.contentAtoms.push(new Atoms.InputAtom(context, this.element, {
+              id: atomConfig.id,
+              value: atomConfig.value,
+              placeholder: atomConfig.placeholder,
+              size: atomConfig.size,
+              color: atomConfig.color,
+              position: atomConfig.position,
+              width: atomConfig.width,
+              height: atomConfig.height,
+              onChange: atomConfig.onChange,
+              onInput: atomConfig.onInput
+            }));
+            break;
+          case 'select':
+            this.contentAtoms.push(new Atoms.SelectAtom(context, this.element, {
+              id: atomConfig.id,
+              value: atomConfig.value,
+              options: atomConfig.options,
+              size: atomConfig.size,
+              color: atomConfig.color,
+              position: atomConfig.position,
+              width: atomConfig.width,
+              height: atomConfig.height,
+              onChange: atomConfig.onChange
+            }));
+            break;
+          case 'checkbox':
+            this.contentAtoms.push(new Atoms.CheckboxAtom(context, this.element, {
+              id: atomConfig.id,
+              checked: atomConfig.checked,
+              label: atomConfig.label,
+              size: atomConfig.size,
+              color: atomConfig.color,
+              position: atomConfig.position,
+              onChange: atomConfig.onChange
+            }));
+            break;
         }
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ContentAtom失败:`, error);
@@ -856,5 +894,33 @@ export class Beaker {
     if (this.onStateChange) {
       this.onStateChange(this.id, { position: { x, y } });
     }
+  }
+
+  public destroy(): void {
+    // 销毁所有子 Beaker
+    this.subBeakers.forEach((subBeaker) => {
+      subBeaker.destroy();
+    });
+    this.subBeakers.clear();
+
+    // 销毁所有内容原子
+    this.contentAtoms.forEach(atom => {
+      if (atom && typeof atom.destroy === 'function') {
+        atom.destroy();
+      }
+    });
+    this.contentAtoms = [];
+
+    // 从 DOM 中移除元素
+    if (this.element.parentNode) {
+      this.element.parentNode.removeChild(this.element);
+    }
+
+    // 清理状态
+    this.onStateChange = null;
+    this.originalSubBeakerStyles.clear();
+    this.originalChildStyles.clear();
+
+    console.log(`[Beaker] ${this.id} 已销毁`);
   }
 }

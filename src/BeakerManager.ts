@@ -5,16 +5,45 @@ export class BeakerManager {
   private bakers: Map<string, Beaker> = new Map();
   private bakerStates: Map<string, BakerState> = new Map();
   private bakerIdCounter: number = 0;
+  private defaultContainer: HTMLElement;
 
-  constructor(molecules: Molecule[]) {
+  constructor(molecules: Molecule[], container?: HTMLElement) {
+    this.defaultContainer = container ?? document.body;
+    
     molecules.forEach((molecule) => {
-      const bakerIndex = this.bakerIdCounter;
-      const bakerId = `baker-${this.bakerIdCounter++}`;
-      const baker = new Beaker(bakerId, molecule, bakerIndex, this.handleBakerStateChange.bind(this));
-      this.bakers.set(bakerId, baker);
-      this.bakerStates.set(bakerId, baker.getState());
-      document.body.appendChild(baker.element);
+      this.addMolecule(molecule);
     });
+  }
+
+  public addMolecule(molecule: Molecule, container?: HTMLElement): Beaker {
+    const bakerIndex = this.bakerIdCounter;
+    const bakerId = `baker-${this.bakerIdCounter++}`;
+    const baker = new Beaker(bakerId, molecule, bakerIndex, this.handleBakerStateChange.bind(this));
+    this.bakers.set(bakerId, baker);
+    this.bakerStates.set(bakerId, baker.getState());
+    (container ?? this.defaultContainer).appendChild(baker.element);
+    return baker;
+  }
+
+  public removeMolecule(bakerId: string): void {
+    const baker = this.bakers.get(bakerId);
+    if (baker) {
+      baker.destroy();
+      this.bakers.delete(bakerId);
+      this.bakerStates.delete(bakerId);
+    }
+  }
+
+  public clearAll(): void {
+    this.bakers.forEach((baker) => {
+      baker.destroy();
+    });
+    this.bakers.clear();
+    this.bakerStates.clear();
+  }
+
+  public destroy(): void {
+    this.clearAll();
   }
 
   private handleBakerStateChange(bakerId: string, state: Partial<BakerState>): void {
