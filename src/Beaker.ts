@@ -56,6 +56,8 @@ export class Beaker {
   } = {};
 
   private subBeakers: Map<string, Beaker> = new Map();
+  private currentScale: number = 1;
+  private originalSubBeakerStyles: Map<HTMLElement, { left: number; top: number; width: number; height: number }> = new Map();
 
   constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback) {
     this.id = id;
@@ -152,8 +154,42 @@ export class Beaker {
         subBeaker.element.style.top = `${molecule.position.y}px`;
       }
       
+      // 保存原始样式
+      this.originalSubBeakerStyles.set(subBeaker.element, {
+        left: molecule.position?.x ?? 0,
+        top: molecule.position?.y ?? 0,
+        width: molecule.width ?? 100,
+        height: molecule.height ?? 100
+      });
+      
       this.subBeakers.set(subBakerId, subBeaker);
       this.element.appendChild(subBeaker.element);
+    });
+  }
+
+  public applyScale(scale: number): void {
+    this.currentScale = scale;
+    
+    // 缩放子Beaker元素
+    this.subBeakers.forEach((subBeaker, id) => {
+      const original = this.originalSubBeakerStyles.get(subBeaker.element);
+      if (original) {
+        const containerCenterX = this.element.offsetWidth / 2;
+        const containerCenterY = this.element.offsetHeight / 2;
+        
+        const childCenterX = original.left + original.width / 2;
+        const childCenterY = original.top + original.height / 2;
+        const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scale;
+        const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scale;
+        
+        subBeaker.element.style.left = `${newChildCenterX - original.width * scale / 2}px`;
+        subBeaker.element.style.top = `${newChildCenterY - original.height * scale / 2}px`;
+        subBeaker.element.style.width = `${original.width * scale}px`;
+        subBeaker.element.style.height = `${original.height * scale}px`;
+      }
+      
+      // 递归应用scale到孙Beaker
+      subBeaker.applyScale(scale);
     });
   }
 
@@ -599,6 +635,12 @@ export class Beaker {
     this.animationAtoms.height?.onHoverChange(isHovered);
     this.animationAtoms.width?.onHoverChange(isHovered);
     
+    // 应用scale到子Beaker
+    if (this.animationAtoms.scale) {
+      const scale = this.animationAtoms.scale.getValue();
+      this.applyScale(scale);
+    }
+    
     // 通知子Beaker
     this.subBeakers.forEach(subBeaker => {
       subBeaker.notifyHoverChange(isHovered);
@@ -612,6 +654,12 @@ export class Beaker {
     this.animationAtoms.height?.onClickChange(isClicked, clickCount);
     this.animationAtoms.width?.onClickChange(isClicked, clickCount);
     
+    // 应用scale到子Beaker
+    if (this.animationAtoms.scale) {
+      const scale = this.animationAtoms.scale.getValue();
+      this.applyScale(scale);
+    }
+    
     // 通知子Beaker
     this.subBeakers.forEach(subBeaker => {
       subBeaker.notifyClickChange(isClicked, clickCount);
@@ -624,6 +672,12 @@ export class Beaker {
     this.animationAtoms.rotate?.onDoubleClick();
     this.animationAtoms.height?.onDoubleClick();
     this.animationAtoms.width?.onDoubleClick();
+    
+    // 应用scale到子Beaker
+    if (this.animationAtoms.scale) {
+      const scale = this.animationAtoms.scale.getValue();
+      this.applyScale(scale);
+    }
     
     // 通知子Beaker
     this.subBeakers.forEach(subBeaker => {

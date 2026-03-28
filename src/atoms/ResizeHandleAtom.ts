@@ -78,8 +78,26 @@ export class ResizeHandleAtom {
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
     
-    // 获取容器圆角
-    const containerRadius = parseInt(this.element.style.borderRadius) || 12;
+    // 从装饰原子获取圆角
+    let containerRadius = 0;
+    const children = this.element.children;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement;
+      const atomId = child.getAttribute('data-atom-id');
+      if (atomId && (atomId.startsWith('bg-') || atomId.startsWith('border-') || atomId.startsWith('shadow-'))) {
+        const radius = parseInt(child.style.borderRadius) || 0;
+        if (radius > 0) {
+          containerRadius = radius;
+          break;
+        }
+      }
+    }
+    
+    // 如果没有找到装饰原子，使用容器的borderRadius
+    if (containerRadius === 0) {
+      containerRadius = parseInt(this.element.style.borderRadius) || 0;
+    }
+    
     const color = this.handleColor;
     
     // 创建三角形把手，圆角跟容器同步
