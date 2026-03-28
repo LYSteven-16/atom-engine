@@ -2,7 +2,16 @@ import type { AtomContext } from '../atoms';
 
 export interface ResizeHandleAtomConfig {
   id: string;
-  targetAtomIds: string[];  // 需要调整尺寸的原子id
+  targetAtomIds?: string[];  // 只更新尺寸的原子
+  fixedAtomIds?: string[];   // 不做任何修改的原子
+}
+
+interface OriginalStyle {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  fontSize: number;
 }
 
 export class ResizeHandleAtom {
@@ -12,12 +21,20 @@ export class ResizeHandleAtom {
   private element: HTMLElement;
   private handle: HTMLElement | null = null;
   private targetElements: HTMLElement[] = [];
+  private fixedElementIds: string[] = [];
+  private originalStyles: Map<HTMLElement, OriginalStyle> = new Map();
+  private originalWidth: number = 0;
+  private originalHeight: number = 0;
 
   constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig) {
     this.context = context;
     this.id = config.id;
     this.element = element;
-    this.findTargets(config.targetAtomIds);
+    this.originalWidth = element.offsetWidth;
+    this.originalHeight = element.offsetHeight;
+    this.fixedElementIds = config.fixedAtomIds || [];
+    this.findTargets(config.targetAtomIds || []);
+    this.saveOriginalStyles();
     this.createHandle();
   }
 
@@ -29,6 +46,20 @@ export class ResizeHandleAtom {
       if (atomId && targetAtomIds.includes(atomId)) {
         this.targetElements.push(child);
       }
+    }
+  }
+
+  private saveOriginalStyles(): void {
+    const children = this.element.children;
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i] as HTMLElement;
+      this.originalStyles.set(child, {
+        left: parseFloat(child.style.left) || 0,
+        top: parseFloat(child.style.top) || 0,
+        width: parseFloat(child.style.width) || child.offsetWidth || 0,
+        height: parseFloat(child.style.height) || child.offsetHeight || 0,
+        fontSize: parseFloat(child.style.fontSize) || parseFloat(getComputedStyle(child).fontSize) || 0
+      });
     }
   }
 
@@ -101,13 +132,48 @@ export class ResizeHandleAtom {
       const newWidth = Math.max(50, startWidth + dx);
       const newHeight = Math.max(50, startHeight + dy);
       
+      // 更新容器尺寸
+      this.element.style.width = `${newWidth}px`;
+      this.element.style.height = `${newHeight}px`;
+      
+      // 更新target原子尺寸
       this.targetElements.forEach((el: HTMLElement) => {
         el.style.width = `${newWidth}px`;
         el.style.height = `${newHeight}px`;
       });
       
-      this.element.style.width = `${newWidth}px`;
-      this.element.style.height = `${newHeight}px`;
+      // 更新其他原子（等比缩放）
+      const scaleX = newWidth / this.originalWidth;
+      const scaleY = newHeight / this.originalHeight;
+      const containerCenterX = this.originalWidth / 2;
+      const containerCenterY = this.originalHeight / 2;
+      
+      const children = this.element.children;
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i] as HTMLElement;
+        if (child === this.handle) continue;
+        
+        const atomId = child.getAttribute('data-atom-id') || '';
+        
+        // 跳过target原子和fixed原子
+        if (this.targetElements.includes(child)) continue;
+        if (this.fixedElementIds.includes(atomId)) continue;
+        
+        const original = this.originalStyles.get(child);
+        if (!original) continue;
+        
+        // 等比缩放
+        const childCenterX = original.left + original.width / 2;
+        const childCenterY = original.top + original.height / 2;
+        const newChildCenterX = containerCenterX + (childCenterX - containerCenterX) * scaleX;
+        const newChildCenterY = containerCenterY + (childCenterY - containerCenterY) * scaleY;
+        
+        child.style.left = `${newChildCenterX - original.width * scaleX / 2}px`;
+        child.style.top = `${newChildCenterY - original.height * scaleY / 2}px`;
+        child.style.width = `${original.width * scaleX}px`;
+        child.style.height = `${original.height * scaleY}px`;
+        child.style.fontSize = `${original.fontSize * Math.min(scaleX, scaleY)}px`;
+      }
     };
 
     const onMouseUp = () => {
