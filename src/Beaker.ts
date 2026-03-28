@@ -140,6 +140,12 @@ export class Beaker {
 
   private createSubBeakers(molecules: Molecule[]): void {
     molecules.forEach((molecule, index) => {
+      // 检查是否尝试创建孙子分子
+      if (molecule.molecules && molecule.molecules.length > 0) {
+        this.showError('不支持嵌套子分子：子分子中不能再包含子分子');
+        return;
+      }
+      
       const subBakerId = `${this.id}-sub-${index}`;
       const subBeaker = new Beaker(
         subBakerId,
@@ -168,6 +174,31 @@ export class Beaker {
       this.subBeakers.set(subBakerId, subBeaker);
       this.element.appendChild(subBeaker.element);
     });
+  }
+
+  private showError(message: string): void {
+    const errorDiv = document.createElement('div');
+    errorDiv.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 0, 0, 0.9);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      z-index: 999999;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    `;
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+      errorDiv.remove();
+    }, 3000);
   }
 
   private saveChildStyles(element: HTMLElement): void {

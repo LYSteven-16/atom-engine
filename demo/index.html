@@ -607,20 +607,6 @@
               { id: 'hover-child-2', capability: 'hover' },
               { id: 'scale-child-2', capability: 'scale', value: 1.2, trigger: 'hover' },
               { id: 'shadow-child-2', capability: 'shadow', x: 2, y: 2, shadowBlur: 8, shadowWidth: 3, color: [0, 0, 0] }
-            ],
-            molecules: [
-              {
-                id: 'grandchild',
-                position: { x: 10, y: 80 },
-                width: 80,
-                height: 30,
-                atoms: [
-                  { id: 'bg-grandchild', capability: 'background', color: [255, 150, 150], radius: 4 },
-                  { id: 'border-grandchild', capability: 'border', borderWidth: 1, color: [240, 130, 130], radius: 4 },
-                  { id: 'text-grandchild', capability: 'text', position: { x: 10, y: 8 }, text: '孙分子', size: 10, color: [255, 255, 255] },
-                  { id: 'resize-grandchild', capability: 'resize-handle', targetAtomIds: ['bg-grandchild', 'border-grandchild'], fixedAtomIds: ['text-grandchild'], minWidth: 50, minHeight: 20, handleColor: [255, 200, 200] }
-                ]
-              }
             ]
           }
         ]
