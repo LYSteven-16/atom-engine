@@ -24,3 +24,7 @@ export { CollapseAtom, type CollapseAtomConfig } from './CollapseAtom';
 export { InputAtom, type InputAtomConfig } from './InputAtom';
 export { SelectAtom, type SelectAtomConfig, type SelectOption } from './SelectAtom';
 export { CheckboxAtom, type CheckboxAtomConfig } from './CheckboxAtom';
+export { TextareaAtom, type TextareaAtomConfig } from './TextareaAtom';
+export { EditableTextAtom, type EditableTextAtomConfig } from './EditableTextAtom';
+export { ScrollContainerAtom, type ScrollContainerAtomConfig } from './ScrollContainerAtom';
+export { FlexAtom, type FlexAtomConfig } from './FlexAtom';

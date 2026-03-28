@@ -338,6 +338,8 @@ export class Beaker {
             this.decorationAtoms.background = new Atoms.BackgroundAtom(context, this.element, {
               id: config.id,
               color: config.color,
+              opacity: config.opacity,
+              gradient: config.gradient,
               position: config.position,
               width: config.width ?? moleculeWidth,
               height: config.height ?? moleculeHeight,
@@ -389,7 +391,13 @@ export class Beaker {
               size: atomConfig.size,
               color: atomConfig.color,
               position: atomConfig.position,
-              writingMode: atomConfig.writingMode
+              writingMode: atomConfig.writingMode,
+              fontWeight: atomConfig.fontWeight,
+              fontStyle: atomConfig.fontStyle,
+              textAlign: atomConfig.textAlign,
+              overflow: atomConfig.overflow,
+              maxWidth: atomConfig.maxWidth,
+              lineHeight: atomConfig.lineHeight
             }));
             break;
           case 'image':
@@ -491,6 +499,56 @@ export class Beaker {
               color: atomConfig.color,
               position: atomConfig.position,
               onChange: atomConfig.onChange
+            }));
+            break;
+          case 'textarea':
+            this.contentAtoms.push(new Atoms.TextareaAtom(context, this.element, {
+              id: atomConfig.id,
+              value: atomConfig.value,
+              placeholder: atomConfig.placeholder,
+              size: atomConfig.size,
+              color: atomConfig.color,
+              position: atomConfig.position,
+              width: atomConfig.width,
+              height: atomConfig.height,
+              rows: atomConfig.rows,
+              onChange: atomConfig.onChange,
+              onInput: atomConfig.onInput
+            }));
+            break;
+          case 'editable-text':
+            this.contentAtoms.push(new Atoms.EditableTextAtom(context, this.element, {
+              id: atomConfig.id,
+              text: atomConfig.text,
+              size: atomConfig.size,
+              color: atomConfig.color,
+              position: atomConfig.position,
+              editable: atomConfig.editable,
+              onChange: atomConfig.onChange,
+              onDoubleClick: atomConfig.onDoubleClick
+            }));
+            break;
+          case 'scroll-container':
+            this.contentAtoms.push(new Atoms.ScrollContainerAtom(context, this.element, {
+              id: atomConfig.id,
+              direction: atomConfig.direction,
+              position: atomConfig.position,
+              width: atomConfig.width,
+              height: atomConfig.height,
+              onScroll: atomConfig.onScroll
+            }));
+            break;
+          case 'flex':
+            this.contentAtoms.push(new Atoms.FlexAtom(context, this.element, {
+              id: atomConfig.id,
+              direction: atomConfig.direction,
+              gap: atomConfig.gap,
+              align: atomConfig.align,
+              justify: atomConfig.justify,
+              wrap: atomConfig.wrap,
+              position: atomConfig.position,
+              width: atomConfig.width,
+              height: atomConfig.height
             }));
             break;
         }

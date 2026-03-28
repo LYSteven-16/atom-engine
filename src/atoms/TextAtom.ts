@@ -1,24 +1,5 @@
 import type { AtomContext } from '../atoms';
 
-/**
- * 文本原子
- * 功能：在分子容器内渲染纯文本内容
- * DOM：✅ 有DOM - 创建一个div元素作为文本容器
- * 
- * 特点：
- * - 绝对定位在容器内指定位置
- * - 文字大小、颜色可配置
- * - 禁止用户选中和鼠标事件穿透
- * 
- * @example
- * {
- *   capability: 'text',
- *   context: { bakerId: 'baker-0', bakerIndex: 0, atomIndex: 0 },
- *   text: 'Hello World',
- *   size: 16,
- *   color: [0, 0, 0]
- * }
- */
 export interface TextAtomConfig {
   id: string;
   text: string;
@@ -26,6 +7,12 @@ export interface TextAtomConfig {
   color: [number, number, number];
   position?: { x: number; y: number; z?: number };
   writingMode?: 'horizontal' | 'vertical';
+  fontWeight?: 'normal' | 'bold';
+  fontStyle?: 'normal' | 'italic';
+  textAlign?: 'left' | 'center' | 'right';
+  overflow?: 'visible' | 'hidden' | 'ellipsis';
+  maxWidth?: number;
+  lineHeight?: number;
 }
 
 export interface RenderResult {
@@ -43,6 +30,12 @@ export class TextAtom {
   color: [number, number, number];
   position?: { x: number; y: number; z?: number };
   writingMode: 'horizontal' | 'vertical';
+  fontWeight: 'normal' | 'bold';
+  fontStyle: 'normal' | 'italic';
+  textAlign: 'left' | 'center' | 'right';
+  overflow: 'visible' | 'hidden' | 'ellipsis';
+  maxWidth?: number;
+  lineHeight?: number;
 
   constructor(context: AtomContext, container: HTMLElement, config: TextAtomConfig) {
     this.context = context;
@@ -52,6 +45,12 @@ export class TextAtom {
     this.color = config.color;
     this.position = config.position;
     this.writingMode = config.writingMode ?? 'horizontal';
+    this.fontWeight = config.fontWeight ?? 'normal';
+    this.fontStyle = config.fontStyle ?? 'normal';
+    this.textAlign = config.textAlign ?? 'left';
+    this.overflow = config.overflow ?? 'visible';
+    this.maxWidth = config.maxWidth;
+    this.lineHeight = config.lineHeight;
     this.render(container);
   }
 
@@ -59,17 +58,28 @@ export class TextAtom {
     try {
       const element = document.createElement('div');
       element.setAttribute('data-atom-id', this.id);
+      
       const writingModeCSS = this.writingMode === 'vertical' ? 'writing-mode: vertical-rl;' : '';
+      const overflowCSS = this.overflow === 'ellipsis' ? 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap;' : 
+                         this.overflow === 'hidden' ? 'overflow: hidden;' : '';
+      const maxWidthCSS = this.maxWidth ? `max-width: ${this.maxWidth}px;` : '';
+      const lineHeightCSS = this.lineHeight ? `line-height: ${this.lineHeight};` : '';
+      
       element.style.cssText = `
         position: absolute;
         left: ${this.position?.x ?? 0}px;
         top: ${this.position?.y ?? 0}px;
         font-size: ${this.size}px;
         color: rgb(${this.color[0]}, ${this.color[1]}, ${this.color[2]});
+        font-weight: ${this.fontWeight};
+        font-style: ${this.fontStyle};
+        text-align: ${this.textAlign};
         pointer-events: none;
         user-select: none;
-        white-space: nowrap;
         ${writingModeCSS}
+        ${overflowCSS}
+        ${maxWidthCSS}
+        ${lineHeightCSS}
       `;
       element.textContent = this.text;
       container.appendChild(element);
