@@ -551,7 +551,9 @@ export class Beaker {
         this.animationAtoms.resizeHandle = new Atoms.ResizeHandleAtom(context, this.element, {
           id: config.id,
           targetAtomIds: config.targetAtomIds,
-          fixedAtomIds: config.fixedAtomIds
+          fixedAtomIds: config.fixedAtomIds,
+          initialWidth: this.molecule.width,
+          initialHeight: this.molecule.height
         });
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);

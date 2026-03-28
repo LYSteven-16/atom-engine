@@ -4,6 +4,8 @@ export interface ResizeHandleAtomConfig {
   id: string;
   targetAtomIds?: string[];  // 只更新尺寸的原子
   fixedAtomIds?: string[];   // 不做任何修改的原子
+  initialWidth?: number;     // 初始宽度
+  initialHeight?: number;    // 初始高度
 }
 
 interface OriginalStyle {
@@ -30,8 +32,8 @@ export class ResizeHandleAtom {
     this.context = context;
     this.id = config.id;
     this.element = element;
-    this.originalWidth = element.offsetWidth;
-    this.originalHeight = element.offsetHeight;
+    this.originalWidth = config.initialWidth || element.offsetWidth || 400;
+    this.originalHeight = config.initialHeight || element.offsetHeight || 300;
     this.fixedElementIds = config.fixedAtomIds || [];
     this.findTargets(config.targetAtomIds || []);
     this.saveOriginalStyles();
@@ -145,6 +147,7 @@ export class ResizeHandleAtom {
       // 更新其他原子（等比缩放）
       const scaleX = newWidth / this.originalWidth;
       const scaleY = newHeight / this.originalHeight;
+      console.log('scaleX:', scaleX, 'scaleY:', scaleY, 'newWidth:', newWidth, 'newHeight:', newHeight, 'originalWidth:', this.originalWidth, 'originalHeight:', this.originalHeight);
       const containerCenterX = this.originalWidth / 2;
       const containerCenterY = this.originalHeight / 2;
       
@@ -173,6 +176,8 @@ export class ResizeHandleAtom {
         child.style.width = `${original.width * scaleX}px`;
         child.style.height = `${original.height * scaleY}px`;
         child.style.fontSize = `${original.fontSize * Math.min(scaleX, scaleY)}px`;
+        
+        console.log('Applied to', atomId, 'left:', child.style.left, 'width:', child.style.width, 'fontSize:', child.style.fontSize);
       }
     };
 
