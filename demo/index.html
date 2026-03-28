@@ -616,7 +616,9 @@
                 height: 30,
                 atoms: [
                   { id: 'bg-grandchild', capability: 'background', color: [255, 150, 150], radius: 4 },
-                  { id: 'text-grandchild', capability: 'text', position: { x: 10, y: 8 }, text: '孙分子', size: 10, color: [255, 255, 255] }
+                  { id: 'border-grandchild', capability: 'border', borderWidth: 1, color: [240, 130, 130], radius: 4 },
+                  { id: 'text-grandchild', capability: 'text', position: { x: 10, y: 8 }, text: '孙分子', size: 10, color: [255, 255, 255] },
+                  { id: 'resize-grandchild', capability: 'resize-handle', targetAtomIds: ['bg-grandchild', 'border-grandchild'], fixedAtomIds: ['text-grandchild'], minWidth: 50, minHeight: 20, handleColor: [255, 200, 200] }
                 ]
               }
             ]
