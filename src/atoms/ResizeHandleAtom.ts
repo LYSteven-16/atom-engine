@@ -94,27 +94,31 @@ export class ResizeHandleAtom {
   private setupDrag(): void {
     if (!this.handle) return;
     let isDragging = false;
-    const containerRect = this.element.getBoundingClientRect();
+    let startLeft = 0;
+    let startTop = 0;
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
       isDragging = true;
+      // 记录容器初始位置
+      const rect = this.element.getBoundingClientRect();
+      startLeft = rect.left;
+      startTop = rect.top;
+      // 固定容器位置
+      this.element.style.left = `${rect.left}px`;
+      this.element.style.top = `${rect.top}px`;
     };
 
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
       
-      // 获取容器左上角坐标
-      const containerLeft = containerRect.left;
-      const containerTop = containerRect.top;
+      // 计算新尺寸
+      const newWidth = e.clientX - startLeft;
+      const newHeight = e.clientY - startTop;
       
-      // 计算鼠标相对于容器左上角的偏移
-      const newWidth = e.clientX - containerLeft;
-      const newHeight = e.clientY - containerTop;
-      
-      // 更新所有装饰原子尺寸（背景、边框、阴影）
+      // 更新所有装饰原子尺寸
       this.decorationElements.forEach(el => {
         el.style.width = `${newWidth}px`;
         el.style.height = `${newHeight}px`;
