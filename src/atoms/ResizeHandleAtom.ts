@@ -75,10 +75,6 @@ export class ResizeHandleAtom {
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
     
-    // 获取容器圆角
-    const containerRadius = parseInt(getComputedStyle(this.element).borderRadius) || 0;
-    const offset = Math.min(containerRadius * 0.5, 10); // 圆角偏移量
-    
     this.handle.style.cssText = `
       position: absolute;
       right: 0;
@@ -92,14 +88,18 @@ export class ResizeHandleAtom {
       overflow: hidden;
     `;
 
-    // 圆点阵列，根据圆角调整位置
+    // 圆点阵列填满右下角区域
     const dots = [
-      { x: 14 + offset, y: 14 + offset },
-      { x: 10 + offset, y: 14 + offset },
-      { x: 14 + offset, y: 10 + offset },
-      { x: 6 + offset, y: 14 + offset },
-      { x: 10 + offset, y: 10 + offset },
-      { x: 14 + offset, y: 6 + offset },
+      { x: 2, y: 14 },
+      { x: 6, y: 14 },
+      { x: 10, y: 14 },
+      { x: 14, y: 14 },
+      { x: 6, y: 10 },
+      { x: 10, y: 10 },
+      { x: 14, y: 10 },
+      { x: 10, y: 6 },
+      { x: 14, y: 6 },
+      { x: 14, y: 2 },
     ];
 
     dots.forEach(pos => {
