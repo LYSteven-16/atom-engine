@@ -10,6 +10,11 @@ AtomEngine 是一个基于层级分解（原子/分子/物质）的纯 JavaScrip
 - **完整交互支持**：内置点击、拖拽、悬停、调整大小、滚动等交互原子
 - **动画系统**：支持缩放、透明度、旋转、平移等 CSS 动画
 - **样式装饰**：支持背景、边框、阴影等视觉装饰
+- **表单输入**：支持文本输入、多行输入、下拉选择、复选框等
+- **布局系统**：支持 Flexbox 布局、滚动容器
+- **动态管理**：支持运行时添加、删除、更新分子
+- **生命周期管理**：支持 onMount、onDestroy 回调，以及 destroy() 清理
+- **子分子支持**：分子内可以包含子分子，支持无限嵌套
 
 ## 项目结构
 
@@ -28,9 +33,9 @@ atom-engine/
 │       ├── VideoAtom.ts         # 视频原子
 │       ├── AudioAtom.ts         # 音频原子
 │       ├── CodeAtom.ts          # 代码原子
-│       ├── IconAtom.ts          # 图标原子
+│       ├── IconAtom.ts          # 图标原子（支持 SVG、emoji）
 │       ├── CanvasAtom.ts        # 画布原子
-│       ├── BackgroundAtom.ts    # 背景装饰原子
+│       ├── BackgroundAtom.ts    # 背景装饰原子（支持渐变）
 │       ├── BorderAtom.ts        # 边框装饰原子
 │       ├── ShadowAtom.ts        # 阴影装饰原子
 │       ├── ClickAtom.ts         # 点击原子
@@ -45,7 +50,14 @@ atom-engine/
 │       ├── TranslateAtom.ts     # 平移动画原子
 │       ├── HeightAtom.ts        # 高度动画原子
 │       ├── WidthAtom.ts         # 宽度动画原子
-│       └── CollapseAtom.ts      # 折叠动画原子
+│       ├── CollapseAtom.ts      # 折叠动画原子
+│       ├── InputAtom.ts         # 单行文本输入原子
+│       ├── TextareaAtom.ts      # 多行文本输入原子
+│       ├── SelectAtom.ts        # 下拉选择原子
+│       ├── CheckboxAtom.ts      # 复选框原子
+│       ├── EditableTextAtom.ts  # 可编辑文本原子
+│       ├── ScrollContainerAtom.ts # 滚动容器原子
+│       └── FlexAtom.ts          # Flexbox 布局原子
 ├── demo/
 │   └── index.html               # 示例页面
 ├── package.json                 # 项目配置
@@ -197,6 +209,14 @@ interface Molecule {
   width?: number;
   height?: number;
   radius?: number;
+  visible?: boolean;        // 初始可见性
+  disabled?: boolean;       // 初始禁用状态
+  selected?: boolean;       // 初始选中状态
+  zIndex?: number;          // 初始层级
+  className?: string;       // 自定义 CSS 类名
+  data?: Record<string, any>;  // 自定义数据
+  onMount?: (element: HTMLElement) => void;   // 挂载回调
+  onDestroy?: () => void;   // 销毁回调
 }
 ```
 
@@ -205,6 +225,10 @@ interface Molecule {
 - 子分子位置相对于父分子
 - **不支持嵌套**：子分子中不能再包含子分子，否则会报错
 - 子分子会跟随父分子的缩放、拖拽等动画效果
+
+**生命周期回调**：
+- `onMount?: (element: HTMLElement) => void` - 分子挂载后调用
+- `onDestroy?: () => void` - 分子销毁前调用
 
 ### 原子（Atom）
 
@@ -229,7 +253,13 @@ const textAtom = {
   text: '显示的文本内容',
   position: { x: 10, y: 10 },
   size: 16,
-  color: [51, 51, 51]
+  color: [51, 51, 51],
+  fontWeight: 'bold',
+  fontStyle: 'italic',
+  textAlign: 'center',
+  overflow: 'ellipsis',
+  maxWidth: 200,
+  lineHeight: 1.5
 };
 ```
 
@@ -239,6 +269,13 @@ const textAtom = {
 - `size: number` - 字号（默认 16）
 - `color: [number, number, number]` - 文字颜色（RGB 数组）
 - `position?: { x: number; y: number; z?: number }` - 位置
+- `writingMode?: 'horizontal' | 'vertical'` - 文字方向（默认 'horizontal'）
+- `fontWeight?: 'normal' | 'bold'` - 字重（默认 'normal'）
+- `fontStyle?: 'normal' | 'italic'` - 字体样式（默认 'normal'）
+- `textAlign?: 'left' | 'center' | 'right'` - 文本对齐（默认 'left'）
+- `overflow?: 'visible' | 'hidden' | 'ellipsis'` - 溢出处理（默认 'visible'）
+- `maxWidth?: number` - 最大宽度（配合 overflow 使用）
+- `lineHeight?: number` - 行高
 
 **实现细节**：
 - 创建 `div` 元素作为文本容器
@@ -337,21 +374,42 @@ const codeAtom = {
 
 #### IconAtom - 图标显示
 
-显示图标（emoji 或字体图标）：
+显示图标（SVG、emoji 或字体图标）：
 
 ```javascript
-const iconAtom = {
+// emoji 图标
+const emojiIconAtom = {
   capability: 'icon',
   icon: '🚀',
   size: 32,
   position: { x: 0, y: 0 }
 };
+
+// SVG 图标
+const svgIconAtom = {
+  capability: 'icon',
+  svg: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>',
+  size: 32,
+  color: [50, 100, 200],
+  position: { x: 50, y: 0 }
+};
+
+// SVG 文件
+const svgFileAtom = {
+  capability: 'icon',
+  svgUrl: '/path/to/icon.svg',
+  size: 32,
+  position: { x: 100, y: 0 }
+};
 ```
 
 **配置属性**：
 - `capability: 'icon'` - 原子类型标识
-- `icon: string` - 图标内容（emoji 或 HTML 实体）（必需）
-- `size: number` - 尺寸
+- `icon?: string` - 图标内容（emoji 或文本）
+- `svg?: string` - SVG 内容字符串
+- `svgUrl?: string` - SVG 文件路径
+- `size?: number` - 尺寸（默认 24）
+- `color?: [number, number, number]` - 图标颜色
 - `position?: { x: number; y: number; z?: number }` - 位置
 
 #### CanvasAtom - 画布绘图
@@ -581,15 +639,173 @@ const scrollAtom = {
 **回调函数**：
 - `onScroll?: (pos: { scrollX: number; scrollY: number }) => void` - 滚动回调
 
+### 表单输入原子
+
+#### InputAtom - 单行文本输入
+
+处理单行文本输入：
+
+```javascript
+const inputAtom = {
+  capability: 'input',
+  value: '默认值',
+  placeholder: '请输入...',
+  size: 16,
+  color: [51, 51, 51],
+  width: 200,
+  height: 32,
+  onChange: (value) => {
+    console.log('值变化:', value);
+  },
+  onInput: (value) => {
+    console.log('输入中:', value);
+  }
+};
+```
+
+**配置属性**：
+- `capability: 'input'` - 原子类型标识
+- `value?: string` - 初始值
+- `placeholder?: string` - 占位符
+- `size?: number` - 字号（默认 16）
+- `color?: [number, number, number]` - 文字颜色
+- `width?: number` - 宽度（默认 200）
+- `height?: number` - 高度（默认 32）
+
+**回调函数**：
+- `onChange?: (value: string) => void` - 值变化回调
+- `onInput?: (value: string) => void` - 输入回调
+
+#### TextareaAtom - 多行文本输入
+
+处理多行文本输入：
+
+```javascript
+const textareaAtom = {
+  capability: 'textarea',
+  placeholder: '请输入描述...',
+  width: 300,
+  height: 100,
+  rows: 3,
+  onChange: (value) => {
+    console.log('值变化:', value);
+  }
+};
+```
+
+**配置属性**：
+- `capability: 'textarea'` - 原子类型标识
+- `value?: string` - 初始值
+- `placeholder?: string` - 占位符
+- `rows?: number` - 行数
+- `width?: number` - 宽度（默认 300）
+- `height?: number` - 高度（默认 100）
+
+#### SelectAtom - 下拉选择
+
+处理下拉选择：
+
+```javascript
+const selectAtom = {
+  capability: 'select',
+  value: 'option1',
+  options: [
+    { label: '选项1', value: 'option1' },
+    { label: '选项2', value: 'option2' }
+  ],
+  onChange: (value) => {
+    console.log('选择:', value);
+  }
+};
+```
+
+**配置属性**：
+- `capability: 'select'` - 原子类型标识
+- `value?: string` - 初始值
+- `options: Array<{label: string, value: string}>` - 选项列表
+- `width?: number` - 宽度（默认 200）
+
+#### CheckboxAtom - 复选框
+
+处理复选框：
+
+```javascript
+const checkboxAtom = {
+  capability: 'checkbox',
+  checked: false,
+  label: '同意条款',
+  size: 14,
+  onChange: (checked) => {
+    console.log('选中:', checked);
+  }
+};
+```
+
+**配置属性**：
+- `capability: 'checkbox'` - 原子类型标识
+- `checked?: boolean` - 初始选中状态
+- `label?: string` - 标签文本
+- `size?: number` - 字号
+
+### 布局原子
+
+#### FlexAtom - Flexbox 布局
+
+创建 Flexbox 布局容器：
+
+```javascript
+const flexAtom = {
+  capability: 'flex',
+  direction: 'row',
+  gap: 10,
+  align: 'center',
+  justify: 'start',
+  wrap: false,
+  width: 400,
+  height: 200
+};
+```
+
+**配置属性**：
+- `capability: 'flex'` - 原子类型标识
+- `direction?: 'row' | 'column'` - 方向（默认 'row'）
+- `gap?: number` - 间距（默认 0）
+- `align?: 'start' | 'center' | 'end' | 'stretch'` - 交叉轴对齐
+- `justify?: 'start' | 'center' | 'end' | 'space-between' | 'space-around'` - 主轴对齐
+- `wrap?: boolean` - 是否换行
+
+#### ScrollContainerAtom - 滚动容器
+
+创建可滚动容器：
+
+```javascript
+const scrollContainerAtom = {
+  capability: 'scroll-container',
+  direction: 'vertical',
+  width: 300,
+  height: 200,
+  onScroll: (pos) => {
+    console.log('滚动位置:', pos);
+  }
+};
+```
+
+**配置属性**：
+- `capability: 'scroll-container'` - 原子类型标识
+- `direction?: 'vertical' | 'horizontal' | 'both'` - 滚动方向
+- `width?: number` - 宽度
+- `height?: number` - 高度
+
 ### 装饰原子
 
 装饰原子各创建独立 DOM 元素，绝对定位，支持 position/width/height/radius。装饰最先渲染（底层），内容原子后渲染（上层）。
 
 #### BackgroundAtom - 背景装饰
 
-设置元素的背景样式：
+设置元素的背景样式，支持纯色、渐变和透明度：
 
 ```javascript
+// 纯色背景
 const backgroundAtom = {
   capability: 'background',
   color: [255, 255, 255],
@@ -598,11 +814,46 @@ const backgroundAtom = {
   height: 100,
   radius: 12
 };
+
+// 线性渐变背景
+const gradientBackgroundAtom = {
+  capability: 'background',
+  gradient: {
+    type: 'linear',
+    colors: [[255, 0, 0], [0, 0, 255]],
+    direction: 'to right'
+  },
+  width: 200,
+  height: 100,
+  radius: 12
+};
+
+// 径向渐变背景
+const radialGradientAtom = {
+  capability: 'background',
+  gradient: {
+    type: 'radial',
+    colors: [[255, 255, 0], [255, 0, 255]]
+  },
+  width: 200,
+  height: 100
+};
+
+// 带透明度的背景
+const transparentBackgroundAtom = {
+  capability: 'background',
+  color: [255, 255, 255],
+  opacity: 0.8,
+  width: 200,
+  height: 100
+};
 ```
 
 **配置属性**：
 - `capability: 'background'` - 原子类型标识
-- `color: [number, number, number]` - 背景颜色（RGB 数组）
+- `color?: [number, number, number]` - 背景颜色（RGB 数组）
+- `opacity?: number` - 透明度（0-1）
+- `gradient?: { type: 'linear' | 'radial', colors: [[number, number, number], ...], direction?: string }` - 渐变配置
 - `position?: { x: number; y: number; z?: number }` - 位置
 - `width?: number` - 宽度
 - `height?: number` - 高度
@@ -876,7 +1127,12 @@ class SubstanceManager {
 
 ```typescript
 class BeakerManager {
-  constructor(molecules: Molecule[]);
+  constructor(molecules: Molecule[], container?: HTMLElement);
+  addMolecule(molecule: Molecule, container?: HTMLElement): Beaker;
+  removeMolecule(bakerId: string): void;
+  updateMolecule(bakerId: string, molecule: Molecule): void;
+  clearAll(): void;
+  destroy(): void;
   getBaker(id: string): Beaker | undefined;
   getAllBakers(): Beaker[];
   getBakerState(id: string): BakerState | undefined;
@@ -886,6 +1142,11 @@ class BeakerManager {
 ```
 
 **方法**：
+- `addMolecule(molecule, container?)` - 动态添加分子
+- `removeMolecule(bakerId)` - 动态移除分子
+- `updateMolecule(bakerId, molecule)` - 动态更新分子
+- `clearAll()` - 清除所有分子
+- `destroy()` - 销毁 BeakerManager 实例
 - `getBaker(id)` - 获取指定 Baker（ID 格式为 `baker-${index}`，如 `baker-0`）
 - `getAllBakers()` - 获取所有 Baker（返回数组）
 - `getBakerState(id)` - 获取指定 Baker 的状态
@@ -919,6 +1180,14 @@ class Beaker {
   updateResizeMove(size: { width: number; height: number }): void;
   updateResizeEnd(size: { width: number; height: number }): void;
   updateScrollState(scrollX?: number, scrollY?: number): void;
+  setZIndex(z: number): void;
+  show(): void;
+  hide(): void;
+  setVisible(visible: boolean): void;
+  setSelected(selected: boolean): void;
+  setDisabled(disabled: boolean): void;
+  getElement(): HTMLElement;
+  destroy(): void;
 }
 ```
 
@@ -944,6 +1213,14 @@ class Beaker {
 - `updateResizeMove(size)` - 调整大小中
 - `updateResizeEnd(size)` - 结束调整大小
 - `updateScrollState(scrollX, scrollY)` - 更新滚动状态
+- `setZIndex(z)` - 设置层级
+- `show()` - 显示元素
+- `hide()` - 隐藏元素
+- `setVisible(visible)` - 设置可见性
+- `setSelected(selected)` - 设置选中状态
+- `setDisabled(disabled)` - 设置禁用状态
+- `getElement()` - 获取 DOM 元素
+- `destroy()` - 销毁 Beaker 实例
 
 ### BakerState
 
@@ -963,6 +1240,12 @@ interface BakerState {
   scrollX?: number;
   scrollY?: number;
   collapsedGroups: Set<string>;
+  zIndex?: number;
+  visible?: boolean;
+  disabled?: boolean;
+  selected?: boolean;
+  opacity?: number;
+  scale?: number;
 }
 ```
 
@@ -975,6 +1258,16 @@ interface BakerState {
 - `isResizing` - 是否调整大小中
 - `position` - 位置坐标（x, y）
 - `width?` - 宽度（可选）
+- `height?` - 高度（可选）
+- `scrollX?` - 水平滚动位置（可选）
+- `scrollY?` - 垂直滚动位置（可选）
+- `collapsedGroups` - 折叠组状态（Set 集合）
+- `zIndex?` - 层级（可选）
+- `visible?` - 是否可见（可选）
+- `disabled?` - 是否禁用（可选）
+- `selected?` - 是否选中（可选）
+- `opacity?` - 透明度（可选）
+- `scale?` - 缩放比例（可选）
 - `height?` - 高度（可选）
 - `scrollX?` - 水平滚动位置（可选）
 - `scrollY?` - 垂直滚动位置（可选）
