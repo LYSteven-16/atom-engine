@@ -77,6 +77,7 @@ export class ResizeHandleAtom {
     
     // 获取容器圆角
     const containerRadius = parseInt(getComputedStyle(this.element).borderRadius) || 0;
+    const offset = Math.min(containerRadius * 0.3, 6); // 圆角偏移量
     
     this.handle.style.cssText = `
       position: absolute;
@@ -87,42 +88,33 @@ export class ResizeHandleAtom {
       cursor: se-resize;
       z-index: 1000;
       pointer-events: auto;
+      background: transparent;
       overflow: hidden;
-      border-radius: ${containerRadius}px 0 0 0;
     `;
 
-    if (containerRadius > 0) {
-      // 圆角容器：使用圆角三角形
-      const triangle = document.createElement('div');
-      triangle.style.cssText = `
+    // 圆点阵列，根据圆角调整位置
+    const dots = [
+      { x: 14 + offset, y: 14 + offset },
+      { x: 10 + offset, y: 14 + offset },
+      { x: 14 + offset, y: 10 + offset },
+      { x: 6 + offset, y: 14 + offset },
+      { x: 10 + offset, y: 10 + offset },
+      { x: 14 + offset, y: 6 + offset },
+    ];
+
+    dots.forEach(pos => {
+      const dot = document.createElement('div');
+      dot.style.cssText = `
         position: absolute;
-        right: 0;
-        bottom: 0;
-        width: 20px;
-        height: 20px;
+        left: ${pos.x}px;
+        top: ${pos.y}px;
+        width: 3px;
+        height: 3px;
         background: #888;
-        border-radius: ${containerRadius}px 0 0 0;
-        clip-path: polygon(100% 0, 100% 100%, 0 100%);
+        border-radius: 50%;
       `;
-      this.handle.appendChild(triangle);
-    } else {
-      // 直角容器：使用尖角斜线
-      for (let i = 0; i < 5; i++) {
-        const line = document.createElement('div');
-        const length = 12 - i * 2;
-        line.style.cssText = `
-          position: absolute;
-          right: ${2 + i * 3}px;
-          bottom: ${2 + i * 3}px;
-          width: ${length}px;
-          height: 1px;
-          background: #888;
-          transform: rotate(-45deg);
-          transform-origin: right bottom;
-        `;
-        this.handle.appendChild(line);
-      }
-    }
+      this.handle.appendChild(dot);
+    });
 
     this.element.appendChild(this.handle);
     this.setupDrag();
