@@ -75,8 +75,8 @@ export class ResizeHandleAtom {
     this.handle = document.createElement('div');
     this.handle.setAttribute('data-atom-id', this.id);
     
-    // 获取容器圆角
-    const containerRadius = parseInt(getComputedStyle(this.element).borderRadius) || 0;
+    // 获取分子容器的圆角
+    const containerRadius = parseInt(this.element.style.borderRadius) || 12;
     
     this.handle.style.cssText = `
       position: absolute;
@@ -91,33 +91,33 @@ export class ResizeHandleAtom {
       overflow: hidden;
     `;
 
-    // 根据圆角生成圆点位置
     const dots: {x: number, y: number}[] = [];
+    const r = Math.min(containerRadius, 20); // 圆角半径，最大20
+    const cx = 20 - r; // 圆心x
+    const cy = 20 - r; // 圆心y
     
-    if (containerRadius > 0) {
-      // 圆角容器：沿弧线排列
-      const r = containerRadius;
-      const cx = 20 - r; // 圆心x
-      const cy = 20 - r; // 圆心y
-      const numDots = 6;
-      
-      for (let i = 0; i <= numDots; i++) {
-        const angle = (Math.PI / 2) * (i / numDots); // 从0到90度
-        const x = cx + r * Math.cos(angle);
-        const y = cy + r * Math.sin(angle);
-        dots.push({ x: Math.round(x), y: Math.round(y) });
+    // 沿弧线排列圆点
+    const numArcDots = 8;
+    for (let i = 0; i <= numArcDots; i++) {
+      const angle = (Math.PI / 2) * (i / numArcDots);
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      dots.push({ x: Math.round(x), y: Math.round(y) });
+    }
+    
+    // 往内填充更多圆点
+    for (let i = 0; i < 3; i++) {
+      const innerR = r - (i + 1) * 4;
+      if (innerR > 0) {
+        const innerCx = 20 - innerR;
+        const innerCy = 20 - innerR;
+        for (let j = 0; j <= numArcDots; j++) {
+          const angle = (Math.PI / 2) * (j / numArcDots);
+          const x = innerCx + innerR * Math.cos(angle);
+          const y = innerCy + innerR * Math.sin(angle);
+          dots.push({ x: Math.round(x), y: Math.round(y) });
+        }
       }
-    } else {
-      // 直角容器：沿边缘排列
-      dots.push(
-        { x: 2, y: 14 },
-        { x: 6, y: 14 },
-        { x: 10, y: 14 },
-        { x: 14, y: 14 },
-        { x: 14, y: 10 },
-        { x: 14, y: 6 },
-        { x: 14, y: 2 }
-      );
     }
 
     dots.forEach(pos => {
@@ -126,8 +126,8 @@ export class ResizeHandleAtom {
         position: absolute;
         left: ${pos.x}px;
         top: ${pos.y}px;
-        width: 3px;
-        height: 3px;
+        width: 2px;
+        height: 2px;
         background: #888;
         border-radius: 50%;
       `;
