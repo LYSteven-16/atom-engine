@@ -17,7 +17,7 @@ export class ResizeHandleAtom {
   private element: HTMLElement;
   private config: ResizeHandleAtomConfig;
   private handle: HTMLElement | null = null;
-  private backgroundElement: HTMLElement | null = null;
+  private decorationElements: HTMLElement[] = [];
 
   constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig) {
     this.context = context;
@@ -30,18 +30,17 @@ export class ResizeHandleAtom {
       duration: 0.15,
       ...config
     };
-    this.findBackground();
+    this.findDecorations();
     this.createHandle();
   }
 
-  private findBackground(): void {
+  private findDecorations(): void {
     const children = this.element.children;
     for (let i = 0; i < children.length; i++) {
       const child = children[i] as HTMLElement;
       const atomId = child.getAttribute('data-atom-id');
-      if (atomId && atomId.startsWith('bg-')) {
-        this.backgroundElement = child;
-        break;
+      if (atomId && (atomId.startsWith('bg-') || atomId.startsWith('border-') || atomId.startsWith('shadow-'))) {
+        this.decorationElements.push(child);
       }
     }
   }
@@ -115,11 +114,11 @@ export class ResizeHandleAtom {
       const newWidth = e.clientX - containerLeft;
       const newHeight = e.clientY - containerTop;
       
-      // 更新背景原子尺寸
-      if (this.backgroundElement) {
-        this.backgroundElement.style.width = `${newWidth}px`;
-        this.backgroundElement.style.height = `${newHeight}px`;
-      }
+      // 更新所有装饰原子尺寸（背景、边框、阴影）
+      this.decorationElements.forEach(el => {
+        el.style.width = `${newWidth}px`;
+        el.style.height = `${newHeight}px`;
+      });
       
       // 更新容器尺寸
       this.element.style.width = `${newWidth}px`;
