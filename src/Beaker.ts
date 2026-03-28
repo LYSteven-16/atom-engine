@@ -85,10 +85,31 @@ export class Beaker {
     this.element.style.boxShadow = 'transparent';
     this.element.style.cursor = 'default';
     this.element.style.borderRadius = `${(molecule as any).radius ?? 12}px`;
+    
+    // 应用新字段
+    if (molecule.className) {
+      this.element.className = molecule.className;
+    }
+    if (molecule.zIndex !== undefined) {
+      this.element.style.zIndex = `${molecule.zIndex}`;
+    }
+    if (molecule.visible === false) {
+      this.element.style.display = 'none';
+    }
+    if (molecule.disabled) {
+      this.element.style.pointerEvents = 'none';
+      this.element.style.opacity = '0.5';
+    }
+    if (molecule.selected) {
+      this.element.style.outline = '2px solid #007bff';
+    }
 
     this.state = this.createInitialState(molecule);
 
     this.init();
+    
+    // 触发挂载回调
+    molecule.onMount?.(this.element);
   }
 
   private createInitialState(molecule: Molecule): BakerState {
@@ -1002,6 +1023,9 @@ export class Beaker {
   }
 
   public destroy(): void {
+    // 触发销毁回调
+    this.molecule.onDestroy?.();
+
     // 销毁所有子 Beaker
     this.subBeakers.forEach((subBeaker) => {
       subBeaker.destroy();

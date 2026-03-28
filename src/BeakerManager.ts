@@ -34,6 +34,18 @@ export class BeakerManager {
     }
   }
 
+  public updateMolecule(bakerId: string, molecule: Molecule): void {
+    const baker = this.bakers.get(bakerId);
+    if (baker) {
+      baker.destroy();
+      const bakerIndex = baker.bakerIndex;
+      const newBaker = new Beaker(bakerId, molecule, bakerIndex, this.handleBakerStateChange.bind(this));
+      this.bakers.set(bakerId, newBaker);
+      this.bakerStates.set(bakerId, newBaker.getState());
+      this.defaultContainer.appendChild(newBaker.element);
+    }
+  }
+
   public clearAll(): void {
     this.bakers.forEach((baker) => {
       baker.destroy();
