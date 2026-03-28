@@ -562,10 +562,64 @@
           { id: 'text-resize-footer', capability: 'text', position: { x: 20, y: 260 }, text: 'resize-handle与scale原子功能相同', size: 12, color: [120, 120, 120] },
           { id: 'shadow-resize-main', capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
         ]
+      },
+      // 21. 子分子 - 嵌套结构
+      // 能力: 子分子
+      // 说明: 分子内可以包含子分子，支持无限嵌套
+      {
+        id: 'atom-sub-molecule',
+        position: { x: 0, y: 6400 },
+        width: 400,
+        height: 400,
+        atoms: [
+          { id: 'bg-sub-main', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-sub-main', capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
+          { id: 'text-sub-title', capability: 'text', position: { x: 20, y: 30 }, text: '21. 子分子 - 嵌套结构', size: 22, color: [50, 100, 200] },
+          { id: 'text-sub-subtitle', capability: 'text', position: { x: 20, y: 60 }, text: '分子内可以包含子分子', size: 14, color: [150, 150, 150] },
+          { id: 'text-sub-desc', capability: 'text', position: { x: 20, y: 95 }, text: '子分子支持无限嵌套，跟随父分子移动', size: 14, color: [80, 80, 80] },
+          { id: 'shadow-sub-main', capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
+        ],
+        molecules: [
+          {
+            id: 'child-1',
+            position: { x: 20, y: 140 },
+            width: 150,
+            height: 100,
+            atoms: [
+              { id: 'bg-child-1', capability: 'background', color: [100, 200, 255], radius: 8 },
+              { id: 'border-child-1', capability: 'border', borderWidth: 1, color: [80, 180, 240], radius: 8 },
+              { id: 'text-child-1', capability: 'text', position: { x: 20, y: 40 }, text: '子分子 1', size: 14, color: [255, 255, 255] }
+            ]
+          },
+          {
+            id: 'child-2',
+            position: { x: 200, y: 140 },
+            width: 180,
+            height: 120,
+            atoms: [
+              { id: 'bg-child-2', capability: 'background', color: [255, 200, 100], radius: 8 },
+              { id: 'border-child-2', capability: 'border', borderWidth: 1, color: [240, 180, 80], radius: 8 },
+              { id: 'text-child-2', capability: 'text', position: { x: 20, y: 30 }, text: '子分子 2', size: 14, color: [255, 255, 255] },
+              { id: 'text-child-2-desc', capability: 'text', position: { x: 20, y: 55 }, text: '包含孙分子', size: 12, color: [255, 255, 255] }
+            ],
+            molecules: [
+              {
+                id: 'grandchild',
+                position: { x: 10, y: 80 },
+                width: 80,
+                height: 30,
+                atoms: [
+                  { id: 'bg-grandchild', capability: 'background', color: [255, 150, 150], radius: 4 },
+                  { id: 'text-grandchild', capability: 'text', position: { x: 10, y: 8 }, text: '孙分子', size: 10, color: [255, 255, 255] }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]);
 
-    console.log('🎯 AtomEngine - 20个原子能力完整展示已加载');
+    console.log('🎯 AtomEngine - 21个原子能力完整展示已加载');
     console.log('所有卡片尺寸统一为 400x300, 间距 20px');
   </script>
 </body>

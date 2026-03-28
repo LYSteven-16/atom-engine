@@ -55,6 +55,8 @@ export class Beaker {
     collapse?: CollapseAtom[];
   } = {};
 
+  private subBeakers: Map<string, Beaker> = new Map();
+
   constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback) {
     this.id = id;
     this.bakerIndex = bakerIndex;
@@ -127,6 +129,32 @@ export class Beaker {
     this.createAnimationAtoms(animationAtomConfigs);
     this.createInputAtoms(atoms);
     this.createResizeHandles(atoms.filter(a => a.capability === 'resize-handle'));
+    
+    // 创建子分子
+    if (this.molecule.molecules && this.molecule.molecules.length > 0) {
+      this.createSubBeakers(this.molecule.molecules);
+    }
+  }
+
+  private createSubBeakers(molecules: Molecule[]): void {
+    molecules.forEach((molecule, index) => {
+      const subBakerId = `${this.id}-sub-${index}`;
+      const subBeaker = new Beaker(
+        subBakerId,
+        molecule,
+        this.bakerIndex + index + 1,
+        this.onStateChange ?? undefined
+      );
+      
+      // 设置位置（相对于父Beaker）
+      if (molecule.position) {
+        subBeaker.element.style.left = `${molecule.position.x}px`;
+        subBeaker.element.style.top = `${molecule.position.y}px`;
+      }
+      
+      this.subBeakers.set(subBakerId, subBeaker);
+      this.element.appendChild(subBeaker.element);
+    });
   }
 
   private createContext(): { bakerId: string; bakerIndex: number; atomIndex: number } {
@@ -570,6 +598,11 @@ export class Beaker {
     this.animationAtoms.rotate?.onHoverChange(isHovered);
     this.animationAtoms.height?.onHoverChange(isHovered);
     this.animationAtoms.width?.onHoverChange(isHovered);
+    
+    // 通知子Beaker
+    this.subBeakers.forEach(subBeaker => {
+      subBeaker.notifyHoverChange(isHovered);
+    });
   }
 
   private notifyClickChange(isClicked: boolean, clickCount: number): void {
@@ -578,6 +611,11 @@ export class Beaker {
     this.animationAtoms.rotate?.onClickChange(isClicked, clickCount);
     this.animationAtoms.height?.onClickChange(isClicked, clickCount);
     this.animationAtoms.width?.onClickChange(isClicked, clickCount);
+    
+    // 通知子Beaker
+    this.subBeakers.forEach(subBeaker => {
+      subBeaker.notifyClickChange(isClicked, clickCount);
+    });
   }
 
   private notifyDoubleClick(): void {
@@ -586,6 +624,11 @@ export class Beaker {
     this.animationAtoms.rotate?.onDoubleClick();
     this.animationAtoms.height?.onDoubleClick();
     this.animationAtoms.width?.onDoubleClick();
+    
+    // 通知子Beaker
+    this.subBeakers.forEach(subBeaker => {
+      subBeaker.notifyDoubleClick();
+    });
   }
 
   private emitStateChange(partialState: Partial<BakerState>): void {
