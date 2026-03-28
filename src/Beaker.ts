@@ -22,6 +22,12 @@ interface BakerState {
   scrollX?: number;
   scrollY?: number;
   collapsedGroups: Set<string>;
+  zIndex?: number;
+  visible?: boolean;
+  disabled?: boolean;
+  selected?: boolean;
+  opacity?: number;
+  scale?: number;
 }
 
 type StateChangeCallback = (bakerId: string, state: Partial<BakerState>) => void;
@@ -952,6 +958,47 @@ export class Beaker {
     if (this.onStateChange) {
       this.onStateChange(this.id, { position: { x, y } });
     }
+  }
+
+  public setZIndex(z: number): void {
+    this.state.zIndex = z;
+    this.element.style.zIndex = `${z}`;
+    this.emitStateChange({ zIndex: z });
+  }
+
+  public show(): void {
+    this.setVisible(true);
+  }
+
+  public hide(): void {
+    this.setVisible(false);
+  }
+
+  public setVisible(visible: boolean): void {
+    this.state.visible = visible;
+    this.element.style.display = visible ? 'block' : 'none';
+    this.emitStateChange({ visible });
+  }
+
+  public setSelected(selected: boolean): void {
+    this.state.selected = selected;
+    if (selected) {
+      this.element.style.outline = '2px solid #007bff';
+    } else {
+      this.element.style.outline = 'transparent';
+    }
+    this.emitStateChange({ selected });
+  }
+
+  public setDisabled(disabled: boolean): void {
+    this.state.disabled = disabled;
+    this.element.style.pointerEvents = disabled ? 'none' : 'auto';
+    this.element.style.opacity = disabled ? '0.5' : '1';
+    this.emitStateChange({ disabled });
+  }
+
+  public getElement(): HTMLElement {
+    return this.element;
   }
 
   public destroy(): void {
