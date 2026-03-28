@@ -6,6 +6,8 @@ export interface ResizeHandleAtomConfig {
   fixedAtomIds?: string[];   // 不做任何修改的原子
   initialWidth?: number;     // 初始宽度
   initialHeight?: number;    // 初始高度
+  minWidth?: number;         // 最小宽度
+  minHeight?: number;        // 最小高度
 }
 
 interface OriginalStyle {
@@ -27,6 +29,8 @@ export class ResizeHandleAtom {
   private originalStyles: Map<HTMLElement, OriginalStyle> = new Map();
   private originalWidth: number = 0;
   private originalHeight: number = 0;
+  private minWidth: number = 50;
+  private minHeight: number = 50;
 
   constructor(context: AtomContext, element: HTMLElement, config: ResizeHandleAtomConfig) {
     this.context = context;
@@ -34,6 +38,8 @@ export class ResizeHandleAtom {
     this.element = element;
     this.originalWidth = config.initialWidth || element.offsetWidth || 400;
     this.originalHeight = config.initialHeight || element.offsetHeight || 300;
+    this.minWidth = config.minWidth || 50;
+    this.minHeight = config.minHeight || 50;
     this.fixedElementIds = config.fixedAtomIds || [];
     this.findTargets(config.targetAtomIds || []);
     this.saveOriginalStyles();
@@ -131,8 +137,8 @@ export class ResizeHandleAtom {
       if (!isDragging) return;
       const dx = e.clientX - startMouseX;
       const dy = e.clientY - startMouseY;
-      const newWidth = Math.max(50, startWidth + dx);
-      const newHeight = Math.max(50, startHeight + dy);
+      const newWidth = Math.max(this.minWidth, startWidth + dx);
+      const newHeight = Math.max(this.minHeight, startHeight + dy);
       
       // 更新容器尺寸
       this.element.style.width = `${newWidth}px`;

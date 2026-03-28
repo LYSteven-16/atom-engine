@@ -553,7 +553,9 @@ export class Beaker {
           targetAtomIds: config.targetAtomIds,
           fixedAtomIds: config.fixedAtomIds,
           initialWidth: this.molecule.width,
-          initialHeight: this.molecule.height
+          initialHeight: this.molecule.height,
+          minWidth: config.minWidth,
+          minHeight: config.minHeight
         });
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ResizeHandleAtom失败:`, error);
