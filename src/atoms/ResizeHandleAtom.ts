@@ -77,29 +77,34 @@ export class ResizeHandleAtom {
   private setupDrag(): void {
     if (!this.handle) return;
     let isDragging = false;
-    let startLeft = 0;
-    let startTop = 0;
+    let startMouseX = 0;
+    let startMouseY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
 
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
       isDragging = true;
-      const rect = this.element.getBoundingClientRect();
-      startLeft = rect.left;
-      startTop = rect.top;
-      this.element.style.left = `${rect.left}px`;
-      this.element.style.top = `${rect.top}px`;
+      startMouseX = e.clientX;
+      startMouseY = e.clientY;
+      startWidth = this.element.offsetWidth;
+      startHeight = this.element.offsetHeight;
     };
 
     const onMouseMove = (e: MouseEvent) => {
       if (!isDragging) return;
-      const newWidth = e.clientX - startLeft;
-      const newHeight = e.clientY - startTop;
+      const dx = e.clientX - startMouseX;
+      const dy = e.clientY - startMouseY;
+      const newWidth = Math.max(50, startWidth + dx);
+      const newHeight = Math.max(50, startHeight + dy);
+      
       this.decorationElements.forEach(el => {
         el.style.width = `${newWidth}px`;
         el.style.height = `${newHeight}px`;
       });
+      
       this.element.style.width = `${newWidth}px`;
       this.element.style.height = `${newHeight}px`;
     };
