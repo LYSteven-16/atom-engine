@@ -56,7 +56,6 @@ export class Beaker {
   } = {};
 
   private subBeakers: Map<string, Beaker> = new Map();
-  private currentScale: number = 1;
   private originalSubBeakerStyles: Map<HTMLElement, { left: number; top: number; width: number; height: number }> = new Map();
 
   constructor(id: string, molecule: Molecule, bakerIndex: number, onStateChange?: StateChangeCallback) {
@@ -168,10 +167,8 @@ export class Beaker {
   }
 
   public applyScale(scale: number): void {
-    this.currentScale = scale;
-    
     // 缩放子Beaker元素
-    this.subBeakers.forEach((subBeaker, id) => {
+    this.subBeakers.forEach((subBeaker) => {
       const original = this.originalSubBeakerStyles.get(subBeaker.element);
       if (original) {
         const containerCenterX = this.element.offsetWidth / 2;
