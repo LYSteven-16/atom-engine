@@ -193,11 +193,18 @@ interface Molecule {
   verticalGap?: number;
   horizontalGap?: number;
   atoms: any[];
+  molecules?: Molecule[];  // 子分子数组（不支持嵌套）
   width?: number;
   height?: number;
   radius?: number;
 }
 ```
+
+**子分子说明**：
+- `molecules?: Molecule[]` - 子分子数组，格式与普通分子完全一致
+- 子分子位置相对于父分子
+- **不支持嵌套**：子分子中不能再包含子分子，否则会报错
+- 子分子会跟随父分子的缩放、拖拽等动画效果
 
 ### 原子（Atom）
 

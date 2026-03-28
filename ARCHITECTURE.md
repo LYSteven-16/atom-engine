@@ -990,11 +990,18 @@ export interface Molecule {
   verticalGap?: number;                            // 垂直间距
   horizontalGap?: number;                           // 水平间距
   atoms: any[];                                   // 原子数组
+  molecules?: Molecule[];                          // 子分子数组（不支持嵌套）
   width?: number | string;                         // 宽度
   height?: number | string;                         // 高度
   radius?: number;                                  // 圆角
 }
 ```
+
+**子分子特性**：
+- 子分子格式与普通分子完全一致
+- 子分子位置相对于父分子
+- 支持无限嵌套（子分子中可包含子分子）
+- 子分子会跟随父分子的缩放、拖拽等动画效果
 
 ### 5. Atom (原子)
 
