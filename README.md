@@ -21,8 +21,7 @@ AtomEngine 是一个基于层级分解（原子/分子/物质）的纯 JavaScrip
 ```
 atom-engine/
 ├── src/
-│   ├── SubstanceManager.ts      # 物质管理器（入口类）
-│   ├── BeakerManager.ts         # 焙烤管理器
+│   ├── BeakerManager.ts         # 焙烤管理器（入口类）
 │   ├── Beaker.ts                # 焙烤器（核心组件）
 │   ├── molecules.ts             # 分子类型定义
 │   ├── atoms.ts                 # 原子类型定义
@@ -78,7 +77,7 @@ npm install @component-chemistry/atom-engine
 
 ```html
 <script type="module">
-  import { SubstanceManager } from './dist/SubstanceManager.mjs';
+  import { BeakerManager } from './dist/BeakerManager.mjs';
 </script>
 ```
 
@@ -145,36 +144,65 @@ const molecules = [
 ];
 ```
 
-### 3. 创建 SubstanceManager 实例
+### 3. 创建 BeakerManager 实例
 
 ```javascript
-import { SubstanceManager } from '@component-chemistry/atom-engine';
+import { BeakerManager } from '@component-chemistry/atom-engine';
 
-const manager = new SubstanceManager(molecules);
+// 基本用法（workplace 默认全屏）
+const manager = new BeakerManager(molecules);
+
+// 指定容器
+const manager = new BeakerManager(molecules, document.getElementById('app'));
+
+// 指定容器和 workplace 配置
+const manager = new BeakerManager(molecules, document.getElementById('app'), {
+  position: { x: 100, y: 100 },
+  width: 800,
+  height: 600
+});
 ```
 
 ### 4. 获取并添加到 DOM
 
 ```javascript
-const baker = manager.getBakerManager().getBaker('baker-0');
+// 获取 workplace 元素
+const workplace = manager.getWorkplace();
+
+// 或者获取具体的 Beaker
+const baker = manager.getBaker('baker-0');
 document.getElementById('app').appendChild(baker.element);
 ```
 
 ## 核心概念
 
-### 物质（Substance）
+### 工作区（Workplace）
 
-物质是应用级别容器，管理所有分子（Molecule）：
+工作区是所有分子的渲染容器，由 BeakerManager 自动创建：
 
 ```javascript
-const substance = new SubstanceManager(molecules);
+const manager = new BeakerManager(molecules, container, {
+  position: { x: 100, y: 100 },
+  width: 800,
+  height: 600
+});
+
+// 获取工作区元素
+const workplace = manager.getWorkplace();
+
+// 动态更新工作区
+manager.updateWorkplace({
+  position: { x: 200, y: 150 },
+  width: 1000,
+  height: 800
+});
 ```
 
-**属性**：
-- `molecules: Molecule[]` - 分子配置数组
-
-**方法**：
-- `getBakerManager()` - 获取 BeakerManager 实例
+**特性**：
+- 默认全屏（100% × 100%）
+- 支持自定义位置和大小
+- 使用绝对定位
+- 所有 Baker 元素都渲染到 workplace 中
 
 ### 分子（Molecule）
 
@@ -1104,12 +1132,12 @@ const collapseAtom = {
 
 ## API 参考
 
-### SubstanceManager
+### BeakerManager
 
 应用入口类，管理所有分子：
 
 ```typescript
-class SubstanceManager {
+class BeakerManager {
   constructor(molecules: Molecule[]);
   getBakerManager(): BeakerManager;
 }
@@ -1123,12 +1151,18 @@ class SubstanceManager {
 
 ### BeakerManager
 
-管理所有 Beaker 实例：
+管理所有 Beaker 实例和工作区：
 
 ```typescript
+interface WorkplaceConfig {
+  position?: { x: number; y: number };
+  width?: number;
+  height?: number;
+}
+
 class BeakerManager {
-  constructor(molecules: Molecule[], container?: HTMLElement);
-  addMolecule(molecule: Molecule, container?: HTMLElement): Beaker;
+  constructor(molecules: Molecule[], parentContainer?: HTMLElement, workplaceConfig?: WorkplaceConfig);
+  addMolecule(molecule: Molecule): Beaker;
   removeMolecule(bakerId: string): void;
   updateMolecule(bakerId: string, molecule: Molecule): void;
   clearAll(): void;
@@ -1138,11 +1172,13 @@ class BeakerManager {
   getBakerState(id: string): BakerState | undefined;
   getAllBakerStates(): BakerState[];
   getBakerCount(): number;
+  getWorkplace(): HTMLElement;
+  updateWorkplace(config: WorkplaceConfig): void;
 }
 ```
 
 **方法**：
-- `addMolecule(molecule, container?)` - 动态添加分子
+- `addMolecule(molecule)` - 动态添加分子
 - `removeMolecule(bakerId)` - 动态移除分子
 - `updateMolecule(bakerId, molecule)` - 动态更新分子
 - `clearAll()` - 清除所有分子
@@ -1151,6 +1187,9 @@ class BeakerManager {
 - `getAllBakers()` - 获取所有 Baker（返回数组）
 - `getBakerState(id)` - 获取指定 Baker 的状态
 - `getAllBakerStates()` - 获取所有 Baker 的状态（返回数组）
+- `getBakerCount()` - 获取 Baker 数量
+- `getWorkplace()` - 获取工作区元素
+- `updateWorkplace(config)` - 动态更新工作区位置和大小
 - `getBakerCount()` - 获取 Baker 数量
 
 ### Beaker
@@ -1195,7 +1234,7 @@ class Beaker {
 - `id` - Baker 实例 ID
 - `molecule` - 关联的分子配置对象
 - `element` - DOM 容器元素
-- `bakerIndex` - Baker 在 SubstanceManager 中的索引
+- `bakerIndex` - Baker 在 BeakerManager 中的索引
 - `state` - 当前状态
 
 **方法**：
@@ -1334,7 +1373,7 @@ const molecules = [
   }
 ];
 
-const manager = new SubstanceManager(molecules);
+const manager = new BeakerManager(molecules);
 const baker = manager.getBakerManager().getBaker('baker-0');
 document.getElementById('app').appendChild(baker.element);
 ```
@@ -1376,7 +1415,7 @@ const molecules = [
   }
 ];
 
-const manager = new SubstanceManager(molecules);
+const manager = new BeakerManager(molecules);
 const baker = manager.getBakerManager().getBaker('baker-0');
 document.getElementById('app').appendChild(baker.element);
 ```
@@ -1451,7 +1490,7 @@ const molecules = [
   }
 ];
 
-const manager = new SubstanceManager(molecules);
+const manager = new BeakerManager(molecules);
 const baker = manager.getBakerManager().getBaker('baker-0');
 document.getElementById('app').appendChild(baker.element);
 ```
@@ -1493,7 +1532,7 @@ const molecules = [
   }
 ];
 
-const manager = new SubstanceManager(molecules);
+const manager = new BeakerManager(molecules);
 const baker = manager.getBakerManager().getBaker('baker-0');
 document.getElementById('app').appendChild(baker.element);
 ```
@@ -1557,7 +1596,7 @@ const molecules = [
   }
 ];
 
-const manager = new SubstanceManager(molecules);
+const manager = new BeakerManager(molecules);
 const baker = manager.getBakerManager().getBaker('baker-0');
 document.getElementById('app').appendChild(baker.element);
 ```
@@ -1638,9 +1677,9 @@ const newMolecule = {
   ]
 };
 
-// 重新创建 SubstanceManager
+// 重新创建 BeakerManager
 const currentMolecules = [...existingMolecules, newMolecule];
-const newManager = new SubstanceManager(currentMolecules);
+const newManager = new BeakerManager(currentMolecules);
 ```
 
 ### Q: 如何实现自定义原子类型？
@@ -1746,7 +1785,7 @@ const molecules = [
   }
 ];
 
-const manager = new SubstanceManager(molecules);
+const manager = new BeakerManager(molecules);
 const baker = manager.getBakerManager().getBaker('baker-0');
 document.getElementById('app').appendChild(baker.element);
 ```
