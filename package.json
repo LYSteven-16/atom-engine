@@ -1,0 +1,28 @@
+{
+  "name": "atom-engine",
+  "version": "3.0.0",
+  "description": "A pure JavaScript recursive component renderer based on level-based decomposition (atom/molecule/substance)",
+  "main": "dist/BeakerManager.js",
+  "module": "dist/BeakerManager.mjs",
+  "types": "dist/BeakerManager.d.ts",
+  "unpkg": "dist/BeakerManager.global.js",
+  "jsdelivr": "dist/BeakerManager.global.js",
+  "scripts": {
+    "build": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine",
+    "dev": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "renderer",
+    "recursive",
+    "atomic-design",
+    "editor",
+    "dom"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}

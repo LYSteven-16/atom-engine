@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkplaceConfig 扩展配置测试</title>
+  <style>
+    body { 
+      margin: 0; 
+      padding: 20px; 
+      background-color: #f0f2f5;
+      font-family: sans-serif;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      margin-top: 20px;
+    }
+    .workplace-wrapper {
+      position: relative;
+      width: 400px;
+      height: 300px;
+      border: 1px dashed #ccc;
+      background-color: #eee;
+    }
+    h2 { margin-top: 0; font-size: 16px; color: #333; }
+  </style>
+</head>
+<body>
+  <h1>WorkplaceConfig 扩展配置测试</h1>
+  
+  <div class="container">
+    <div id="test1-wrapper" class="workplace-wrapper">
+      <h2>1. 基础背景、圆角与阴影 (P0)</h2>
+      <div id="test1"></div>
+    </div>
+
+    <div id="test2-wrapper" class="workplace-wrapper">
+      <h2>2. 边框与自定义阴影 (P1)</h2>
+      <div id="test2"></div>
+    </div>
+
+    <div id="test3-wrapper" class="workplace-wrapper">
+      <h2>3. 线性渐变 (P2)</h2>
+      <div id="test3"></div>
+    </div>
+
+    <div id="test4-wrapper" class="workplace-wrapper">
+      <h2>4. 径向渐变 (P2)</h2>
+      <div id="test4"></div>
+    </div>
+
+    <div id="test5-wrapper" class="workplace-wrapper">
+      <h2>5. 背景图片与裁剪 (P2)</h2>
+      <div id="test5"></div>
+    </div>
+
+    <div id="test6-wrapper" class="workplace-wrapper">
+      <h2>6. 动态更新测试</h2>
+      <div id="test6"></div>
+      <button id="update-btn" style="position: absolute; bottom: -30px; left: 0;">点击更新样式</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { BeakerManager } from '../dist/BeakerManager.mjs';
+
+    const molecules = [
+      {
+        id: 'mol-1',
+        position: { x: 20, y: 20 },
+        width: 100,
+        height: 100,
+        atoms: [
+          { id: 'bg', capability: 'background', color: [255, 107, 107] },
+          { id: 'txt', capability: 'text', text: 'Molecule', size: 14, color: [255, 255, 255], position: { x: 10, y: 40 } }
+        ]
+      }
+    ];
+
+    // 1. 基础背景、圆角与阴影
+    new BeakerManager(molecules, document.getElementById('test1'), {
+      width: 300,
+      height: 200,
+      position: { x: 50, y: 50 },
+      backgroundColor: '#ffffff',
+      borderRadius: 20,
+      showShadow: true,
+      shadowBlur: 30,
+      shadowColor: 'rgba(255, 107, 107, 0.3)'
+    });
+
+    // 2. 边框与自定义阴影
+    new BeakerManager(molecules, document.getElementById('test2'), {
+      width: 300,
+      height: 200,
+      position: { x: 50, y: 50 },
+      backgroundColor: '#f8f9fa',
+      borderWidth: 4,
+      borderColor: '#4dabf7',
+      borderRadius: 8,
+      shadowOffsetX: 10,
+      shadowOffsetY: 10,
+      shadowBlur: 0,
+      shadowColor: '#dee2e6'
+    });
+
+    // 3. 线性渐变
+    new BeakerManager(molecules, document.getElementById('test3'), {
+      width: 300,
+      height: 200,
+      position: { x: 50, y: 50 },
+      gradientType: 'linear',
+      gradientAngle: 45,
+      gradientColors: ['#ff9a9e', '#fecfef'],
+      borderRadius: 15
+    });
+
+    // 4. 径向渐变
+    new BeakerManager(molecules, document.getElementById('test4'), {
+      width: 300,
+      height: 200,
+      position: { x: 50, y: 50 },
+      gradientType: 'radial',
+      gradientColors: ['#a18cd1', '#fbc2eb'],
+      borderRadius: 15
+    });
+
+    // 5. 背景图片与裁剪
+    new BeakerManager(molecules, document.getElementById('test5'), {
+      width: 300,
+      height: 200,
+      position: { x: 50, y: 50 },
+      backgroundImage: 'https://picsum.photos/id/10/300/200',
+      backgroundSize: 'cover',
+      clipContent: true,
+      borderRadius: 20
+    });
+
+    // 6. 动态更新测试
+    const manager6 = new BeakerManager(molecules, document.getElementById('test6'), {
+      width: 300,
+      height: 200,
+      position: { x: 50, y: 50 },
+      backgroundColor: '#e9ecef',
+      borderRadius: 0
+    });
+
+    document.getElementById('update-btn').onclick = () => {
+      manager6.updateWorkplace({
+        backgroundColor: '#333',
+        borderRadius: 50,
+        borderColor: '#ffd43b',
+        borderWidth: 5,
+        shadowColor: 'rgba(255, 212, 59, 0.5)',
+        shadowBlur: 20
+      });
+      // 同时也测试分子是否还在
+      console.log('Workplace updated');
+    };
+
+  </script>
+</body>
+</html>
