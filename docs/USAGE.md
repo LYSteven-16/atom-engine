@@ -1,274 +1,109 @@
 # 使用 AtomEngine
 
-## 快速开始
+## 安装
 
-直接在 HTML 中引入，无需安装：
-
-```html
-<!-- 使用 jsDelivr (推荐，从 GitHub 导入) -->
-<script src="https://cdn.jsdelivr.net/gh/LYSteven-16/atom-engine@main/dist/BeakerManager.global.js"></script>
-
-<!-- 或使用 unpkg -->
-<script src="https://unpkg.com/atom-engine@latest/dist/BeakerManager.iife.js"></script>
+```bash
+npm install atom-engine
 ```
 
 ## 基本用法
 
-### 1. HTML 页面中直接使用
+### 1. ES Module 导入
+
+```javascript
+import { BeakerManager } from 'atom-engine';
+
+const manager = new BeakerManager();
+
+const molecule = {
+  id: 'my-component',
+  position: { x: 100, y: 100 },
+  width: 200,
+  height: 100,
+  atoms: [
+    {
+      capability: 'background',
+      id: 'bg-1',
+      color: [255, 0, 0],
+      opacity: 0.5
+    }
+  ]
+};
+
+manager.createBeaker('app', molecule);
+```
+
+### 2. 在 HTML 中使用
 
 ```html
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
   <title>AtomEngine Demo</title>
-  <script src="https://cdn.jsdelivr.net/gh/LYSteven-16/atom-engine@main/dist/BeakerManager.iife.js"></script>
 </head>
 <body>
   <div id="app"></div>
-  
-  <script>
-    const molecules = [
-      {
-        id: 'my-card',
-        position: { x: 100, y: 100 },
-        width: 400,
-        height: 300,
-        atoms: [
-          {
-            id: 'bg',
-            capability: 'background',
-            color: [255, 255, 255]
-          },
-          {
-            id: 'border',
-            capability: 'border',
-            borderWidth: 1,
-            color: [220, 220, 220],
-            radius: 12
-          },
-          {
-            id: 'text',
-            capability: 'text',
-            position: { x: 20, y: 30 },
-            text: 'Hello AtomEngine!',
-            size: 22,
-            color: [50, 100, 200]
-          }
-        ]
-      }
-    ];
+  <script type="module">
+    import { BeakerManager } from 'atom-engine';
     
-    // 创建引擎实例
-    const manager = new AtomEngine.SubstanceManager(molecules);
+    const manager = new BeakerManager();
     
-    // 获取 Baker（容器）
-    const baker = manager.getBakerManager().getBaker('baker-0');
+    const molecule = {
+      id: 'my-component',
+      position: { x: 100, y: 100 },
+      width: 200,
+      height: 100,
+      atoms: [
+        {
+          capability: 'background',
+          id: 'bg-1',
+          color: [255, 0, 0],
+          opacity: 0.5
+        }
+      ]
+    };
     
-    // 添加到页面
-    document.getElementById('app').appendChild(baker.element);
+    manager.createBeaker('app', molecule);
   </script>
 </body>
 </html>
 ```
 
-### 2. 在 React/Vue 等框架中使用
+## 核心概念
+
+### 分子 (Molecule)
+
+分子是组件的基本单位，包含位置、尺寸和子元素：
 
 ```javascript
-// React 示例
-function AtomComponent({ molecules }) {
-  const containerRef = useRef(null);
-  
-  useEffect(() => {
-    if (!containerRef.current) return;
-    
-    // 创建引擎实例
-    const manager = new AtomEngine.SubstanceManager(molecules);
-    
-    // 获取所有 Baker
-    const bakers = manager.getBakerManager().getAllBakers();
-    
-    // 将 Baker 添加到容器中
-    bakers.forEach(baker => {
-      containerRef.current.appendChild(baker.element);
-    });
-    
-    // 清理
-    return () => {
-      bakers.forEach(baker => {
-        baker.element.remove();
-      });
-    };
-  }, [molecules]);
-  
-  return <div ref={containerRef}></div>;
+{
+  id: 'unique-id',
+  position: { x: 0, y: 0 },
+  width: 100,
+  height: 100,
+  atoms: [
+    // 原子列表
+  ]
 }
 ```
 
-## 完整示例
+### 原子 (Atom)
 
-```javascript
-const molecules = [
-  {
-    id: 'main-container',
-    position: { x: 50, y: 50 },
-    width: 600,
-    height: 400,
-    atoms: [
-      // 背景
-      {
-        id: 'bg-main',
-        capability: 'background',
-        color: [245, 245, 245]
-      },
-      
-      // 边框
-      {
-        id: 'border-main',
-        capability: 'border',
-        borderWidth: 1,
-        color: [200, 200, 200],
-        radius: 12
-      },
-      
-      // 标题
-      {
-        id: 'title',
-        capability: 'text',
-        position: { x: 30, y: 30 },
-        text: '我的应用',
-        size: 28,
-        color: [50, 100, 200]
-      },
-      
-      // 描述
-      {
-        id: 'description',
-        capability: 'text',
-        position: { x: 30, y: 70 },
-        text: '这是一个使用 AtomEngine 构建的应用',
-        size: 16,
-        color: [100, 100, 100]
-      },
-      
-      // 子分子
-      {
-        id: 'sub-molecule',
-        position: { x: 30, y: 120 },
-        width: 540,
-        height: 200,
-        atoms: [
-          {
-            id: 'bg-sub',
-            capability: 'background',
-            color: [255, 255, 255]
-          },
-          {
-            id: 'text-sub',
-            capability: 'text',
-            position: { x: 20, y: 20 },
-            text: '这是子分子',
-            size: 18,
-            color: [80, 80, 80]
-          }
-        ]
-      },
-      
-      // 调整把手
-      {
-        id: 'resize-handle',
-        capability: 'resize-handle',
-        targetAtomIds: ['bg-main', 'border-main'],
-        fixedAtomIds: ['title', 'description'],
-        minWidth: 400,
-        minHeight: 300
-      }
-    ]
-  }
-];
+原子是功能单元，不同的 capability 对应不同的功能：
 
-// 初始化
-const manager = new AtomEngine.SubstanceManager(molecules);
+| Capability | 功能 |
+|------------|------|
+| background | 背景色/渐变 |
+| border | 边框 |
+| shadow | 阴影 |
+| text | 文本显示 |
+| click | 点击事件 |
+| drag | 拖拽事件 |
+| hover | 悬停事件 |
+| scale | 缩放动画 |
+| opacity | 透明度动画 |
+| input | 文本输入 |
+| select | 下拉选择 |
+| flex | Flexbox 布局 |
 
-// 获取所有 Baker 并添加到 DOM
-const bakers = manager.getBakerManager().getAllBakers();
-document.body.append(...bakers.map(b => b.element));
-```
-
-## API 参考
-
-### SubstanceManager
-
-```typescript
-class SubstanceManager {
-  constructor(molecules: Molecule[]);
-  getBakerManager(): BeakerManager;
-}
-```
-
-### BeakerManager
-
-```typescript
-class BeakerManager {
-  getBaker(id: string): Beaker | undefined;
-  getAllBakers(): Beaker[];
-  getBakerState(id: string): BakerState | undefined;
-  getAllBakerStates(): BakerState[];
-  getBakerCount(): number;
-}
-```
-
-### Beaker
-
-```typescript
-class Beaker {
-  readonly id: string;
-  readonly molecule: Molecule;
-  readonly element: HTMLElement;
-  
-  getState(): BakerState;
-  updateState(newState: Partial<BakerState>): void;
-}
-```
-
-## 常见问题
-
-### Q: 如何使用 BeakerManager？
-
-A: 通过 `AtomEngine.BeakerManager` 访问：
-
-```javascript
-const manager = new AtomEngine.BeakerManager();
-const bakerManager = manager.getBakerManager();
-```
-
-### Q: 能否在 Vue 组件中使用？
-
-A: 可以，但需要注意生命周期管理：
-
-```vue
-<template>
-  <div ref="container"></div>
-</template>
-
-<script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-
-const container = ref(null);
-let manager = null;
-
-onMounted(() => {
-  const molecules = [/* your molecules */];
-  manager = new AtomEngine.SubstanceManager(molecules);
-  const baker = manager.getBakerManager().getBaker('baker-0');
-  container.value.appendChild(baker.element);
-});
-
-onUnmounted(() => {
-  if (manager) {
-    const bakers = manager.getBakerManager().getAllBakers();
-    bakers.forEach(baker => baker.element.remove());
-  }
-});
-</script>
-```
+更多原子请查看 `src/atoms/` 目录。

@@ -1,11 +1,10 @@
-name: Build
+name: Build and Publish
 
 on:
   push:
     branches: [main]
-
-permissions:
-  contents: write
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -17,13 +16,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
       - run: npm ci
       - run: npm run build
       - run: npm run typecheck
-      - name: Commit dist files
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add dist/
-          git diff --staged --quiet || git commit -m "chore: build dist files"
-          git push
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
