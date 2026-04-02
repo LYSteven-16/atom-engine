@@ -5,8 +5,16 @@
   "main": "dist/BeakerManager.js",
   "module": "dist/BeakerManager.mjs",
   "types": "dist/BeakerManager.d.ts",
-  "unpkg": "dist/BeakerManager.global.js",
-  "jsdelivr": "dist/BeakerManager.global.js",
+  "exports": {
+    ".": {
+      "types": "./dist/BeakerManager.d.ts",
+      "import": "./dist/BeakerManager.mjs",
+      "require": "./dist/BeakerManager.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine",
     "dev": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine --watch",
