@@ -7,7 +7,7 @@ AtomEngine 是一个基于层级分解（原子/分子/物质）的纯 JavaScrip
 ### 安装
 
 ```bash
-npm install atom-engine
+npm install @LYSteven-16/atom-engine
 ```
 
 ### 基本使用
@@ -21,7 +21,7 @@ npm install atom-engine
 <body>
   <div id="app"></div>
   <script type="module">
-    import { BeakerManager } from 'atom-engine';
+    import { BeakerManager } from '@LYSteven-16/atom-engine';
     
     const manager = new BeakerManager();
     

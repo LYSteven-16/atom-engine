@@ -1,5 +1,5 @@
 {
-  "name": "atom-engine",
+  "name": "@LYSteven-16/atom-engine",
   "version": "3.0.0",
   "description": "A pure JavaScript recursive component renderer based on level-based decomposition (atom/molecule/substance)",
   "main": "dist/BeakerManager.js",
@@ -15,6 +15,10 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LYSteven-16/atom-engine"
+  },
   "scripts": {
     "build": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine",
     "dev": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine --watch",

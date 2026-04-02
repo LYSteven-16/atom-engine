@@ -3,7 +3,7 @@
 ## 安装
 
 ```bash
-npm install atom-engine
+npm install @LYSteven-16/atom-engine
 ```
 
 ## 基本用法
@@ -11,7 +11,7 @@ npm install atom-engine
 ### 1. ES Module 导入
 
 ```javascript
-import { BeakerManager } from 'atom-engine';
+import { BeakerManager } from '@LYSteven-16/atom-engine';
 
 const manager = new BeakerManager();
 
