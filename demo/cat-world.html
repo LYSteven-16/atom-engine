@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🐱 猫咪世界 - AtomEngine 展示</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      position: relative; 
+      margin: 0; 
+      padding: 20px; 
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); 
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .section-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ff6b6b;
+      margin: 20px 0 10px 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import { BeakerManager } from '../dist/BeakerManager.mjs';
+
+    // ========================================================================
+    // 第一部分: 头部区域 - 展示 Text, Icon, Click, Hover 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'header',
+        position: { x: 0, y: 0 },
+        width: 1200,
+        height: 120,
+        atoms: [
+          // 背景装饰
+          { id: 'bg-header', capability: 'background', color: [255, 107, 107], opacity: 0.9 },
+          { id: 'border-header', capability: 'border', borderWidth: 3, color: [255, 255, 255], radius: 20 },
+          { id: 'shadow-header', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          
+          // 标题
+          { id: 'title', capability: 'text', position: { x: 50, y: 30 }, text: '🐱 猫咪世界', size: 48, color: [255, 255, 255], fontWeight: 'bold' },
+          { id: 'subtitle', capability: 'text', position: { x: 50, y: 85 }, text: 'AtomEngine 完整能力展示', size: 20, color: [255, 255, 255] },
+          
+          // 图标
+          { id: 'icon-cat', capability: 'icon', position: { x: 1100, y: 30 }, icon: '🐾', size: 60 },
+          { id: 'icon-heart', capability: 'icon', position: { x: 1020, y: 40 }, icon: '❤️', size: 40 },
+          
+          // 悬停效果
+          { id: 'hover-title', capability: 'hover', position: { x: 50, y: 30 }, width: 300, height: 60 },
+          { id: 'scale-title', capability: 'scale', value: 1.1, trigger: 'hover', duration: 0.3 },
+          
+          // 点击效果
+          { id: 'click-icon', capability: 'click', position: { x: 1100, y: 30 }, width: 60, height: 60 },
+          { id: 'rotate-icon', capability: 'rotate', value: 360, trigger: 'click', duration: 0.5 }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第二部分: 猫咪画廊 - 展示 Image, Drag, Translate, Scale, Opacity 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'gallery-title',
+        position: { x: 0, y: 140 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-gallery-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-gallery-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-gallery-title', capability: 'text', position: { x: 20, y: 10 }, text: '📸 猫咪画廊 - 拖拽图片可排序', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'cat-card-1',
+        position: { x: 0, y: 210 },
+        width: 280,
+        height: 320,
+        atoms: [
+          { id: 'bg-card-1', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-card-1', capability: 'border', borderWidth: 2, color: [255, 182, 193], radius: 15 },
+          { id: 'shadow-card-1', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          { id: 'img-cat-1', capability: 'image', position: { x: 20, y: 20 }, src: 'https://placekitten.com/240/180', width: 240, height: 180, alt: '可爱小猫1' },
+          { id: 'text-name-1', capability: 'text', position: { x: 20, y: 210 }, text: '小橘', size: 20, color: [255, 107, 107], fontWeight: 'bold' },
+          { id: 'text-desc-1', capability: 'text', position: { x: 20, y: 240 }, text: '活泼好动的小橘猫', size: 14, color: [128, 128, 128] },
+          { id: 'icon-heart-1', capability: 'icon', position: { x: 230, y: 270 }, icon: '❤️', size: 30 },
+          
+          // 拖拽功能
+          { id: 'drag-card-1', capability: 'drag' },
+          { id: 'translate-card-1', capability: 'translate', trigger: 'drag' },
+          
+          // 悬停缩放
+          { id: 'hover-card-1', capability: 'hover', position: { x: 0, y: 0 }, width: 280, height: 320 },
+          { id: 'scale-card-1', capability: 'scale', value: 1.05, trigger: 'hover', duration: 0.3 }
+        ]
+      },
+      {
+        id: 'cat-card-2',
+        position: { x: 300, y: 210 },
+        width: 280,
+        height: 320,
+        atoms: [
+          { id: 'bg-card-2', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-card-2', capability: 'border', borderWidth: 2, color: [173, 216, 230], radius: 15 },
+          { id: 'shadow-card-2', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          { id: 'img-cat-2', capability: 'image', position: { x: 20, y: 20 }, src: 'https://placekitten.com/241/180', width: 240, height: 180, alt: '可爱小猫2' },
+          { id: 'text-name-2', capability: 'text', position: { x: 20, y: 210 }, text: '小灰', size: 20, color: [100, 149, 237], fontWeight: 'bold' },
+          { id: 'text-desc-2', capability: 'text', position: { x: 20, y: 240 }, text: '安静优雅的灰猫', size: 14, color: [128, 128, 128] },
+          { id: 'icon-heart-2', capability: 'icon', position: { x: 230, y: 270 }, icon: '💙', size: 30 },
+          
+          { id: 'drag-card-2', capability: 'drag' },
+          { id: 'translate-card-2', capability: 'translate', trigger: 'drag' },
+          { id: 'hover-card-2', capability: 'hover', position: { x: 0, y: 0 }, width: 280, height: 320 },
+          { id: 'scale-card-2', capability: 'scale', value: 1.05, trigger: 'hover', duration: 0.3 }
+        ]
+      },
+      {
+        id: 'cat-card-3',
+        position: { x: 600, y: 210 },
+        width: 280,
+        height: 320,
+        atoms: [
+          { id: 'bg-card-3', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-card-3', capability: 'border', borderWidth: 2, color: [144, 238, 144], radius: 15 },
+          { id: 'shadow-card-3', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          { id: 'img-cat-3', capability: 'image', position: { x: 20, y: 20 }, src: 'https://placekitten.com/242/180', width: 240, height: 180, alt: '可爱小猫3' },
+          { id: 'text-name-3', capability: 'text', position: { x: 20, y: 210 }, text: '小黑', size: 20, color: [50, 50, 50], fontWeight: 'bold' },
+          { id: 'text-desc-3', capability: 'text', position: { x: 20, y: 240 }, text: '神秘的小黑猫', size: 14, color: [128, 128, 128] },
+          { id: 'icon-heart-3', capability: 'icon', position: { x: 230, y: 270 }, icon: '🖤', size: 30 },
+          
+          { id: 'drag-card-3', capability: 'drag' },
+          { id: 'translate-card-3', capability: 'translate', trigger: 'drag' },
+          { id: 'hover-card-3', capability: 'hover', position: { x: 0, y: 0 }, width: 280, height: 320 },
+          { id: 'scale-card-3', capability: 'scale', value: 1.05, trigger: 'hover', duration: 0.3 }
+        ]
+      },
+      {
+        id: 'cat-card-4',
+        position: { x: 900, y: 210 },
+        width: 280,
+        height: 320,
+        atoms: [
+          { id: 'bg-card-4', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-card-4', capability: 'border', borderWidth: 2, color: [255, 215, 0], radius: 15 },
+          { id: 'shadow-card-4', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          { id: 'img-cat-4', capability: 'image', position: { x: 20, y: 20 }, src: 'https://placekitten.com/243/180', width: 240, height: 180, alt: '可爱小猫4' },
+          { id: 'text-name-4', capability: 'text', position: { x: 20, y: 210 }, text: '小花', size: 20, color: [255, 165, 0], fontWeight: 'bold' },
+          { id: 'text-desc-4', capability: 'text', position: { x: 20, y: 240 }, text: '花斑小猫咪', size: 14, color: [128, 128, 128] },
+          { id: 'icon-heart-4', capability: 'icon', position: { x: 230, y: 270 }, icon: '💛', size: 30 },
+          
+          { id: 'drag-card-4', capability: 'drag' },
+          { id: 'translate-card-4', capability: 'translate', trigger: 'drag' },
+          { id: 'hover-card-4', capability: 'hover', position: { x: 0, y: 0 }, width: 280, height: 320 },
+          { id: 'scale-card-4', capability: 'scale', value: 1.05, trigger: 'hover', duration: 0.3 }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第三部分: 猫咪信息卡片 - 展示 Collapse, Height, Width 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'info-title',
+        position: { x: 0, y: 550 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-info-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-info-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-info-title', capability: 'text', position: { x: 20, y: 10 }, text: '📋 猫咪信息卡片 - 点击展开/折叠', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'info-card-1',
+        position: { x: 0, y: 620 },
+        width: 580,
+        height: 200,
+        atoms: [
+          { id: 'bg-info-1', capability: 'background', color: [255, 245, 238] },
+          { id: 'border-info-1', capability: 'border', borderWidth: 2, color: [255, 182, 193], radius: 15 },
+          { id: 'shadow-info-1', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          
+          { id: 'text-info-title-1', capability: 'text', position: { x: 20, y: 20 }, text: '🐱 橘猫小档案', size: 22, color: [255, 107, 107], fontWeight: 'bold' },
+          { id: 'text-info-content-1', capability: 'text', position: { x: 20, y: 50 }, text: '品种：中华田园猫', size: 16, color: [80, 80, 80] },
+          { id: 'text-info-content-2', capability: 'text', position: { x: 20, y: 75 }, text: '年龄：2岁', size: 16, color: [80, 80, 80] },
+          { id: 'text-info-content-3', capability: 'text', position: { x: 20, y: 100 }, text: '性格：活泼好动，喜欢玩耍', size: 16, color: [80, 80, 80] },
+          { id: 'text-info-content-4', capability: 'text', position: { x: 20, y: 125 }, text: '爱好：吃罐头、晒太阳、追激光笔', size: 16, color: [80, 80, 80] },
+          { id: 'text-info-content-5', capability: 'text', position: { x: 20, y: 150 }, text: '特点：特别能吃，已经10斤了', size: 16, color: [80, 80, 80] },
+          
+          // 点击折叠
+          { id: 'click-info-1', capability: 'click', position: { x: 0, y: 0 }, width: 580, height: 200 },
+          { id: 'height-info-1', capability: 'height', collapsedValue: 50, moleculeHeight: 200, trigger: 'click', duration: 0.3 }
+        ]
+      },
+      {
+        id: 'info-card-2',
+        position: { x: 600, y: 620 },
+        width: 580,
+        height: 200,
+        atoms: [
+          { id: 'bg-info-2', capability: 'background', color: [240, 248, 255] },
+          { id: 'border-info-2', capability: 'border', borderWidth: 2, color: [100, 149, 237], radius: 15 },
+          { id: 'shadow-info-2', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          
+          { id: 'text-info-title-2', capability: 'text', position: { x: 20, y: 20 }, text: '🐱 英短小档案', size: 22, color: [100, 149, 237], fontWeight: 'bold' },
+          { id: 'text-info-content-6', capability: 'text', position: { x: 20, y: 50 }, text: '品种：英国短毛猫', size: 16, color: [80, 80, 80] },
+          { id: 'text-info-content-7', capability: 'text', position: { x: 20, y: 75 }, text: '年龄：3岁', size: 16, color: [80, 80, 80] },
+          { id: 'text-info-content-8', capability: 'text', position: { x: 20, y: 100 }, text: '性格：安静优雅，高冷范', size: 16, color: [80, 80, 80] },
+          { id: 'text-info-content-9', capability: 'text', position: { x: 20, y: 125 }, text: '爱好：发呆、看窗外、偶尔抓老鼠', size: 16, color: [80, 80, 80] },
+          { id: 'text-info-content-10', capability: 'text', position: { x: 20, y: 150 }, text: '特点：毛色像蓝宝石', size: 16, color: [80, 80, 80] },
+          
+          { id: 'click-info-2', capability: 'click', position: { x: 0, y: 0 }, width: 580, height: 200 },
+          { id: 'height-info-2', capability: 'height', collapsedValue: 50, moleculeHeight: 200, trigger: 'click', duration: 0.3 }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第四部分: 猫咪画板 - 展示 Canvas 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'canvas-title',
+        position: { x: 0, y: 840 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-canvas-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-canvas-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-canvas-title', capability: 'text', position: { x: 20, y: 10 }, text: '🎨 猫咪画板 - 自由绘画', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'canvas-container',
+        position: { x: 0, y: 910 },
+        width: 1200,
+        height: 400,
+        atoms: [
+          { id: 'bg-canvas', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-canvas', capability: 'border', borderWidth: 3, color: [255, 182, 193], radius: 20 },
+          { id: 'shadow-canvas', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          
+          // 画布
+          { id: 'canvas-draw', capability: 'canvas', position: { x: 20, y: 20 }, width: 1160, height: 360, strokeColor: [255, 107, 107], strokeWidth: 3, backgroundColor: [255, 245, 238], showToolbar: true, resizable: true, blackboardStyle: false }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第五部分: 猫咪表单 - 展示 Input, Textarea, Select, Checkbox, EditableText 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'form-title',
+        position: { x: 0, y: 1330 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-form-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-form-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-form-title', capability: 'text', position: { x: 20, y: 10 }, text: '📝 猫咪领养申请表', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'form-container',
+        position: { x: 0, y: 1400 },
+        width: 1200,
+        height: 450,
+        atoms: [
+          { id: 'bg-form', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-form', capability: 'border', borderWidth: 3, color: [255, 182, 193], radius: 20 },
+          { id: 'shadow-form', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          
+          // 表单标题
+          { id: 'text-form-header', capability: 'text', position: { x: 40, y: 30 }, text: '🐱 请填写您的信息', size: 28, color: [255, 107, 107], fontWeight: 'bold' },
+          
+          // 姓名输入
+          { id: 'text-name-label', capability: 'text', position: { x: 40, y: 80 }, text: '您的姓名：', size: 16, color: [80, 80, 80] },
+          { id: 'input-name', capability: 'input', position: { x: 150, y: 75 }, width: 300, placeholder: '请输入姓名', size: 16 },
+          
+          // 电话输入
+          { id: 'text-phone-label', capability: 'text', position: { x: 40, y: 130 }, text: '联系电话：', size: 16, color: [80, 80, 80] },
+          { id: 'input-phone', capability: 'input', position: { x: 150, y: 125 }, width: 300, placeholder: '请输入电话', size: 16 },
+          
+          // 邮箱输入
+          { id: 'text-email-label', capability: 'text', position: { x: 40, y: 180 }, text: '电子邮箱：', size: 16, color: [80, 80, 80] },
+          { id: 'input-email', capability: 'input', position: { x: 150, y: 175 }, width: 300, placeholder: '请输入邮箱', size: 16 },
+          
+          // 选择猫咪
+          { id: 'text-cat-label', capability: 'text', position: { x: 40, y: 230 }, text: '选择猫咪：', size: 16, color: [80, 80, 80] },
+          { id: 'select-cat', capability: 'select', position: { x: 150, y: 225 }, width: 300, options: [
+            { label: '🐱 小橘 - 活泼好动', value: 'orange' },
+            { label: '🐱 小灰 - 安静优雅', value: 'gray' },
+            { label: '🐱 小黑 - 神秘酷炫', value: 'black' },
+            { label: '🐱 小花 - 花斑可爱', value: 'calico' }
+          ]},
+          
+          // 申请原因
+          { id: 'text-reason-label', capability: 'text', position: { x: 40, y: 280 }, text: '申请原因：', size: 16, color: [80, 80, 80] },
+          { id: 'textarea-reason', capability: 'textarea', position: { x: 150, y: 275 }, width: 500, height: 100, placeholder: '请描述您想领养猫咪的原因...', size: 14 },
+          
+          // 复选框
+          { id: 'checkbox-agree', capability: 'checkbox', position: { x: 40, y: 400 }, label: '我已阅读并同意领养协议', size: 14 },
+          { id: 'checkbox-newsletter', capability: 'checkbox', position: { x: 300, y: 400 }, label: '订阅猫咪资讯', size: 14 },
+          
+          // 可编辑文本
+          { id: 'text-editable-label', capability: 'text', position: { x: 700, y: 80 }, text: '📝 备注（双击编辑）：', size: 16, color: [80, 80, 80] },
+          { id: 'editable-text', capability: 'editable-text', position: { x: 700, y: 110 }, text: '双击这里可以编辑文字...', size: 16, color: [80, 80, 80] }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第六部分: 动画展示区 - 展示 Scale, Opacity, Rotate, Translate, Height, Width 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'animation-title',
+        position: { x: 0, y: 1870 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-animation-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-animation-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-animation-title', capability: 'text', position: { x: 20, y: 10 }, text: '✨ 动画效果展示 - 悬停/点击查看效果', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'animation-card-1',
+        position: { x: 0, y: 1940 },
+        width: 280,
+        height: 200,
+        atoms: [
+          { id: 'bg-anim-1', capability: 'background', color: [255, 182, 193] },
+          { id: 'border-anim-1', capability: 'border', borderWidth: 2, color: [255, 255, 255], radius: 15 },
+          { id: 'shadow-anim-1', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          { id: 'text-anim-1', capability: 'text', position: { x: 20, y: 20 }, text: '🐱 缩放动画', size: 20, color: [255, 255, 255], fontWeight: 'bold' },
+          { id: 'text-anim-1-desc', capability: 'text', position: { x: 20, y: 50 }, text: '悬停查看缩放效果', size: 14, color: [255, 255, 255] },
+          { id: 'icon-cat-anim-1', capability: 'icon', position: { x: 120, y: 100 }, icon: '🐱', size: 60 },
+          { id: 'hover-anim-1', capability: 'hover', position: { x: 0, y: 0 }, width: 280, height: 200 },
+          { id: 'scale-anim-1', capability: 'scale', value: 1.3, trigger: 'hover', duration: 0.3 }
+        ]
+      },
+      {
+        id: 'animation-card-2',
+        position: { x: 300, y: 1940 },
+        width: 280,
+        height: 200,
+        atoms: [
+          { id: 'bg-anim-2', capability: 'background', color: [173, 216, 230] },
+          { id: 'border-anim-2', capability: 'border', borderWidth: 2, color: [255, 255, 255], radius: 15 },
+          { id: 'shadow-anim-2', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          { id: 'text-anim-2', capability: 'text', position: { x: 20, y: 20 }, text: '🐱 透明度动画', size: 20, color: [255, 255, 255], fontWeight: 'bold' },
+          { id: 'text-anim-2-desc', capability: 'text', position: { x: 20, y: 50 }, text: '悬停查看透明度变化', size: 14, color: [255, 255, 255] },
+          { id: 'icon-cat-anim-2', capability: 'icon', position: { x: 120, y: 100 }, icon: '🐱', size: 60 },
+          { id: 'hover-anim-2', capability: 'hover', position: { x: 0, y: 0 }, width: 280, height: 200 },
+          { id: 'opacity-anim-2', capability: 'opacity', value: 0.3, trigger: 'hover', duration: 0.3 }
+        ]
+      },
+      {
+        id: 'animation-card-3',
+        position: { x: 600, y: 1940 },
+        width: 280,
+        height: 200,
+        atoms: [
+          { id: 'bg-anim-3', capability: 'background', color: [144, 238, 144] },
+          { id: 'border-anim-3', capability: 'border', borderWidth: 2, color: [255, 255, 255], radius: 15 },
+          { id: 'shadow-anim-3', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          { id: 'text-anim-3', capability: 'text', position: { x: 20, y: 20 }, text: '🐱 旋转动画', size: 20, color: [255, 255, 255], fontWeight: 'bold' },
+          { id: 'text-anim-3-desc', capability: 'text', position: { x: 20, y: 50 }, text: '点击查看旋转效果', size: 14, color: [255, 255, 255] },
+          { id: 'icon-cat-anim-3', capability: 'icon', position: { x: 120, y: 100 }, icon: '🐱', size: 60 },
+          { id: 'click-anim-3', capability: 'click', position: { x: 0, y: 0 }, width: 280, height: 200 },
+          { id: 'rotate-anim-3', capability: 'rotate', value: 360, trigger: 'click', duration: 0.5 }
+        ]
+      },
+      {
+        id: 'animation-card-4',
+        position: { x: 900, y: 1940 },
+        width: 280,
+        height: 200,
+        atoms: [
+          { id: 'bg-anim-4', capability: 'background', color: [255, 215, 0] },
+          { id: 'border-anim-4', capability: 'border', borderWidth: 2, color: [255, 255, 255], radius: 15 },
+          { id: 'shadow-anim-4', capability: 'shadow', x: 3, y: 3, shadowBlur: 15, shadowWidth: 3, color: [0, 0, 0] },
+          { id: 'text-anim-4', capability: 'text', position: { x: 20, y: 20 }, text: '🐱 平移动画', size: 20, color: [255, 255, 255], fontWeight: 'bold' },
+          { id: 'text-anim-4-desc', capability: 'text', position: { x: 20, y: 50 }, text: '拖拽查看移动效果', size: 14, color: [255, 255, 255] },
+          { id: 'icon-cat-anim-4', capability: 'icon', position: { x: 120, y: 100 }, icon: '🐱', size: 60 },
+          { id: 'drag-anim-4', capability: 'drag' },
+          { id: 'translate-anim-4', capability: 'translate', trigger: 'drag' }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第七部分: 猫咪视频和音频 - 展示 Video, Audio 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'media-title',
+        position: { x: 0, y: 2160 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-media-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-media-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-media-title', capability: 'text', position: { x: 20, y: 10 }, text: '🎬 猫咪视频和音乐', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'video-container',
+        position: { x: 0, y: 2230 },
+        width: 580,
+        height: 350,
+        atoms: [
+          { id: 'bg-video', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-video', capability: 'border', borderWidth: 3, color: [255, 182, 193], radius: 20 },
+          { id: 'shadow-video', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          { id: 'text-video-label', capability: 'text', position: { x: 20, y: 20 }, text: '📹 猫咪视频', size: 20, color: [255, 107, 107], fontWeight: 'bold' },
+          { id: 'video-cat', capability: 'video', position: { x: 20, y: 50 }, src: 'https://www.w3schools.com/html/mov_bbb.mp4', width: 540, height: 280 }
+        ]
+      },
+      {
+        id: 'audio-container',
+        position: { x: 600, y: 2230 },
+        width: 580,
+        height: 350,
+        atoms: [
+          { id: 'bg-audio', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-audio', capability: 'border', borderWidth: 3, color: [173, 216, 230], radius: 20 },
+          { id: 'shadow-audio', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          { id: 'text-audio-label', capability: 'text', position: { x: 20, y: 20 }, text: '🎵 猫咪音乐', size: 20, color: [100, 149, 237], fontWeight: 'bold' },
+          { id: 'audio-cat', capability: 'audio', position: { x: 20, y: 60 }, src: 'https://www.w3schools.com/html/horse.mp3', width: 540, height: 50 },
+          { id: 'text-audio-desc', capability: 'text', position: { x: 20, y: 130 }, text: '🎵 播放猫咪专属音乐', size: 16, color: [80, 80, 80] },
+          { id: 'icon-music', capability: 'icon', position: { x: 250, y: 180 }, icon: '🎵', size: 80 }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第八部分: 猫咪代码展示 - 展示 Code 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'code-title',
+        position: { x: 0, y: 2600 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-code-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-code-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-code-title', capability: 'text', position: { x: 20, y: 10 }, text: '💻 猫咪代码', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'code-container',
+        position: { x: 0, y: 2670 },
+        width: 1200,
+        height: 300,
+        atoms: [
+          { id: 'bg-code', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-code', capability: 'border', borderWidth: 3, color: [255, 182, 193], radius: 20 },
+          { id: 'shadow-code', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          { id: 'code-cat', capability: 'code', position: { x: 20, y: 20 }, code: '// 猫咪类定义\nclass Cat {\n  constructor(name, color, age) {\n    this.name = name;\n    this.color = color;\n    this.age = age;\n    this.isHappy = true;\n  }\n\n  meow() {\n    console.log(`${this.name}: 喵喵喵~`);\n  }\n\n  play() {\n    console.log(`${this.name}: 正在玩耍...`);\n  }\n\n  sleep() {\n    console.log(`${this.name}: 正在睡觉...`);\n  }\n}\n\n// 创建猫咪实例\nconst myCat = new Cat("小橘", "橙色", 2);\nmyCat.meow(); // 小橘: 喵喵喵~', language: 'javascript', width: 1160, height: 260, backgroundColor: [40, 44, 52] }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第九部分: 猫咪滚动列表 - 展示 Scroll, ScrollContainer, Flex 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'scroll-title',
+        position: { x: 0, y: 2990 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-scroll-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-scroll-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-scroll-title', capability: 'text', position: { x: 20, y: 10 }, text: '📜 猫咪滚动列表', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'scroll-container',
+        position: { x: 0, y: 3060 },
+        width: 1200,
+        height: 300,
+        atoms: [
+          { id: 'bg-scroll', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-scroll', capability: 'border', borderWidth: 3, color: [255, 182, 193], radius: 20 },
+          { id: 'shadow-scroll', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          
+          // 滚动容器
+          { id: 'scroll-list', capability: 'scroll-container', position: { x: 20, y: 20 }, width: 1160, height: 260, direction: 'horizontal' }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第十部分: 猫咪调整大小 - 展示 Resize, ResizeHandle 原子
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'resize-title',
+        position: { x: 0, y: 3380 },
+        width: 1200,
+        height: 50,
+        atoms: [
+          { id: 'bg-resize-title', capability: 'background', color: [255, 255, 255], opacity: 0.8 },
+          { id: 'border-resize-title', capability: 'border', borderWidth: 2, color: [255, 107, 107], radius: 10 },
+          { id: 'text-resize-title', capability: 'text', position: { x: 20, y: 10 }, text: '📐 猫咪调整大小 - 拖拽右下角调整', size: 24, color: [255, 107, 107], fontWeight: 'bold' }
+        ]
+      },
+      {
+        id: 'resize-container',
+        position: { x: 0, y: 3450 },
+        width: 600,
+        height: 400,
+        atoms: [
+          { id: 'bg-resize', capability: 'background', color: [255, 245, 238] },
+          { id: 'border-resize', capability: 'border', borderWidth: 3, color: [255, 182, 193], radius: 20 },
+          { id: 'shadow-resize', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          { id: 'text-resize-label', capability: 'text', position: { x: 20, y: 20 }, text: '🐱 可调整大小的容器', size: 20, color: [255, 107, 107], fontWeight: 'bold' },
+          { id: 'img-resize-cat', capability: 'image', position: { x: 20, y: 60 }, src: 'https://placekitten.com/560/320', width: 560, height: 320, alt: '可调整大小的猫咪' },
+          
+          // 调整大小把手
+          { id: 'resize-handle', capability: 'resize-handle', targetAtomIds: ['bg-resize', 'border-resize', 'shadow-resize'], fixedAtomIds: ['text-resize-label'], minWidth: 300, minHeight: 200 }
+        ]
+      }
+    ]);
+
+    // ========================================================================
+    // 第十一部分: 底部信息
+    // ========================================================================
+    
+    new BeakerManager([
+      {
+        id: 'footer',
+        position: { x: 0, y: 3870 },
+        width: 1200,
+        height: 100,
+        atoms: [
+          { id: 'bg-footer', capability: 'background', color: [255, 107, 107], opacity: 0.9 },
+          { id: 'border-footer', capability: 'border', borderWidth: 3, color: [255, 255, 255], radius: 20 },
+          { id: 'shadow-footer', capability: 'shadow', x: 5, y: 5, shadowBlur: 20, shadowWidth: 5, color: [0, 0, 0] },
+          { id: 'text-footer', capability: 'text', position: { x: 50, y: 30 }, text: '🐱 猫咪世界 - 由 AtomEngine 强力驱动', size: 24, color: [255, 255, 255], fontWeight: 'bold' },
+          { id: 'icon-footer', capability: 'icon', position: { x: 1100, y: 25 }, icon: '🐾', size: 50 }
+        ]
+      }
+    ]);
+
+    console.log('🐱 猫咪世界已加载完成！');
+    console.log('✨ 展示了所有原子能力：');
+    console.log('  - 内容原子：Text, Image, Video, Audio, Code, Icon, Canvas');
+    console.log('  - 装饰原子：Background, Border, Shadow');
+    console.log('  - 交互原子：Click, Drag, Hover, Scroll, Resize');
+    console.log('  - 动画原子：Scale, Opacity, Rotate, Translate, Height, Width');
+    console.log('  - 表单原子：Input, Textarea, Select, Checkbox, EditableText');
+    console.log('  - 布局原子：ScrollContainer');
+  </script>
+</body>
+</html>
