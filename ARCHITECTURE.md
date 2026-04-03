@@ -203,8 +203,8 @@ private workplaceConfig: WorkplaceConfig;      // 工作区当前配置
 ```
 
 **Workplace 样式管理**：
-BeakerManager 负责创建一个绝对定位的容器（Workplace），所有 Baker 都会被添加进这个容器中。它支持通过 `WorkplaceConfig` 进行高度定制，包括：
-- **基础布局**：位置 (`x`, `y`)、尺寸 (`width`, `height`)。
+BeakerManager 负责创建一个可配置定位的容器（Workplace），所有 Baker 都会被添加进这个容器中。它支持通过 `WorkplaceConfig` 进行高度定制，包括：
+- **基础布局**：位置 (`x`, `y`)、尺寸 (`width`, `height`)、定位类型 (`positionType`)。
 - **视觉装饰**：背景色、圆角、边框、阴影。
 - **高级背景**：线性/径向渐变、背景图片（支持 `cover`/`contain` 等）。
 - **内容控制**：溢出模式 (`overflow`)、内容裁剪 (`clipContent`)。
@@ -227,6 +227,9 @@ private applyWorkplaceStyles(config: WorkplaceConfig): void {
     return v;
   };
   
+  style.position = config.positionType ?? 'absolute';
+  style.left = px(config.position?.x);
+  style.top = px(config.position?.y);
   style.width = typeof config.width === 'number' ? `${config.width}px` : (config.width || '100%');
   style.height = typeof config.height === 'number' ? `${config.height}px` : (config.height || '100%');
   // ...

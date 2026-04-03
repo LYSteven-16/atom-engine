@@ -3,6 +3,7 @@ import type { Molecule } from './molecules';
 
 export interface WorkplaceConfig {
   position?: { x: number; y: number };
+  positionType?: 'absolute' | 'fixed' | 'relative';
   width?: number | string;
   height?: number | string;
 
@@ -94,7 +95,7 @@ export class BeakerManager {
       return v;
     };
     
-    style.position = 'absolute';
+    style.position = config.positionType ?? 'absolute';
     style.left = px(config.position?.x);
     style.top = px(config.position?.y);
     style.width = typeof config.width === 'number' ? `${config.width}px` : (config.width || '100%');
