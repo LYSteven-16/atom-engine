@@ -1,6 +1,6 @@
 {
   "name": "@LYSteven-16/atom-engine",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "A pure JavaScript recursive component renderer based on level-based decomposition (atom/molecule/substance)",
   "main": "dist/BeakerManager.js",
   "module": "dist/BeakerManager.mjs",
