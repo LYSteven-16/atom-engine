@@ -1,6 +1,6 @@
 {
   "name": "@LYSteven-16/atom-engine",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A pure JavaScript recursive component renderer based on level-based decomposition (atom/molecule/substance)",
   "main": "dist/BeakerManager.js",
   "module": "dist/BeakerManager.mjs",
@@ -17,11 +17,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/LYSteven-16/atom-engine"
+    "url": "git+https://github.com/LYSteven-16/atom-engine.git"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
-    "directory": "dist"
+    "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "build": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine",
