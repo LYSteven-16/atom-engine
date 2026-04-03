@@ -20,9 +20,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: echo '@LYSteven-16:registry=https://npm.pkg.github.com/' >> .npmrc
-      - run: echo '//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}' >> .npmrc
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@LYSteven-16'
       - run: npm ci
       - run: npm run build
       - run: npm run typecheck
       - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
