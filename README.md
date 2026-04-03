@@ -6,18 +6,19 @@ AtomEngine 是一个基于层级分解（原子/分子/物质）的纯 JavaScrip
 
 ### 安装
 
-#### 1. 创建 `.npmrc` 文件
-
-在项目根目录创建 `.npmrc` 文件：
-
-```ini
-@LYSteven-16:registry=https://npm.pkg.github.com/
-```
-
-#### 2. 安装
+#### 方式一：npm 安装（推荐）
 
 ```bash
 npm install @LYSteven-16/atom-engine
+```
+
+#### 方式二：从 GitHub Release 下载
+
+1. 访问 [Releases](https://github.com/LYSteven-16/atom-engine/releases) 下载最新版本的 `atom-engine.tar.gz`
+2. 解压到项目目录
+
+```bash
+tar -xzf atom-engine.tar.gz
 ```
 
 ### 基本使用

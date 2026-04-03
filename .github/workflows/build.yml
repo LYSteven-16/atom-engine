@@ -1,14 +1,11 @@
-name: Build and Publish
+name: Build and Release
 
 on:
   push:
     branches: [main]
-  release:
-    types: [created]
 
 permissions:
-  contents: read
-  packages: write
+  contents: write
 
 jobs:
   build:
@@ -20,11 +17,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@LYSteven-16'
       - run: npm ci
       - run: npm run build
       - run: npm run typecheck
-      - run: npm publish
+      - name: Create distribution package
+        run: |
+          cd dist
+          tar -czvf ../atom-engine.tar.gz *
+          cd ..
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: atom-engine.tar.gz
+          generate_release_notes: true
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

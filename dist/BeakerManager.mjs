@@ -3886,7 +3886,7 @@ var BeakerManager = class {
       if (/^\d+$/.test(v)) return `${v}px`;
       return v;
     };
-    style.position = "absolute";
+    style.position = config.positionType ?? "absolute";
     style.left = px(config.position?.x);
     style.top = px(config.position?.y);
     style.width = typeof config.width === "number" ? `${config.width}px` : config.width || "100%";

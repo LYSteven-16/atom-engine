@@ -123,6 +123,7 @@ interface WorkplaceConfig {
         x: number;
         y: number;
     };
+    positionType?: 'absolute' | 'fixed' | 'relative';
     width?: number | string;
     height?: number | string;
     backgroundColor?: string;
