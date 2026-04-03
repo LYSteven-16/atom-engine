@@ -6,10 +6,10 @@ AtomEngine 是一个基于层级分解（原子/分子/物质）的纯 JavaScrip
 
 ### 安装
 
-#### 方式一：npm 安装（推荐）
+#### 方式一：CDN（推荐）
 
-```bash
-npm install @LYSteven-16/atom-engine
+```html
+<script src="https://cdn.jsdelivr.net/gh/LYSteven-16/atom-engine@latest/dist/BeakerManager.global.js"></script>
 ```
 
 #### 方式二：从 GitHub Release 下载
