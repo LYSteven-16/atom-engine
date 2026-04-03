@@ -3,7 +3,6 @@ name: Build and Release
 on:
   push:
     branches: [main]
-  push:
     tags:
       - 'v*'
 
@@ -23,15 +22,6 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run typecheck
-      - name: Get version
-        id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/}"
-          else
-            VERSION="v$(node -p 'require("./package.json").version')"
-          fi
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
       - name: Create distribution package
         run: |
           cd dist
