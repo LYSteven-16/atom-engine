@@ -6,6 +6,33 @@ AtomEngine 是一个基于层级分解（原子/分子/物质）的纯 JavaScrip
 
 ### 安装
 
+由于包托管在 GitHub Packages，安装前需要配置 registry：
+
+#### 1. 创建 `.npmrc` 文件
+
+在项目根目录创建 `.npmrc` 文件：
+
+```ini
+@LYSteven-16:registry=https://npm.pkg.github.com/
+```
+
+#### 2. 认证
+
+需要 GitHub Personal Access Token（需要 `packages:read` 权限）。
+
+**方式 A：临时登录**
+```bash
+npm login @LYSteven-16 --registry=https://npm.pkg.github.com/
+```
+
+**方式 B：永久配置**
+在 `~/.npmrc` 或项目 `.npmrc` 中添加：
+```ini
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+```
+
+#### 3. 安装
+
 ```bash
 npm install @LYSteven-16/atom-engine
 ```
