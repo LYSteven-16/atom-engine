@@ -20,6 +20,15 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run typecheck
+      - name: Get version
+        id: version
+        run: echo "VERSION=v$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+      - name: Create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.version.outputs.VERSION }}
+          git push origin ${{ steps.version.outputs.VERSION }}
       - name: Create distribution package
         run: |
           cd dist
