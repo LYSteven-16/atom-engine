@@ -29,25 +29,10 @@ jobs:
         id: version
         run: |
            node -e "
-             const { execSync } = require('child_process');
              const pkg = require('./package.json');
-             const baseVersion = pkg.version.split('-')[0];
-             
-             // 获取最新 tag（格式：v26.4.4-01）
-             let buildNumber = 1;
-             try {
-               const tags = execSync('git tag --sort=-v:refname | grep ^v' + baseVersion + '- | head -1', { encoding: 'utf8' });
-               if (tags.trim()) {
-                 const parts = tags.trim().split('-');
-                 if (parts.length > 1) {
-                   buildNumber = parseInt(parts[1]) + 1;
-                 }
-               }
-             } catch (e) {}
-             
-             const newVersion = baseVersion + '-' + String(buildNumber).padStart(2, '0');
-             console.log('VERSION=' + newVersion);
-             console.log('TAG_VERSION=v' + newVersion);
+             const version = pkg.version.split('-')[0];
+             console.log('VERSION=' + version);
+             console.log('TAG_VERSION=v' + version);
            " >> $GITHUB_OUTPUT
       - name: Publish dist to CDN
         run: |
@@ -60,11 +45,10 @@ jobs:
           git add -f dist/
           if git status --porcelain | grep -q .; then
             git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
-            git push origin main
           else
             git commit --amend --no-edit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
-            git push origin main --force
           fi
+          git push origin main --force
           git tag -f ${{ steps.version.outputs.TAG_VERSION }}
           git push origin ${{ steps.version.outputs.TAG_VERSION }} --force
       - name: Create distribution package
