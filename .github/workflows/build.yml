@@ -23,13 +23,15 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
-      - name: Regenerate dist with timestamp
-        run: |
-          for f in dist/*; do
-            echo "// Built at: $(date -u +"%Y-%m-%dT%H:%M:%SZ") sha:${{ github.sha }}" | cat - "$f" > temp && mv temp "$f"
-          done
       - name: Type check
         run: npm run typecheck
+      - name: Publish dist to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f dist/
+          git commit -m "chore: release dist files"
+          git push origin main --force
       - name: Get version
         id: version
         run: |
@@ -56,15 +58,6 @@ jobs:
              console.log('VERSION=' + newVersion);
              console.log('TAG_VERSION=v' + newVersion);
            " >> $GITHUB_OUTPUT
-      - name: Publish dist to CDN
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f dist/
-          git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
-          git push origin main --force
-          git tag -f ${{ steps.version.outputs.TAG_VERSION }}
-          git push origin ${{ steps.version.outputs.TAG_VERSION }} --force
       - name: Create distribution package
         run: |
           tar -czvf atom-engine.tar.gz dist/*
