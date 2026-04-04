@@ -21,39 +21,34 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: npm ci
-      - run: npm run build
-      - run: npm run typecheck
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Type check
+        run: npm run typecheck
+      - name: Publish dist to CDN
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mv dist dist-built
+          git checkout main
+          rm -rf dist
+          mv dist-built dist
+          git add -f dist/
+          git commit -m "chore: release dist files for ${{ github.ref_name }}"
+          git push origin main
+          git tag -f ${{ github.ref_name }}
+          git push origin ${{ github.ref_name }} --force
       - name: Create distribution package
         run: |
-          cd dist
-          tar -czvf ../atom-engine.tar.gz *
-          cd ..
+          tar -czvf atom-engine.tar.gz dist/*
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
         with:
           files: atom-engine.tar.gz
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Deploy to GitHub CDN
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout main || git checkout master
-          npm ci
-          npm run build
-          VERSION=$(node -p 'require("./package.json").version')
-          git add -f dist/
-          git commit -m "chore: release dist files for v${VERSION}"
-          git push origin main
-      - name: Create tag if not exists
-        if: startsWith(github.ref, 'refs/heads/')
-        run: |
-          VERSION="v$(node -p 'require("./package.json").version')"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag $VERSION
-          git push origin $VERSION
