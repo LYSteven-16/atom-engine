@@ -25,13 +25,18 @@ jobs:
         run: npm run build
       - name: Type check
         run: npm run typecheck
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(node -p 'require("./package.json").version')
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+          echo "TAG_VERSION=v${VERSION}" >> $GITHUB_OUTPUT
       - name: Create tag
         run: |
-          VERSION="v$(node -p 'require("./package.json").version')"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -f $VERSION
-          git push origin $VERSION --force
+          git tag -f ${{ steps.version.outputs.TAG_VERSION }}
+          git push origin ${{ steps.version.outputs.TAG_VERSION }} --force
       - name: Publish dist to CDN
         run: |
           git config user.name "github-actions[bot]"
@@ -41,10 +46,10 @@ jobs:
           rm -rf dist
           mv dist-built dist
           git add -f dist/
-          git commit -m "chore: release dist files for v$(node -p 'require(\"./package.json\").version')"
+          git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
           git push origin main
-          git tag -f "v$(node -p 'require(\"./package.json\").version')"
-          git push origin "v$(node -p 'require(\"./package.json\").version')" --force
+          git tag -f ${{ steps.version.outputs.TAG_VERSION }}
+          git push origin ${{ steps.version.outputs.TAG_VERSION }} --force
       - name: Create distribution package
         run: |
           tar -czvf atom-engine.tar.gz dist/*
