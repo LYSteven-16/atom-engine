@@ -45,8 +45,9 @@ jobs:
           git checkout main || git checkout master
           npm ci
           npm run build
+          VERSION=$(node -p 'require("./package.json").version')
           git add -f dist/
-          git commit -m "chore: release dist files for v$(node -p 'require(\"./package.json\").version')"
+          git commit -m "chore: release dist files for v${VERSION}"
           git push origin main
       - name: Create tag if not exists
         if: startsWith(github.ref, 'refs/heads/')
