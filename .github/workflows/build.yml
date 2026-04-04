@@ -43,7 +43,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout main || git checkout master
-          git add dist/
+          git add -f dist/
           git commit -m "chore: release dist files"
           git push origin main
       - name: Create tag if not exists
