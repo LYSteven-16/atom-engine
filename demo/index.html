@@ -694,7 +694,37 @@
       }
     ]);
 
-    console.log('🎯 AtomEngine - 25个原子能力完整展示已加载');
+    // 26. Choice 原子 - 水平排列（完形填空示例）
+    new BeakerManager([
+      {
+        id: 'atom-choice-horizontal',
+        position: { x: 0, y: 8100 },
+        width: 400,
+        height: 300,
+        atoms: [
+          { id: 'bg-choice-main', capability: 'background', color: [255, 255, 255] },
+          { id: 'border-choice-main', capability: 'border', borderWidth: 1, color: [220, 220, 220], radius: 12 },
+          { id: 'text-choice-title', capability: 'text', position: { x: 20, y: 30 }, text: '26. Choice 原子 - 水平排列', size: 22, color: [50, 100, 200] },
+          { id: 'text-choice-desc', capability: 'text', position: { x: 20, y: 60 }, text: 'layout: "horizontal" | "vertical"', size: 14, color: [150, 150, 150] },
+          { id: 'text-choice-question', capability: 'text', position: { x: 20, y: 100 }, text: '12. She walked ____ through the quiet street.', size: 16, color: [40, 40, 40] },
+          { id: 'choice-horizontal', capability: 'choice', position: { x: 20, y: 130 }, optionCount: 4, layout: 'horizontal', size: 14, width: 80, height: 36, options: [
+            { label: 'A. slowly', value: 'A', isCorrect: true },
+            { label: 'B. quietly', value: 'B', isCorrect: false },
+            { label: 'C. fast', value: 'C', isCorrect: false },
+            { label: 'D. carefully', value: 'D', isCorrect: false }
+          ]},
+          { id: 'text-choice-example2', capability: 'text', position: { x: 20, y: 180 }, text: '13. Please select your answer:', size: 16, color: [40, 40, 40] },
+          { id: 'choice-vertical', capability: 'choice', position: { x: 20, y: 210 }, optionCount: 3, layout: 'vertical', size: 14, width: 120, height: 32, options: [
+            { label: 'Option 1', value: '1', isCorrect: false },
+            { label: 'Option 2', value: '2', isCorrect: true },
+            { label: 'Option 3', value: '3', isCorrect: false }
+          ]},
+          { id: 'shadow-choice-main', capability: 'shadow', x: 3, y: 3, shadowBlur: 10, shadowWidth: 5, color: [0, 0, 0] }
+        ]
+      }
+    ]);
+
+    console.log('🎯 AtomEngine - 26个原子能力完整展示已加载');
     console.log('所有卡片尺寸统一为 400x300, 间距 20px');
   </script>
 </body>

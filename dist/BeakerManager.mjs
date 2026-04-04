@@ -2987,12 +2987,15 @@ var ChoiceAtom = class {
       const color = this.config.color ?? [51, 51, 51];
       const width = this.config.width ?? 110;
       const height = this.config.height ?? 36;
+      const layout = this.config.layout ?? "vertical";
+      const wrap = this.config.wrap ?? false;
       wrapper.style.cssText = `
         position: absolute;
         left: ${this.config.position?.x ?? 0}px;
         top: ${this.config.position?.y ?? 0}px;
         display: flex;
-        flex-direction: column;
+        flex-direction: ${layout};
+        flex-wrap: ${wrap ? "wrap" : "nowrap"};
         gap: 4px;
       `;
       const optionCount = this.config.optionCount ?? 4;
@@ -3579,6 +3582,8 @@ var Beaker = class _Beaker {
               position: atomConfig.position,
               width: atomConfig.width,
               height: atomConfig.height,
+              layout: atomConfig.layout,
+              wrap: atomConfig.wrap,
               onSelect: atomConfig.onSelect,
               onCorrect: atomConfig.onCorrect,
               onIncorrect: atomConfig.onIncorrect

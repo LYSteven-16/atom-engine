@@ -16,6 +16,8 @@ export interface ChoiceAtomConfig {
   position?: { x: number; y: number };
   width?: number;
   height?: number;
+  layout?: 'vertical' | 'horizontal';
+  wrap?: boolean;
   onSelect?: (value: string, isCorrect: boolean) => void;
   onCorrect?: () => void;
   onIncorrect?: () => void;
@@ -45,12 +47,16 @@ export class ChoiceAtom {
       const width = this.config.width ?? 110;
       const height = this.config.height ?? 36;
 
+      const layout = this.config.layout ?? 'vertical';
+      const wrap = this.config.wrap ?? false;
+      
       wrapper.style.cssText = `
         position: absolute;
         left: ${this.config.position?.x ?? 0}px;
         top: ${this.config.position?.y ?? 0}px;
         display: flex;
-        flex-direction: column;
+        flex-direction: ${layout};
+        flex-wrap: ${wrap ? 'wrap' : 'nowrap'};
         gap: 4px;
       `;
 
