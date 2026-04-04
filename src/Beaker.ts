@@ -589,6 +589,8 @@ export class Beaker {
               position: atomConfig.position,
               width: atomConfig.width,
               height: atomConfig.height,
+              layout: atomConfig.layout,
+              wrap: atomConfig.wrap,
               onSelect: atomConfig.onSelect,
               onCorrect: atomConfig.onCorrect,
               onIncorrect: atomConfig.onIncorrect
