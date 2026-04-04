@@ -23,8 +23,11 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
-      - name: Add version timestamp
-        run: echo ${{ github.sha }} $(date -u +"%Y-%m-%dT%H:%M:%SZ") > dist/.version
+      - name: Regenerate dist with timestamp
+        run: |
+          for f in dist/*; do
+            echo "// Built at: $(date -u +"%Y-%m-%dT%H:%M:%SZ") sha:${{ github.sha }}" | cat - "$f" > temp && mv temp "$f"
+          done
       - name: Type check
         run: npm run typecheck
       - name: Get version
