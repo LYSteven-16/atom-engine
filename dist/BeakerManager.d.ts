@@ -1,4 +1,4 @@
-// Built at: 2026-04-04T11:05:47Z sha:4c80f57d9a5c14a1cda6e9611ca4c43110b5705f
+// Built at: 2026-04-04T11:07:28Z sha:4037fd0bdbe0b9df8d13629793a59e56e54c9256
 interface Molecule {
     id: string;
     position?: {
