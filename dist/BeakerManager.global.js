@@ -255,6 +255,17 @@ var AtomEngine = (() => {
     }
     render(container, config) {
       try {
+        const radius = config.radius ?? 0;
+        const wrapper = document.createElement("div");
+        wrapper.style.cssText = `
+        position: absolute;
+        left: ${config.position?.x ?? 0}px;
+        top: ${config.position?.y ?? 0}px;
+        width: ${config.width ? `${config.width}px` : "100%"};
+        height: ${config.height ? `${config.height}px` : "auto"};
+        border-radius: ${radius}px;
+        overflow: hidden;
+      `;
         const element = document.createElement("video");
         element.setAttribute("data-atom-id", this.id);
         element.src = config.src;
@@ -262,15 +273,14 @@ var AtomEngine = (() => {
         if (config.autoplay) element.autoplay = true;
         if (config.loop) element.loop = true;
         if (config.muted) element.muted = true;
-        if (config.width) element.width = config.width;
-        if (config.height) element.height = config.height;
         element.style.cssText = `
-        position: absolute;
-        left: ${config.position?.x ?? 0}px;
-        top: ${config.position?.y ?? 0}px;
-        border-radius: ${config.radius ?? 0}px;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
       `;
-        container.appendChild(element);
+        wrapper.appendChild(element);
+        container.appendChild(wrapper);
         console.log(`[Atom] ${this.context.bakerId} - VideoAtom\u6E32\u67D3\u6210\u529F`);
       } catch (error) {
         console.error(`[Atom Error] ${this.context.bakerId} - VideoAtom\u6E32\u67D3\u5931\u8D25:`, error);
@@ -3315,7 +3325,12 @@ var AtomEngine = (() => {
                 src: atomConfig.src,
                 width: atomConfig.width,
                 height: atomConfig.height,
-                position: atomConfig.position
+                position: atomConfig.position,
+                radius: atomConfig.radius,
+                autoplay: atomConfig.autoplay,
+                loop: atomConfig.loop,
+                muted: atomConfig.muted,
+                controls: atomConfig.controls
               }));
               break;
             case "audio":
