@@ -3,8 +3,6 @@ name: Build and Release
 on:
   push:
     branches: [main]
-    tags:
-      - 'v*'
 
 permissions:
   contents: write
@@ -27,8 +25,14 @@ jobs:
         run: npm run build
       - name: Type check
         run: npm run typecheck
+      - name: Create tag
+        run: |
+          VERSION="v$(node -p 'require("./package.json").version')"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag $VERSION
+          git push origin $VERSION
       - name: Publish dist to CDN
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -37,15 +41,14 @@ jobs:
           rm -rf dist
           mv dist-built dist
           git add -f dist/
-          git commit -m "chore: release dist files for ${{ github.ref_name }}"
+          git commit -m "chore: release dist files for v$(node -p 'require(\"./package.json\").version')"
           git push origin main
-          git tag -f ${{ github.ref_name }}
-          git push origin ${{ github.ref_name }} --force
+          git tag -f "v$(node -p 'require(\"./package.json\").version')"
+          git push origin "v$(node -p 'require(\"./package.json\").version')" --force
       - name: Create distribution package
         run: |
           tar -czvf atom-engine.tar.gz dist/*
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: atom-engine.tar.gz
