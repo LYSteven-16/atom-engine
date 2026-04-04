@@ -34,10 +34,24 @@ jobs:
         id: version
         run: |
            node -e "
+             const { execSync } = require('child_process');
              const pkg = require('./package.json');
-             const version = pkg.version.split('-')[0];
-             console.log('VERSION=' + version);
-             console.log('TAG_VERSION=v' + version);
+             const baseVersion = pkg.version.split('-')[0];
+             
+             let buildNumber = 1;
+             try {
+               const tags = execSync('git tag --sort=-v:refname | grep ^v' + baseVersion + '- | head -1', { encoding: 'utf8' });
+               if (tags.trim()) {
+                 const parts = tags.trim().split('-');
+                 if (parts.length > 1) {
+                   buildNumber = parseInt(parts[1]) + 1;
+                 }
+               }
+             } catch (e) {}
+             
+             const newVersion = baseVersion + '-' + String(buildNumber).padStart(2, '0');
+             console.log('VERSION=' + newVersion);
+             console.log('TAG_VERSION=v' + newVersion);
            " >> $GITHUB_OUTPUT
       - name: Publish dist to CDN
         run: |
