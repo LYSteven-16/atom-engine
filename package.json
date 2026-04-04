@@ -23,8 +23,8 @@
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
-    "build": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine",
-    "dev": "tsup src/BeakerManager.ts --format cjs,esm,iife --dts --global-name AtomEngine --watch",
+    "build": "tsup src/BeakerManager.ts --format iife --dts --global-name AtomEngine && rm -f dist/*.mjs dist/*.d.mts",
+    "dev": "tsup src/BeakerManager.ts --format iife --dts --global-name AtomEngine --watch",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
