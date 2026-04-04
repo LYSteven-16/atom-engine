@@ -2989,17 +2989,29 @@ var ChoiceAtom = class {
       const height = this.config.height ?? 36;
       const layout = this.config.layout ?? "vertical";
       const wrap = this.config.wrap ?? false;
+      const optionCount = this.config.optionCount ?? 4;
+      const optionsToRender = this.config.options.slice(0, optionCount);
+      const gap = 4;
+      let wrapperWidth;
+      let wrapperHeight;
+      if (layout === "horizontal") {
+        wrapperWidth = width * optionsToRender.length + gap * (optionsToRender.length - 1);
+        wrapperHeight = height;
+      } else {
+        wrapperWidth = width;
+        wrapperHeight = height * optionsToRender.length + gap * (optionsToRender.length - 1);
+      }
       wrapper.style.cssText = `
         position: absolute;
         left: ${this.config.position?.x ?? 0}px;
         top: ${this.config.position?.y ?? 0}px;
+        width: ${wrapperWidth}px;
+        height: ${wrapperHeight}px;
         display: flex;
         flex-direction: ${layout};
         flex-wrap: ${wrap ? "wrap" : "nowrap"};
-        gap: 4px;
+        gap: ${gap}px;
       `;
-      const optionCount = this.config.optionCount ?? 4;
-      const optionsToRender = this.config.options.slice(0, optionCount);
       optionsToRender.forEach((option, index) => {
         const optionElement = document.createElement("div");
         optionElement.setAttribute("data-option-index", index.toString());
