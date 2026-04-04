@@ -23,6 +23,8 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+      - name: Add version timestamp
+        run: echo ${{ github.sha }} $(date -u +"%Y-%m-%dT%H:%M:%SZ") > dist/.version
       - name: Type check
         run: npm run typecheck
       - name: Get version
@@ -43,7 +45,7 @@ jobs:
           rm -rf dist
           mv dist-built dist
           git add -f dist/
-          git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}" --allow-empty
+          git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
           git push origin main --force
           git tag -f ${{ steps.version.outputs.TAG_VERSION }}
           git push origin ${{ steps.version.outputs.TAG_VERSION }} --force
