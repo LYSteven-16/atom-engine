@@ -578,6 +578,22 @@ export class Beaker {
               height: atomConfig.height
             }));
             break;
+          case 'choice':
+            this.contentAtoms.push(new Atoms.ChoiceAtom(context, this.element, {
+              id: atomConfig.id,
+              placeholder: atomConfig.placeholder,
+              optionCount: atomConfig.optionCount,
+              options: atomConfig.options,
+              size: atomConfig.size,
+              color: atomConfig.color,
+              position: atomConfig.position,
+              width: atomConfig.width,
+              height: atomConfig.height,
+              onSelect: atomConfig.onSelect,
+              onCorrect: atomConfig.onCorrect,
+              onIncorrect: atomConfig.onIncorrect
+            }));
+            break;
         }
       } catch (error) {
         console.error(`[Beaker Error] ${this.id} - 创建ContentAtom失败:`, error);
