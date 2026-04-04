@@ -30,8 +30,8 @@ jobs:
           VERSION="v$(node -p 'require("./package.json").version')"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag $VERSION
-          git push origin $VERSION
+          git tag -f $VERSION
+          git push origin $VERSION --force
       - name: Publish dist to CDN
         run: |
           git config user.name "github-actions[bot]"
