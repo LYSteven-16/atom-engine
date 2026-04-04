@@ -46,8 +46,10 @@ jobs:
           rm -rf dist
           mv dist-built dist
           git add -f dist/
-          git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
-          git push origin main
+          if git status --porcelain | grep -q .; then
+            git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
+            git push origin main
+          fi
           git tag -f ${{ steps.version.outputs.TAG_VERSION }}
           git push origin ${{ steps.version.outputs.TAG_VERSION }} --force
       - name: Create distribution package
