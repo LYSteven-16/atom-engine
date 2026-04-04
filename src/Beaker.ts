@@ -128,7 +128,7 @@ export class Beaker {
   private init(): void {
     const atoms = [...(this.molecule.atoms || [])];
 
-    const contentCapabilities = ['text', 'image', 'video', 'audio', 'code', 'icon', 'canvas'];
+    const contentCapabilities = ['text', 'image', 'video', 'audio', 'code', 'icon', 'canvas', 'input', 'select', 'checkbox', 'textarea', 'editable-text', 'scroll-container', 'flex', 'choice'];
     const decorationCapabilities = ['background', 'border', 'shadow'];
     const animationCapabilities = ['scale', 'opacity', 'rotate', 'translate', 'height', 'width', 'collapse'];
 
