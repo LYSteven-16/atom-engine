@@ -43,10 +43,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          mv dist dist-built
-          git checkout main
-          rm -rf dist
-          mv dist-built dist
           git add -f dist/
           git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
           git push origin main --force
