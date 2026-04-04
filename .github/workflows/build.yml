@@ -28,25 +28,27 @@ jobs:
       - name: Get version
         id: version
         run: |
-          node -e "
-            const { execSync } = require('child_process');
-            const pkg = require('./package.json');
-            const baseVersion = pkg.version.split('-')[0];
-            
-            // 获取最新 tag
-            let buildNumber = 1;
-            try {
-              const tags = execSync('git tag --sort=-v:refname | grep ^v' + baseVersion + '- || true', { encoding: 'utf8' });
-              if (tags.trim()) {
-                const latestBuild = tags.trim().split('-')[1];
-                buildNumber = parseInt(latestBuild) + 1;
-              }
-            } catch (e) {}
-            
-            const newVersion = baseVersion + '-' + String(buildNumber).padStart(2, '0');
-            console.log('VERSION=' + newVersion);
-            console.log('TAG_VERSION=v' + newVersion);
-          " >> $GITHUB_OUTPUT
+           node -e "
+             const { execSync } = require('child_process');
+             const pkg = require('./package.json');
+             const baseVersion = pkg.version.split('-')[0];
+             
+             // 获取最新 tag（格式：v26.4.4-01）
+             let buildNumber = 1;
+             try {
+               const tags = execSync('git tag --sort=-v:refname | grep ^v' + baseVersion + '- | head -1', { encoding: 'utf8' });
+               if (tags.trim()) {
+                 const parts = tags.trim().split('-');
+                 if (parts.length > 1) {
+                   buildNumber = parseInt(parts[1]) + 1;
+                 }
+               }
+             } catch (e) {}
+             
+             const newVersion = baseVersion + '-' + String(buildNumber).padStart(2, '0');
+             console.log('VERSION=' + newVersion);
+             console.log('TAG_VERSION=v' + newVersion);
+           " >> $GITHUB_OUTPUT
       - name: Publish dist to CDN
         run: |
           git config user.name "github-actions[bot]"
@@ -56,10 +58,8 @@ jobs:
           rm -rf dist
           mv dist-built dist
           git add -f dist/
-          if git status --porcelain | grep -q .; then
-            git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}"
-            git push origin main
-          fi
+          git commit -m "chore: release dist files for v${{ steps.version.outputs.VERSION }}" --allow-empty
+          git push origin main
           git tag -f ${{ steps.version.outputs.TAG_VERSION }}
           git push origin ${{ steps.version.outputs.TAG_VERSION }} --force
       - name: Create distribution package
