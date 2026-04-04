@@ -28,9 +28,25 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(node -p 'require("./package.json").version')
-          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
-          echo "TAG_VERSION=v${VERSION}" >> $GITHUB_OUTPUT
+          node -e "
+            const { execSync } = require('child_process');
+            const pkg = require('./package.json');
+            const baseVersion = pkg.version.split('-')[0];
+            
+            // 获取最新 tag
+            let buildNumber = 1;
+            try {
+              const tags = execSync('git tag --sort=-v:refname | grep ^v' + baseVersion + '- || true', { encoding: 'utf8' });
+              if (tags.trim()) {
+                const latestBuild = tags.trim().split('-')[1];
+                buildNumber = parseInt(latestBuild) + 1;
+              }
+            } catch (e) {}
+            
+            const newVersion = baseVersion + '-' + String(buildNumber).padStart(2, '0');
+            console.log('VERSION=' + newVersion);
+            console.log('TAG_VERSION=v' + newVersion);
+          " >> $GITHUB_OUTPUT
       - name: Publish dist to CDN
         run: |
           git config user.name "github-actions[bot]"
