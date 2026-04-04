@@ -43,8 +43,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout main || git checkout master
+          npm ci
+          npm run build
           git add -f dist/
-          git commit -m "chore: release dist files"
+          git commit -m "chore: release dist files for v$(node -p 'require(\"./package.json\").version')"
           git push origin main
       - name: Create tag if not exists
         if: startsWith(github.ref, 'refs/heads/')
