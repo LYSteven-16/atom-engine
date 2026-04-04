@@ -46,6 +46,18 @@ export class VideoAtom {
 
   private render(container: HTMLElement, config: VideoAtomConfig): void {
     try {
+      const radius = config.radius ?? 0;
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = `
+        position: absolute;
+        left: ${config.position?.x ?? 0}px;
+        top: ${config.position?.y ?? 0}px;
+        width: ${config.width ? `${config.width}px` : '100%'};
+        height: ${config.height ? `${config.height}px` : 'auto'};
+        border-radius: ${radius}px;
+        overflow: hidden;
+      `;
+
       const element = document.createElement('video');
       element.setAttribute('data-atom-id', this.id);
       element.src = config.src;
@@ -53,15 +65,15 @@ export class VideoAtom {
       if (config.autoplay) element.autoplay = true;
       if (config.loop) element.loop = true;
       if (config.muted) element.muted = true;
-      if (config.width) element.width = config.width;
-      if (config.height) element.height = config.height;
       element.style.cssText = `
-        position: absolute;
-        left: ${config.position?.x ?? 0}px;
-        top: ${config.position?.y ?? 0}px;
-        border-radius: ${config.radius ?? 0}px;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
       `;
-      container.appendChild(element);
+
+      wrapper.appendChild(element);
+      container.appendChild(wrapper);
       console.log(`[Atom] ${this.context.bakerId} - VideoAtom渲染成功`);
     } catch (error) {
       console.error(`[Atom Error] ${this.context.bakerId} - VideoAtom渲染失败:`, error);

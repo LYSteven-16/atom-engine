@@ -438,7 +438,12 @@ export class Beaker {
               src: atomConfig.src,
               width: atomConfig.width,
               height: atomConfig.height,
-              position: atomConfig.position
+              position: atomConfig.position,
+              radius: atomConfig.radius,
+              autoplay: atomConfig.autoplay,
+              loop: atomConfig.loop,
+              muted: atomConfig.muted,
+              controls: atomConfig.controls
             }));
             break;
           case 'audio':
