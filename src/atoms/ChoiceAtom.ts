@@ -49,6 +49,7 @@ export class ChoiceAtom {
 
       const layout = this.config.layout ?? 'vertical';
       const wrap = this.config.wrap ?? false;
+      const flexDirection = layout === 'horizontal' ? 'row' : 'column';
       
       const optionCount = this.config.optionCount ?? 4;
       const optionsToRender = this.config.options.slice(0, optionCount);
@@ -72,7 +73,7 @@ export class ChoiceAtom {
         width: ${wrapperWidth}px;
         height: ${wrapperHeight}px;
         display: flex;
-        flex-direction: ${layout};
+        flex-direction: ${flexDirection};
         flex-wrap: ${wrap ? 'wrap' : 'nowrap'};
         gap: ${gap}px;
       `;
